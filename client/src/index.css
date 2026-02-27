@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Stereo Gothic';
+  src: url('/fonts/StereoGothic-850.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+* { font-family: 'Montserrat', sans-serif; }
+
+/* ── Impresión: solo muestra el cartón ────────────────── */
+@media print {
+  @page { size: landscape; margin: 5mm; }
+
+  body * { visibility: hidden !important; }
+
+  #cartao-print,
+  #cartao-print * { visibility: visible !important; }
+
+  #cartao-print {
+    position: fixed !important;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+  }
+}
