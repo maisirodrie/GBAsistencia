@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 
 /**
  * Captura el elemento DOM del cartón de frecuencia y lo exporta como PDF.
- * @param {HTMLElement} elemento - El div del CartaoFrequencia renderizado en pantalla.
+ * @param {HTMLElement} elemento - El div #cartao-pdf-wrapper fuera de pantalla.
  * @param {string} nombreAlumno - Para nombrar el archivo descargado.
  */
 export const generarPDFCartao = async (elemento, nombreAlumno = "alumno") => {
@@ -12,25 +12,45 @@ export const generarPDFCartao = async (elemento, nombreAlumno = "alumno") => {
     return;
   }
 
-  // Capturar el elemento como imagen en alta resolución
+  // Mover el elemento temporalmente a una posición visible para html2canvas
+  const originalLeft = elemento.parentElement.style.left;
+  elemento.parentElement.style.left = "0px";
+
+  // Esperar a que las imágenes estén cargadas
+  const imgs = Array.from(elemento.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map((img) =>
+      img.complete
+        ? Promise.resolve()
+        : new Promise((r) => { img.onload = r; img.onerror = r; })
+    )
+  );
+
+  // Esperar un frame para que el navegador pinte
+  await new Promise((r) => requestAnimationFrame(r));
+
   const canvas = await html2canvas(elemento, {
-    scale: 2,          // 2x resolución para mejor calidad
-    useCORS: true,
+    scale:           3,
+    useCORS:         true,
+    allowTaint:      true,
     backgroundColor: null,
-    logging: false,
+    logging:         false,
+    imageTimeout:    5000,
   });
 
-  const imgData   = canvas.toDataURL("image/jpeg", 0.95);
-  const imgWidth  = canvas.width;
-  const imgHeight = canvas.height;
+  // Restaurar posición fuera de pantalla
+  elemento.parentElement.style.left = originalLeft;
 
-  // Orientación landscape para que quepa el cartón apaisado
+  const imgData = canvas.toDataURL("image/png");
+  const pxW     = canvas.width  / 3;
+  const pxH     = canvas.height / 3;
+
   const pdf = new jsPDF({
     orientation: "landscape",
-    unit: "px",
-    format: [imgWidth / 2, imgHeight / 2],
+    unit:        "px",
+    format:      [pxW, pxH],
   });
 
-  pdf.addImage(imgData, "JPEG", 0, 0, imgWidth / 2, imgHeight / 2);
+  pdf.addImage(imgData, "PNG", 0, 0, pxW, pxH);
   pdf.save(`Carton_${nombreAlumno.replace(/\s+/g, "_")}.pdf`);
 };

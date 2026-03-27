@@ -1,0 +1,1 @@
+﻿import fs from 'fs'; fetch('http://localhost:4000/api/alumnos/699dae12021df250dac7e4e5/pdf').then(res => res.arrayBuffer()).then(ab => { fs.writeFileSync('dl_test.pdf', Buffer.from(ab)); console.log('Downloaded', ab.byteLength); })

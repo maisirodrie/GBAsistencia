@@ -9,22 +9,87 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: '643';
+  src: url('/fonts/643-font.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DinPro-CondensedLight';
+  src: url('/fonts/dinpro_condensedlight.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DinPro-CondensedBold';
+  src: url('/fonts/dinpro_condensedbold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
 * { font-family: 'Montserrat', sans-serif; }
 
-/* ── Impresión: solo muestra el cartón ────────────────── */
+/* ── Ficha de frecuencia: usar fuente 643 en todo salvo excepción ── */
+#cartao-print,
+#cartao-print *:not(.gb-text):not(.dinpro-text) {
+  font-family: '643', sans-serif !important;
+}
+
+.dinpro-text {
+  font-family: 'DinPro-CondensedLight', sans-serif !important;
+}
+
+.dinpro-bold-text {
+  font-family: 'DinPro-CondensedBold', sans-serif !important;
+}
+#cartao-print .gb-text {
+  font-family: 'Stereo Gothic', sans-serif !important;
+}
+
+/* ── Impresión: solo muestra el cartón y fuerza fondos ────────────────── */
 @media print {
-  @page { size: landscape; margin: 5mm; }
+  @page { 
+    size: landscape; 
+    margin: 5mm; 
+  }
 
-  body * { visibility: hidden !important; }
+  /* Forzar la impresión de colores de fondo */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 
+  /* Ocultar elementos visualmente */
+  body * { visibility: hidden; }
+
+  /* Asegurarse de que el layout original no ocupe espacio extra generando páginas en blanco */
+  #root {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 0;
+    overflow: hidden;
+    background: transparent !important;
+  }
+
+  /* La ficha SI es visible */
   #cartao-print,
-  #cartao-print * { visibility: visible !important; }
+  #cartao-print * {
+    visibility: visible !important;
+  }
 
+  /* Posicionar la ficha en la esquina superior izquierda */
   #cartao-print {
-    position: fixed !important;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
+    position: fixed !important; /* fixed para que no scrollee ni fuerce paginas extras */
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+  }
+
+  table {
+    page-break-inside: avoid;
   }
 }

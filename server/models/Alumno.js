@@ -6,6 +6,16 @@ const alumnoSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    apellido: {
+        type: String,
+        trim: true,
+        default: ""
+    },
+    celular: {
+        type: String,
+        trim: true,
+        default: ""
+    },
     faja: {
         type: String,
         enum: ['Blanca', 'Azul', 'Morada', 'Marrón', 'Negra'],
@@ -17,13 +27,29 @@ const alumnoSchema = new mongoose.Schema({
         max: 4,
         default: 0
     },
+    fotoUrl: {
+        type: String,
+        default: ""
+    },
     ultimaGraduacion: {
-        type: Date,
-        default: Date.now
+        type: Date
     },
     asistencias: [
         {
             type: Date
+        }
+    ],
+    clasesParaGraduacion: {
+        type: Number,
+        default: 30,
+        min: 1
+    },
+    historicoGraduaciones: [
+        {
+            faja: String,
+            grado: Number,
+            ultimaGraduacion: Date,
+            fechaClasePromocion: Date
         }
     ]
 }, {

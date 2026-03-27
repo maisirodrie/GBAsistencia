@@ -11,12 +11,14 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, faja, grado, ultimaGraduacion } = req.body;
+        const { nombre, faja, grado, ultimaGraduacion, clasesParaGraduacion } = req.body;
         const newAlumno = new Alumno({
             nombre,
             faja,
             grado,
-            ultimaGraduacion
+            clasesParaGraduacion: clasesParaGraduacion || 30,
+            asistencias: [],
+            ultimaGraduacion: (ultimaGraduacion && ultimaGraduacion.trim() !== "") ? new Date(ultimaGraduacion) : null
         });
         const savedAlumno = await newAlumno.save();
         res.json(savedAlumno);
@@ -47,10 +49,18 @@ export const deleteAlumno = async (req, res) => {
 
 export const updateAlumno = async (req, res) => {
     try {
+        const alumnoViejo = await Alumno.findById(req.params.id);
+        if (!alumnoViejo) return res.status(404).json({ message: 'Alumno no encontrado' });
+
+        if (req.body.ultimaGraduacion === "") {
+            req.body.ultimaGraduacion = null;
+        } else if (req.body.ultimaGraduacion) {
+            req.body.ultimaGraduacion = new Date(req.body.ultimaGraduacion);
+        }
+
         const alumnoUpdated = await Alumno.findByIdAndUpdate(req.params.id, req.body, {
             new: true
         });
-        if (!alumnoUpdated) return res.status(404).json({ message: 'Alumno no encontrado' });
         res.json(alumnoUpdated);
     } catch (error) {
         return res.status(500).json({ message: error.message });
@@ -70,8 +80,106 @@ export const addAsistencia = async (req, res) => {
         if (yaAsistio) return res.status(400).json({ message: 'Asistencia ya registrada para hoy' });
 
         alumno.asistencias.push(fecha);
+
+        // Auto-graduación check
+        const requeridasBase = alumno.clasesParaGraduacion || 30;
+        const requeridasReales = requeridasBase * (alumno.grado + 1);
+        
+        const toLocalStr = (dObj) => {
+            const d = new Date(dObj);
+            const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+            return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+        };
+
+        const strUg = alumno.ultimaGraduacion ? toLocalStr(alumno.ultimaGraduacion) : "";
+        const validas = strUg 
+            ? alumno.asistencias.filter(iso => toLocalStr(iso) >= strUg).length
+            : alumno.asistencias.length;
+
+        if (validas >= requeridasReales) {
+            // Guardar estado previo antes de promover
+            alumno.historicoGraduaciones.push({
+                faja: alumno.faja,
+                grado: alumno.grado,
+                ultimaGraduacion: alumno.ultimaGraduacion,
+                fechaClasePromocion: new Date(fecha)
+            });
+
+            if (alumno.grado < 4) {
+                alumno.grado += 1;
+                // No tocamos la ultimaGraduacion para que no se pierda la fecha de faja!
+            } else {
+                alumno.grado = 0;
+                // Si cambia de faja reseteamos la fecha
+                alumno.ultimaGraduacion = new Date(fecha);
+            }
+        }
+
         await alumno.save();
         res.json(alumno);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+ 
+export const checkIn = async (req, res) => {
+    try {
+        const alumno = await Alumno.findById(req.params.id);
+        if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
+        
+        const hoy = new Date();
+        const fechaSinHora = hoy.setHours(0, 0, 0, 0);
+        
+        const yaAsistio = alumno.asistencias.some(a => new Date(a).setHours(0, 0, 0, 0) === fechaSinHora);
+        if (yaAsistio) {
+            return res.status(400).json({ 
+                message: `Hola ${alumno.nombre}, ya registraste tu asistencia hoy.`,
+                yaAsistio: true 
+            });
+        }
+
+        alumno.asistencias.push(new Date());
+
+        // Reutilizar lógica de graduación (Simplificada para este endpoint)
+        const requeridasBase = alumno.clasesParaGraduacion || 30;
+        const requeridasReales = requeridasBase * (alumno.grado + 1);
+        
+        const toLocalStr = (dObj) => {
+            const d = new Date(dObj);
+            const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+            return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+        };
+
+        const strUg = alumno.ultimaGraduacion ? toLocalStr(alumno.ultimaGraduacion) : "";
+        const validas = strUg 
+            ? alumno.asistencias.filter(iso => toLocalStr(iso) >= strUg).length
+            : alumno.asistencias.length;
+
+        let mensajeGrad = "";
+        if (validas >= requeridasReales) {
+            alumno.historicoGraduaciones.push({
+                faja: alumno.faja,
+                grado: alumno.grado,
+                ultimaGraduacion: alumno.ultimaGraduacion,
+                fechaClasePromocion: new Date()
+            });
+
+            if (alumno.grado < 4) {
+                alumno.grado += 1;
+                mensajeGrad = `¡Felicitaciones! Alcanzaste el Grado ${alumno.grado}.`;
+            } else {
+                alumno.grado = 0;
+                alumno.ultimaGraduacion = new Date();
+                mensajeGrad = `¡Increíble! Completaste todos los grados de tu faja.`;
+            }
+        }
+
+        await alumno.save();
+        res.json({ 
+            message: `¡Hola ${alumno.nombre}! Check-in exitoso.`,
+            alumno,
+            mensajeGrad
+        });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -85,8 +193,57 @@ export const removeAsistencia = async (req, res) => {
         
         const fechaParaRemover = new Date(fecha).setHours(0, 0, 0, 0);
         alumno.asistencias = alumno.asistencias.filter(a => new Date(a).setHours(0, 0, 0, 0) !== fechaParaRemover);
+        alumno.markModified('asistencias');
         
+        // REVERTIR PROMOCIÓN SI LA CANTIDAD DE CLASES CAE POR DEBAJO DE LA META
+        if (alumno.historicoGraduaciones && alumno.historicoGraduaciones.length > 0) {
+            const ultimoHistorial = alumno.historicoGraduaciones[alumno.historicoGraduaciones.length - 1];
+            
+            // Re-evaluamos cuántas clases válidas quedan usando la fecha de graduación anterior
+            const toLocalStr = (dObj) => {
+                const d = new Date(dObj);
+                const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+                return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+            };
+            
+            const strUgAnterior = ultimoHistorial.ultimaGraduacion ? toLocalStr(ultimoHistorial.ultimaGraduacion) : "";
+            
+            const validasRestantes = strUgAnterior
+                ? alumno.asistencias.filter(iso => toLocalStr(iso) >= strUgAnterior).length
+                : alumno.asistencias.length;
+
+            const requeridasBase = alumno.clasesParaGraduacion || 30;
+            const clasesParaPromoverAnterior = requeridasBase * (ultimoHistorial.grado + 1);
+
+            if (validasRestantes < clasesParaPromoverAnterior) {
+                // Revertir a la faja y grado anteriores
+                alumno.faja = ultimoHistorial.faja;
+                alumno.grado = ultimoHistorial.grado;
+                alumno.ultimaGraduacion = ultimoHistorial.ultimaGraduacion || null;
+                // Sacar del historial
+                alumno.historicoGraduaciones.pop();
+            }
+        }
+
         await alumno.save();
+        res.json(alumno);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const subirFotoAlumno = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No se proporcionó ninguna imagen" });
+        }
+
+        const alumno = await Alumno.findById(req.params.id);
+        if (!alumno) return res.status(404).json({ message: "Alumno no encontrado" });
+
+        alumno.fotoUrl = req.file.filename;
+        await alumno.save();
+
         res.json(alumno);
     } catch (error) {
         return res.status(500).json({ message: error.message });

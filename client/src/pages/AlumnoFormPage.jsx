@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAlumno, createAlumno, updateAlumno, addAsistencia, removeAsistencia } from "../api/alumnos";
+import { getAlumno, createAlumno, updateAlumno, deleteAlumno, addAsistencia, removeAsistencia, descargarPDF, uploadFoto } from "../api/alumnos";
 import CartaoFrequencia from "../components/CartaoFrequencia";
+import ProgresoChart from "../components/ProgresoChart";
+import QRModal from "../components/QRModal";
+import PhotoCropModal from "../components/PhotoCropModal";
 import { format } from "date-fns";
 
 const MESES_ES = [
@@ -21,8 +24,32 @@ export default function AlumnoFormPage() {
     const { id } = useParams();
     const [asistencias, setAsistencias] = useState([]);
     const [fechaManual, setFechaManual] = useState(format(new Date(), "yyyy-MM-dd"));
+    const [anioFicha, setAnioFicha] = useState(new Date().getFullYear().toString());
     const [guardado, setGuardado] = useState(false);
     const [cargando, setCargando] = useState(!!id);
+    const [showQR, setShowQR] = useState(false);
+    const [imageToCrop, setImageToCrop] = useState(null);
+    const fileInputRef = useRef(null);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file || !id) return;
+        const reader = new FileReader();
+        reader.addEventListener("load", () => setImageToCrop(reader.result));
+        reader.readAsDataURL(file);
+    };
+
+    const handleCropComplete = async (croppedFile) => {
+        setImageToCrop(null);
+        const formData = new FormData();
+        formData.append("foto", croppedFile);
+        try {
+            const res = await uploadFoto(id, formData);
+            setValue("fotoUrl", res.data.fotoUrl);
+        } catch (error) {
+            alert(error.response?.data?.message || "Error al subir foto");
+        }
+    };
 
     /* Cargar alumno */
     useEffect(() => {
@@ -30,8 +57,12 @@ export default function AlumnoFormPage() {
         (async () => {
             const { data } = await getAlumno(id);
             setValue("nombre", data.nombre);
+            setValue("apellido", data.apellido || "");
+            setValue("celular", data.celular || "");
             setValue("faja", data.faja ?? "Blanca");
             setValue("grado", String(data.grado ?? 0));
+            setValue("clasesParaGraduacion", data.clasesParaGraduacion || 30);
+            setValue("fotoUrl", data.fotoUrl || "");
             if (data.ultimaGraduacion) {
                 const local = toLocal(data.ultimaGraduacion);
                 setValue("ultimaGraduacion", format(local, "yyyy-MM-dd"));
@@ -44,7 +75,8 @@ export default function AlumnoFormPage() {
     /* Guardar */
     const onSubmit = handleSubmit(async (data) => {
         if (id) {
-            await updateAlumno(id, data);
+            const res = await updateAlumno(id, data);
+            setAsistencias(res.data.asistencias || []);
             setGuardado(true);
             setTimeout(() => setGuardado(false), 2500);
         } else {
@@ -53,12 +85,25 @@ export default function AlumnoFormPage() {
         }
     });
 
+    /* Sincronizar UI con datos del servidor tras modificar asistencias */
+    const syncAlumnoData = (data) => {
+        setAsistencias(data.asistencias);
+        setValue("grado", String(data.grado ?? 0));
+        if (data.ultimaGraduacion) {
+            const local = toLocal(data.ultimaGraduacion);
+            setValue("ultimaGraduacion", format(local, "yyyy-MM-dd"));
+        } else {
+            setValue("ultimaGraduacion", "");
+        }
+    };
+
     /* Asistencia */
     async function marcarHoy() {
         if (!id) return alert("Guarda el alumno primero.");
         try {
+            await updateAlumno(id, watch());
             const { data } = await addAsistencia(id, new Date());
-            setAsistencias(data.asistencias);
+            syncAlumnoData(data);
         } catch (e) {
             alert(e.response?.data?.message ?? "Error");
         }
@@ -67,8 +112,9 @@ export default function AlumnoFormPage() {
     async function marcarFecha() {
         if (!id) return alert("Guarda el alumno primero.");
         try {
+            await updateAlumno(id, watch());
             const { data } = await addAsistencia(id, new Date(fechaManual + "T12:00:00"));
-            setAsistencias(data.asistencias);
+            syncAlumnoData(data);
         } catch (e) {
             alert(e.response?.data?.message ?? "Error");
         }
@@ -76,8 +122,23 @@ export default function AlumnoFormPage() {
 
     async function eliminarAsistencia(fecha) {
         if (!window.confirm("¿Eliminar esta asistencia?")) return;
-        const { data } = await removeAsistencia(id, fecha);
-        setAsistencias(data.asistencias);
+        try {
+            await updateAlumno(id, watch());
+            const { data } = await removeAsistencia(id, fecha);
+            syncAlumnoData(data);
+        } catch (e) {
+            alert(e.response?.data?.message ?? "Error");
+        }
+    }
+
+    async function handleDelete() {
+        if (!window.confirm(`¿Estás seguro de que querés borrar este alumno? Esta acción no se puede deshacer.`)) return;
+        try {
+            await deleteAlumno(id);
+            navigate("/");
+        } catch (e) {
+            alert("Error al borrar el alumno.");
+        }
     }
 
     /* Agrupar asistencias por año/mes */
@@ -91,200 +152,404 @@ export default function AlumnoFormPage() {
         return acc;
     }, {});
 
-    if (cargando) return <div className="text-slate-400 text-center py-20">Cargando…</div>;
+    /* Asistencias válidas para la próxima graduación */
+    const strUg = watch("ultimaGraduacion");
+    const asistenciasValidas = strUg
+        ? asistencias.filter(iso => {
+            const ld = toLocal(iso);
+            const strF = `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+            return strF >= strUg;
+        })
+        : asistencias;
+
+    if (cargando) return (
+        <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-slate-500 font-bold bg-slate-800/50 px-6 py-3 rounded-full animate-pulse border border-slate-700">Cargando perfil…</div>
+        </div>
+    );
 
     return (
-        <>
-            {/* ── Cartón oculto para impresión (window.print) ─── */}
-            <div className="hidden">
-                <CartaoFrequencia
-                    id="cartao-print"
-                    asistencias={asistencias}
-                    alumnoNombre={watch("nombre")}
-                    faja={watch("faja")}
-                    grado={watch("grado")}
-                    ultimaGraduacion={watch("ultimaGraduacion")}
-                />
+        <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
+            {/* Header / Top Bar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/40 p-3 sm:p-4 rounded-3xl border border-slate-800 backdrop-blur-md shadow-lg">
+                <button
+                    onClick={() => navigate("/")}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-all text-sm font-bold bg-slate-800/50 hover:bg-slate-700/80 px-5 py-2.5 rounded-2xl"
+                >
+                    <span aria-hidden="true" className="text-lg">&larr;</span> Volver al listado
+                </button>
+                <div className="flex gap-3 w-full sm:w-auto">
+                    {id && (
+                        <button
+                            onClick={() => descargarPDF(id, `${watch("nombre") || ""} ${watch("apellido") || ""}`.trim())}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-2xl text-sm font-bold transition-all border border-slate-700 shadow-sm"
+                        >
+                            🖨️ <span className="hidden sm:inline">Imprimir Cartón</span>
+                        </button>
+                    )}
+                    {id && (
+                        <button
+                            onClick={handleDelete}
+                            className="bg-slate-800/50 hover:bg-red-900/40 text-slate-400 hover:text-red-400 p-2.5 rounded-2xl border border-slate-700 transition-all active:scale-95"
+                            title="Borrar Alumno"
+                        >
+                            🗑
+                        </button>
+                    )}
+                    <button
+                        onClick={onSubmit}
+                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-lg ${
+                            guardado 
+                            ? "bg-green-500 hover:bg-green-400 text-white shadow-green-500/20" 
+                            : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-red-600/20 border border-red-500/50"
+                        }`}
+                    >
+                        {guardado ? "✓ Guardado!" : (id ? "Guardar Cambios" : "Crear Alumno")}
+                    </button>
+                </div>
             </div>
 
-            {/* ── Layout visible ─────────────────────────────── */}
-            <div className="max-w-5xl mx-auto space-y-8">
+            {/* Dos grandes columnas */}
+            <div className="grid lg:grid-cols-12 gap-6 lg:gap-8">
+                
+                {/* PANEL IZQUIERDO: PERFIL DEL ALUMNO */}
+                <div className="lg:col-span-7 bg-slate-800/30 backdrop-blur-2xl rounded-[2rem] p-6 text-white sm:p-8 border border-slate-700/50 shadow-2xl flex flex-col gap-6 relative overflow-hidden">
+                    {/* Glow effect */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-slate-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
-                {/* Barra de acciones */}
-                <div className="flex justify-between items-center">
-                    <button
-                        onClick={() => navigate("/")}
-                        className="text-slate-400 hover:text-white transition-colors text-sm"
-                    >
-                        ← Volver
-                    </button>
-                    <div className="flex gap-2">
-                        {id && (
-                            <button
-                                onClick={() => window.print()}
-                                className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all border border-slate-600"
-                            >
-                                🖨️ Imprimir Cartón
-                            </button>
-                        )}
-                        <button
-                            onClick={onSubmit}
-                            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-md"
+                    <div className="flex items-center gap-5 border-b border-slate-700/40 pb-6 relative z-10">
+                        <div 
+                            className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-3xl shadow-inner flex-shrink-0 border border-slate-600/50 cursor-pointer overflow-hidden group"
+                            onClick={() => id ? fileInputRef.current?.click() : alert("Guardá el alumno primero antes de subir su foto.")}
                         >
-                            {guardado ? "✓ Guardado" : (id ? "Actualizar" : "Guardar Alumno")}
-                        </button>
+                            {watch("fotoUrl") ? (
+                                <img src={`http://${window.location.hostname}:4000/uploads/${watch("fotoUrl")}`} alt="Perfil" className="w-full h-full object-cover" />
+                            ) : (
+                                <span>{watch("nombre")?.charAt(0)?.toUpperCase() || "👤"}</span>
+                            )}
+                            {id && (
+                                <div className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center transition-all backdrop-blur-sm">
+                                    <span className="text-white text-xs font-bold text-center leading-tight tracking-wider">Cambiar<br/>Foto</span>
+                                </div>
+                            )}
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-2xl font-black tracking-tight">Datos del Alumno</h2>
+                                {/* {id && (
+                                    <button 
+                                        onClick={() => setShowQR(true)}
+                                        className="bg-blue-600/20 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-600/30 transition-all flex items-center gap-1.5"
+                                    >
+                                        <span className="text-xs">📱</span> QR
+                                    </button>
+                                )} */}
+                            </div>
+                            <p className="text-sm text-slate-400 font-medium mt-0.5">Información principal y progreso</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6 relative z-10">
+                        {/* Nombre y Apellido */}
+                        <div className="grid sm:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Nombre</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: Juan"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    {...register("nombre", { required: true })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Apellido</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: Pérez"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    {...register("apellido")}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Celular */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Celular (WhatsApp)</label>
+                            <input
+                                type="text"
+                                placeholder="Ej: +54 9 11 1234-5678"
+                                className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                {...register("celular")}
+                            />
+                        </div>
+
+                        {/* Fila Faja / Grado */}
+                        <div className="grid sm:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Faja (Cinturón)</label>
+                                <div className="relative">
+                                    <select
+                                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
+                                        {...register("faja")}
+                                    >
+                                        {["Blanca", "Azul", "Morada", "Marrón", "Negra"].map(f => (
+                                            <option key={f}>{f}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">▼</div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Grado (Stripes)</label>
+                                <div className="relative">
+                                    <select
+                                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
+                                        {...register("grado")}
+                                    >
+                                        {[0, 1, 2, 3, 4].map(g => <option key={g}>{g}</option>)}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">▼</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Fila Fecha / Metas */}
+                        <div className="grid sm:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-end pl-1 pr-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Última Grad.</label>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setValue("ultimaGraduacion", "")}
+                                        className="text-[10px] uppercase font-bold text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                                    >
+                                        Borrar
+                                    </button>
+                                </div>
+                                <input
+                                    type="date"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner [color-scheme:dark]"
+                                    {...register("ultimaGraduacion")}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Req. p/ Graduar</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    {...register("clasesParaGraduacion", { required: true, valueAsNumber: true })}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Progreso Visual */}
+                        {id && (
+                            <div className="pt-8">
+                                {(() => {
+                                    const reqBase = watch("clasesParaGraduacion") || 30;
+                                    const gradoActual = parseInt(watch("grado") || 0, 10);
+                                    
+                                    // Si la fecha es futura, la ignoramos para el cálculo de progreso (fail-safe)
+                                    const strUg = watch("ultimaGraduacion");
+                                    const isFuture = strUg && (new Date(strUg + "T12:00:00") > new Date());
+                                    
+                                    const validasParaCalculo = (strUg && !isFuture) ? asistenciasValidas.length : asistencias.length;
+                                    const clasesHaciaProximo = validasParaCalculo - (gradoActual * reqBase);
+                                    const clasesProgreso = Math.max(0, clasesHaciaProximo);
+                                    const pct = Math.min((clasesProgreso / reqBase) * 100, 100);
+                                    
+                                    return (
+                                        <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-700/50 shadow-inner">
+                                            <div className="flex justify-between items-end mb-4">
+                                                <div>
+                                                    <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-[0.2em] mb-1.5">PROGRESO ACTUAL</p>
+                                                    <p className="text-lg font-black text-white">Hacia {gradoActual < 4 ? `Grado ${gradoActual + 1}` : "Nueva Faja"}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-3xl font-black text-white">{clasesProgreso}</span>
+                                                    <span className="text-sm text-slate-400 font-bold ml-1">/ {reqBase}</span>
+                                                </div>
+                                            </div>
+                                            <div className="h-3.5 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-red-600 to-rose-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(225,29,72,0.4)]"
+                                                    style={{ width: `${pct}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-4 font-medium text-center">
+                                                {strUg && !isFuture 
+                                                    ? `Clases desde última graducación: ${asistenciasValidas.length}` 
+                                                    : `Total de clases acumuladas: ${asistencias.length}`}
+                                                {gradoActual > 0 && ` (-${gradoActual * reqBase} por grados)`}
+                                            </p>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Formulario + toma de asistencia */}
-                <div className="grid lg:grid-cols-2 gap-6">
+                {/* PANEL DERECHO: TOMA DE ASISTENCIA */}
+                {id && (
+                    <div className="lg:col-span-5 flex flex-col gap-6 lg:gap-8">
+                        
+                        {/* Widget de Acción Rápida */}
+                        <div className="bg-gradient-to-br from-blue-900/40 to-slate-900/60 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-blue-500/20 shadow-2xl relative overflow-hidden">
+                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                            
+                            <h2 className="text-xl font-black text-white tracking-tight mb-6 flex items-center gap-2">
+                                <span className="bg-slate-700/50 text-slate-400 p-2 rounded-xl py-1.5 leading-none shadow-inner border border-slate-700/10">📅</span>
+                                Historial Manual
+                            </h2>
 
-                    {/* Datos del alumno */}
-                    <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-4">
-                        <h2 className="font-bold text-lg">Datos del Alumno</h2>
-
-                        <div>
-                            <label className="text-xs text-slate-400 mb-1 block">Nombre completo</label>
-                            <input
-                                type="text"
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-red-600"
-                                {...register("nombre", { required: true })}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs text-slate-400 mb-1 block">Faja</label>
-                                <select
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-red-600"
-                                    {...register("faja")}
-                                >
-                                    {["Blanca", "Azul", "Morada", "Marrón", "Negra"].map(f => (
-                                        <option key={f}>{f}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-400 mb-1 block">Grado</label>
-                                <select
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-red-600"
-                                    {...register("grado")}
-                                >
-                                    {[0, 1, 2, 3, 4].map(g => <option key={g}>{g}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-xs text-slate-400 mb-1 block">Fecha última graduación</label>
-                            <input
-                                type="date"
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-red-600"
-                                {...register("ultimaGraduacion")}
-                            />
-                        </div>
-
-                        {/* Progreso */}
-                        {id && (
-                            <div className="pt-2 border-t border-slate-700">
-                                <div className="flex justify-between text-xs text-slate-400 mb-1.5">
-                                    <span>Progreso hacia próxima graduación</span>
-                                    <span className="font-bold text-white">{asistencias.length} / 30</span>
-                                </div>
-                                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-red-600 rounded-full transition-all"
-                                        style={{ width: `${Math.min((asistencias.length / 30) * 100, 100)}%` }}
+                            <div className="relative z-10">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2 pl-1">Agregar fecha específica</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="date"
+                                        className="flex-1 bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-semibold shadow-inner [color-scheme:dark]"
+                                        value={fechaManual}
+                                        onChange={e => setFechaManual(e.target.value)}
                                     />
+                                    <button
+                                        onClick={marcarFecha}
+                                        className="bg-slate-700/80 hover:bg-slate-600 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all border border-slate-600 shadow-sm active:scale-95"
+                                    >
+                                        Agregar
+                                    </button>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
 
-                    {/* Toma de asistencia */}
-                    {id && (
-                        <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 space-y-4">
-                            <h2 className="font-bold text-lg">Tomar Asistencia</h2>
-
-                            {/* Botón HOY */}
-                            <button
-                                onClick={marcarHoy}
-                                className="w-full bg-blue-700 hover:bg-blue-600 py-3 rounded-xl font-bold text-lg transition-all shadow-md active:scale-95"
-                            >
-                                ✔ Marcar HOY
-                            </button>
-
-                            {/* Fecha manual */}
-                            <div className="flex gap-2">
-                                <input
-                                    type="date"
-                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-600"
-                                    value={fechaManual}
-                                    onChange={e => setFechaManual(e.target.value)}
-                                />
-                                <button
-                                    onClick={marcarFecha}
-                                    className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                                >
-                                    Agregar
-                                </button>
-                            </div>
-
-                            {/* Historial */}
-                            <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                        {/* Historial Interactivo */}
+                        <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-700/50 shadow-xl flex-1 flex flex-col max-h-[420px]">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center justify-between pl-1 pr-1 border-b border-slate-700/50 pb-4">
+                                Historial de Clases
+                                <span className="bg-slate-800 border border-slate-700 text-slate-300 py-1 px-3 rounded-full text-[10px] shadow-inner font-bold">{asistencias.length} TOTALES</span>
+                            </h3>
+                            
+                            <div className="space-y-6 overflow-y-auto pr-3 custom-scrollbar flex-1 pb-4">
                                 {Object.keys(agrupadas).sort((a, b) => b - a).map(anio => (
                                     <div key={anio}>
-                                        <p className="text-xs text-slate-500 font-black uppercase tracking-widest mb-1">{anio}</p>
-                                        {Object.keys(agrupadas[anio]).sort((a, b) => b - a).map(mes => (
-                                            <div key={mes} className="mb-2">
-                                                <p className="text-[10px] text-blue-500 font-bold uppercase ml-1 mb-1">{MESES_ES[mes]}</p>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {agrupadas[anio][mes].sort((a, b) => a.dia - b.dia).map(({ iso, dia }) => (
-                                                        <button
-                                                            key={iso}
-                                                            onClick={() => eliminarAsistencia(iso)}
-                                                            title="Click para eliminar"
-                                                            className="bg-slate-900 hover:bg-red-900/40 border border-slate-700 hover:border-red-700 rounded-lg w-8 h-8 text-sm font-bold transition-all"
-                                                        >
-                                                            {String(dia).padStart(2, "0")}
-                                                        </button>
-                                                    ))}
+                                        <div className="inline-block bg-slate-900/80 border border-slate-700 px-3 py-1 rounded-lg mb-3">
+                                            <p className="text-xs text-white font-black tracking-widest">{anio}</p>
+                                        </div>
+                                        <div className="space-y-5">
+                                            {Object.keys(agrupadas[anio]).sort((a, b) => b - a).map(mes => (
+                                                <div key={mes} className="pl-2 border-l-2 border-slate-700/50 relative">
+                                                    <div className="absolute w-2 h-2 rounded-full bg-blue-500 -left-[5px] top-1"></div>
+                                                    <p className="text-[10px] text-blue-400 font-black uppercase mb-2 ml-2 tracking-widest">{MESES_ES[mes]}</p>
+                                                    <div className="flex flex-wrap gap-2 ml-2">
+                                                        {agrupadas[anio][mes].sort((a, b) => a.dia - b.dia).map(({ iso, dia }) => (
+                                                            <button
+                                                                key={iso}
+                                                                onClick={() => eliminarAsistencia(iso)}
+                                                                title="Eliminar asistencia"
+                                                                className="group relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-600 hover:border-red-500 text-sm font-bold text-slate-300 transition-all shadow-sm overflow-hidden"
+                                                            >
+                                                                <span className="group-hover:-translate-y-8 transition-transform duration-300">
+                                                                    {String(dia).padStart(2, "0")}
+                                                                </span>
+                                                                <span className="absolute inset-0 flex items-center justify-center bg-red-500/20 text-red-500 translate-y-8 group-hover:translate-y-0 transition-transform duration-300">
+                                                                    ✕
+                                                                </span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 ))}
                                 {asistencias.length === 0 && (
-                                    <p className="text-slate-600 text-sm italic text-center pt-4">Sin asistencias aún</p>
+                                    <div className="h-full flex flex-col items-center justify-center pt-8 opacity-50">
+                                        <span className="text-4xl mb-2">👻</span>
+                                        <p className="text-white text-sm font-bold">Sin asistencias aún</p>
+                                    </div>
                                 )}
                             </div>
                         </div>
-                    )}
-                </div>
-
-                {/* Vista previa del cartón */}
-                {id && (
-                    <div className="space-y-3">
-                        <h2 className="font-bold text-lg flex items-center gap-2">
-                            🖨️ Vista Previa del Cartón
-                        </h2>
-                        <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-700 overflow-x-auto">
-                            <div className="min-w-[900px]">
-                                <CartaoFrequencia
-                                    asistencias={asistencias}
-                                    alumnoNombre={watch("nombre")}
-                                    faja={watch("faja")}
-                                    grado={watch("grado")}
-                                    ultimaGraduacion={watch("ultimaGraduacion")}
-                                />
-                            </div>
-                        </div>
-                        <p className="text-slate-500 text-xs italic text-center">
-                            Pulsá "Imprimir Cartón" para abrir el diálogo de impresión / guardar como PDF.
-                        </p>
                     </div>
                 )}
             </div>
-        </>
+
+            {/* ── GRÁFICO DE PROGRESO (ancho completo) ── */}
+            {id && asistencias.length > 0 && (
+                <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-slate-700/50 shadow-2xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/50 pb-4 mb-6">
+                        <h3 className="text-sm font-black text-white flex items-center gap-2">
+                            <span className="bg-blue-500/20 text-blue-400 p-2 rounded-xl leading-none border border-blue-500/20">📈</span>
+                            Progreso de Entrenamiento
+                        </h3>
+                        <span className="text-xs text-slate-400 bg-slate-900/60 px-3 py-1 rounded-full border border-slate-700/50 font-bold">{anioFicha}</span>
+                    </div>
+                    <ProgresoChart
+                        asistencias={asistencias}
+                        anio={Number(anioFicha)}
+                        clasesObjetivo={Number(watch("clasesParaGraduacion") || 30)}
+                    />
+                </div>
+            )}
+
+            {/* VISTA PREVIA DEL CARTÓN */}
+            {id && (
+                <div className="bg-slate-800/30 backdrop-blur-2xl rounded-[2rem] p-6 sm:p-8 border border-slate-700/50 shadow-2xl mt-4 relative overflow-hidden">
+                    {/* Background decoration */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 opacity-30"></div>
+                    
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
+                            <span className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl leading-none text-xl shadow-inner">🖨️</span>
+                            Vista Previa de Ficha
+                        </h2>
+                        <div className="flex items-center gap-3 bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-700/50 shadow-inner">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Año a visualizar:</label>
+                            <select 
+                                value={anioFicha}
+                                onChange={e => setAnioFicha(e.target.value)}
+                                className="bg-transparent border-none outline-none focus:ring-0 text-sm font-black text-white cursor-pointer"
+                            >
+                                {Array.from(new Set([...Object.keys(agrupadas), new Date().getFullYear().toString()]))
+                                    .sort((a, b) => b - a)
+                                    .map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-[#0B1120] p-6 rounded-2xl border border-slate-800 overflow-x-auto custom-scrollbar shadow-inner relative">
+                        <div className="min-w-[900px] flex justify-center py-4">
+                            <CartaoFrequencia
+                                asistencias={asistencias.filter(iso => toLocal(iso).getFullYear().toString() === anioFicha)}
+                                alumnoNombre={`${watch("nombre") || ""} ${watch("apellido") || ""}`.trim()}
+                                faja={watch("faja")}
+                                grado={watch("grado")}
+                                ultimaGraduacion={watch("ultimaGraduacion")}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {id && (
+                <QRModal 
+                    show={showQR} 
+                    onClose={() => setShowQR(false)} 
+                    alumnoId={id}
+                    alumnoNombre={`${watch("nombre") || ""} ${watch("apellido") || ""}`.trim()}
+                    alumnoCelular={watch("celular")}
+                />
+            )}
+
+            {imageToCrop && (
+                <PhotoCropModal
+                    image={imageToCrop}
+                    onCropComplete={handleCropComplete}
+                    onCancel={() => setImageToCrop(null)}
+                />
+            )}
+        </div>
     );
 }
