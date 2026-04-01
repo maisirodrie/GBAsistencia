@@ -160,7 +160,11 @@ export default function AlumnosPage() {
                                 <div className="flex items-start gap-3 pr-10 pb-3 flex-1 min-w-0">
                                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
                                         {a.fotoUrl ? (
-                                            <img src={`http://${window.location.hostname}:4000/uploads/${a.fotoUrl}`} alt="Perfil" className="w-full h-full object-cover" />
+                                            <img 
+                                                src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `http://${window.location.hostname}:4000/uploads/${a.fotoUrl}`} 
+                                                alt="Perfil" 
+                                                className="w-full h-full object-cover" 
+                                            />
                                         ) : (
                                             <span className="text-white drop-shadow-md">{a.nombre?.charAt(0)?.toUpperCase() || "👤"}</span>
                                         )}

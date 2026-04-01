@@ -209,9 +209,15 @@ export default function FinanzasPage() {
                         <div key={alumno._id} className={`rounded-2xl p-4 border shadow-lg flex flex-col gap-3 ${pago ? "bg-green-900/20 border-green-700/40" : "bg-slate-800/30 border-slate-700/50"}`}>
                             <div className="flex items-center gap-3">
                                 <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-lg flex-shrink-0 border border-slate-600/50 overflow-hidden">
-                                    {alumno.fotoUrl
-                                        ? <img src={`http://localhost:4000/uploads/${alumno.fotoUrl}`} alt="Perfil" className="w-full h-full object-cover" />
-                                        : <span className="text-white">{alumno.nombre?.charAt(0)}</span>}
+                                    {alumno.fotoUrl ? (
+                                        <img 
+                                            src={alumno.fotoUrl.startsWith('http') ? alumno.fotoUrl : `http://${window.location.hostname}:4000/uploads/${alumno.fotoUrl}`} 
+                                            alt="Perfil" 
+                                            className="w-full h-full object-cover" 
+                                        />
+                                    ) : (
+                                        <span className="text-white">{alumno.nombre?.charAt(0)}</span>
+                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="font-bold text-white text-sm truncate">{alumno.nombre} {alumno.apellido || ""}</p>

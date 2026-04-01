@@ -223,7 +223,7 @@ export default function AlumnoFormPage() {
                             onClick={() => id ? fileInputRef.current?.click() : alert("Guardá el alumno primero antes de subir su foto.")}
                         >
                             {watch("fotoUrl") ? (
-                                <img src={`http://${window.location.hostname}:4000/uploads/${watch("fotoUrl")}`} alt="Perfil" className="w-full h-full object-cover" />
+                                <img src={watch("fotoUrl").startsWith('http') ? watch("fotoUrl") : `http://${window.location.hostname}:4000/uploads/${watch("fotoUrl")}`} alt="Perfil" className="w-full h-full object-cover" />
                             ) : (
                                 <span>{watch("nombre")?.charAt(0)?.toUpperCase() || "👤"}</span>
                             )}

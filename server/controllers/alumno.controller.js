@@ -241,7 +241,8 @@ export const subirFotoAlumno = async (req, res) => {
         const alumno = await Alumno.findById(req.params.id);
         if (!alumno) return res.status(404).json({ message: "Alumno no encontrado" });
 
-        alumno.fotoUrl = req.file.filename;
+        // req.file.path contains the Cloudinary secure URL
+        alumno.fotoUrl = req.file.path || req.file.filename;
         await alumno.save();
 
         res.json(alumno);
