@@ -1,17 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
-import { Users, DollarSign, Package, Camera, UserPlus } from "lucide-react";
+import { Users, DollarSign, Package, LogOut, UserPlus, Shield, User as UserIcon } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
     const location = useLocation();
+    const { user, logout, isAuthenticated } = useAuth();
 
     const isActive = (path) => location.pathname === path;
 
     const navLinks = [
         { to: "/", label: "Alumnos", icon: <Users size={20} />, active: isActive("/") },
-        // { to: "/checkin", label: "Check-In", icon: <Camera size={20} />, active: isActive("/checkin"), primary: true },
         { to: "/finanzas", label: "Finanzas", icon: <DollarSign size={20} />, active: isActive("/finanzas") },
         { to: "/stock", label: "Stock", icon: <Package size={20} />, active: isActive("/stock") },
     ];
+
+    if (!isAuthenticated) return null;
 
     return (
         <>
@@ -40,15 +43,15 @@ export default function Navbar() {
                             to={link.to}
                             className={`flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-sm transition-all duration-300 group ${
                                 link.active
-                                    ? (link.primary ? "bg-blue-600 text-white shadow-[0_10px_20px_rgba(37,99,235,0.3)]" : "bg-slate-800 text-white border border-slate-700")
+                                    ? "bg-slate-800 text-white border border-slate-700"
                                     : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                             }`}
                         >
-                            <span className={`${link.active ? "text-white" : "text-slate-500 group-hover:text-blue-400"} transition-colors`}>
+                            <span className={`${link.active ? "text-white" : "text-slate-500 group-hover:text-rose-400"} transition-colors`}>
                                 {link.icon}
                             </span>
                             <span className="tracking-wide">{link.label}</span>
-                            {link.active && !link.primary && (
+                            {link.active && (
                                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></div>
                             )}
                         </Link>
@@ -74,24 +77,25 @@ export default function Navbar() {
                         key={link.to}
                         to={link.to}
                         className={`flex flex-col items-center gap-1 p-2 transition-all ${
-                            link.active ? "text-blue-400" : "text-slate-500"
+                            link.active ? "text-rose-400" : "text-slate-500"
                         }`}
                     >
-                        <div className={`p-2 rounded-xl transition-all ${link.active ? "bg-blue-500/10 scale-110" : ""}`}>
+                        <div className={`p-2 rounded-xl transition-all ${link.active ? "bg-rose-500/10 scale-110" : ""}`}>
                             {link.icon}
                         </div>
                         <span className="text-[10px] font-black uppercase tracking-widest">{link.label}</span>
                     </Link>
                 ))}
-                <Link
-                    to="/nuevo"
-                    className="flex flex-col items-center gap-1 p-2 text-red-500"
+                
+                <button
+                    onClick={logout}
+                    className="flex flex-col items-center gap-1 p-2 text-slate-500"
                 >
-                    <div className="p-2 bg-red-500/10 rounded-xl">
-                        <UserPlus size={20} />
+                    <div className="p-2">
+                        <LogOut size={20} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Nuevo</span>
-                </Link>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Salir</span>
+                </button>
             </nav>
         </>
     );

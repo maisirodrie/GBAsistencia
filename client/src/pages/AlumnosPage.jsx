@@ -21,7 +21,11 @@ export default function AlumnosPage() {
         try {
             const { data } = await getAlumnos();
             setAlumnos(data);
-        } catch { /**/ }
+        } catch (error) {
+            console.error("Error al cargar alumnos:", error);
+            const msg = error.response?.data?.message || "Error de conexión con el servidor.";
+            alert(`Error: ${msg}`);
+        }
     }
 
     async function handleToggleAsistencia(alumno, yaAsistio) {

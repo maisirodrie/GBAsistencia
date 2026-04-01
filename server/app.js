@@ -4,10 +4,13 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import authRoutes from './routes/auth.routes.js';
 import alumnoRoutes from './routes/alumno.routes.js';
 import finanzasRoutes from './routes/finanzas.routes.js';
 import productosRoutes from './routes/productos.routes.js';
 import planPagoRoutes from './routes/planPago.routes.js';
+import { validateToken } from './middlewares/validateToken.js';
+import { FRONTEND_URL } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,30 +19,21 @@ const app = express();
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cors({
-    origin: (origin, callback) => {
-        // En desarrollo, permitimos cualquier origen que venga de la red local
-        // Permitimos local, red local y dominios de Vercel para producción
-        if (!origin || origin.startsWith('http://localhost') || 
-            origin.startsWith('http://192.168') || origin.startsWith('http://172') || origin.startsWith('http://10') ||
-            origin.endsWith('.vercel.app') || origin.includes('posadas-norte')) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: FRONTEND_URL,
     credentials: true
 }));
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 
-// Health check para Render
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/', (req, res) => res.status(200).send('Servidor de Asistente Mestre funcionando!'));
 
-app.use('/api', alumnoRoutes);
-app.use('/api', finanzasRoutes);
-app.use('/api', productosRoutes);
-app.use('/api', planPagoRoutes);
+app.use('/api', authRoutes);
+app.use('/api', validateToken, alumnoRoutes);
+app.use('/api', validateToken, finanzasRoutes);
+app.use('/api', validateToken, productosRoutes);
+app.use('/api', validateToken, planPagoRoutes);
 
 export default app;
