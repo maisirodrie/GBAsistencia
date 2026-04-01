@@ -18,7 +18,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cors({
     origin: (origin, callback) => {
         // En desarrollo, permitimos cualquier origen que venga de la red local
-        if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://192.168') || origin.startsWith('http://172') || origin.startsWith('http://10')) {
+        // Permitimos local, red local y dominios de Vercel para producción
+        if (!origin || origin.startsWith('http://localhost') || 
+            origin.startsWith('http://192.168') || origin.startsWith('http://172') || origin.startsWith('http://10') ||
+            origin.endsWith('.vercel.app') || origin.includes('posadas-norte')) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
