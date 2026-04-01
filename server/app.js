@@ -30,6 +30,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cookieParser());
 
+// Health check para Render
+app.get('/healthz', (req, res) => res.status(200).send('OK'));
+app.get('/', (req, res) => res.status(200).send('Servidor de Asistente Mestre funcionando!'));
+
 app.use('/api', alumnoRoutes);
 app.use('/api', finanzasRoutes);
 app.use('/api', productosRoutes);
