@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Save, AlertCircle } from "lucide-react";
+import { showAlert } from "../utils/alerts";
 
 const ChangePasswordPage = () => {
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
@@ -18,12 +19,21 @@ const ChangePasswordPage = () => {
                 newPassword: data.newPassword
             });
             setSuccess(true);
+            
+            showAlert({
+                title: "¡Contraseña Actualizada!",
+                text: "Tu seguridad ha sido reforzada. Redirigiendo al inicio de sesión...",
+                icon: "success"
+            });
+
             setTimeout(() => {
                 logout(); // Deslogueamos para que vuelva a entrar con la nueva clave
                 navigate("/login");
             }, 3000);
         } catch (error) {
-            setServerError(error.response?.data?.message || "Error al cambiar la contraseña");
+            const msg = error.response?.data?.message || "Error al cambiar la contraseña";
+            setServerError(msg);
+            showAlert({ title: "Error", text: msg, icon: "error" });
         }
     });
 

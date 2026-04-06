@@ -2,7 +2,58 @@ import Alumno from '../models/Alumno.js';
 
 export const getAlumnos = async (req, res) => {
     try {
-        const alumnos = await Alumno.find();
+        const hoy = new Date();
+        const hoyInicio = new Date(hoy.setHours(0, 0, 0, 0));
+        const hoyFin = new Date(hoy.setHours(23, 59, 59, 999));
+
+        const alumnos = await Alumno.aggregate([
+            {
+                $project: {
+                    nombre: 1,
+                    apellido: 1,
+                    faja: 1,
+                    grado: 1,
+                    fotoUrl: 1,
+                    ultimaGraduacion: 1,
+                    clasesParaGraduacion: 1,
+                    totalAsistencias: { $size: "$asistencias" },
+                    yaAsistioHoy: {
+                        $gt: [
+                            {
+                                $size: {
+                                    $filter: {
+                                        input: "$asistencias",
+                                        as: "asist",
+                                        cond: {
+                                            $and: [
+                                                { $gte: ["$$asist", hoyInicio] },
+                                                { $lte: ["$$asist", hoyFin] }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            0
+                        ]
+                    },
+                    asistenciasDesdeUltimaGrad: {
+                        $size: {
+                            $filter: {
+                                input: "$asistencias",
+                                as: "asist",
+                                cond: {
+                                    $or: [
+                                        { $eq: ["$ultimaGraduacion", null] },
+                                        { $gte: ["$$asist", "$ultimaGraduacion"] }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ]);
+
         res.json(alumnos);
     } catch (error) {
         return res.status(500).json({ message: error.message });

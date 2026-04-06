@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { checkIn } from "../api/alumnos";
 import { useNavigate } from "react-router-dom";
+import { showAlert } from "../utils/alerts";
 
 export default function CheckInPage() {
     const [result, setResult] = useState(null);
@@ -41,10 +42,25 @@ export default function CheckInPage() {
         try {
             const res = await checkIn(id);
             setResult(res.data);
+            
+            showAlert({
+                title: res.data.message,
+                text: res.data.mensajeGrad || "Asistencia registrada correctamente.",
+                icon: "success"
+            });
+            
             // Limpiar mensaje después de 5 segundos para el siguiente
             setTimeout(() => setResult(null), 5000);
         } catch (err) {
-            setError(err.response?.data?.message || "Error al procesar el Check-in");
+            const msg = err.response?.data?.message || "Error al procesar el Check-in";
+            setError(msg);
+            
+            showAlert({
+                title: "Error de Check-in",
+                text: msg,
+                icon: "error"
+            });
+            
             setTimeout(() => setError(null), 5000);
         } finally {
             setLoading(false);

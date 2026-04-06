@@ -26,6 +26,7 @@
     "react-qr-code": "^2.0.18",
     "react-router-dom": "^6.23.0",
     "recharts": "^3.8.1",
+    "sweetalert2": "^11.26.24",
     "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {

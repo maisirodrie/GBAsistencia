@@ -2,7 +2,8 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, User, Eye, EyeOff, Lock } from "lucide-react";
+import { showAlert } from "../utils/alerts";
+import { User, Eye, EyeOff, Lock } from "lucide-react";
 
 const LoginPage = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -13,6 +14,16 @@ const LoginPage = () => {
     useEffect(() => {
         if (isAuthenticated) navigate("/");
     }, [isAuthenticated, navigate]);
+
+    useEffect(() => {
+        if (signinErrors && signinErrors.length > 0) {
+            showAlert({
+                title: "Error de Acceso",
+                text: signinErrors[0],
+                icon: "error"
+            });
+        }
+    }, [signinErrors]);
 
     const onSubmit = handleSubmit(async (data) => {
         signin(data);
@@ -89,7 +100,11 @@ const LoginPage = () => {
                         <button 
                             type="button"
                             className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-rose-400 transition-colors"
-                            onClick={() => alert('Por favor, contacta al Sensei para restablecer tu acceso.')}
+                            onClick={() => showAlert({
+                                title: "Restablecer Contraseña",
+                                text: "Por favor, contacta al Sensei de la academia para que resetee tu acceso manualmente.",
+                                icon: "info"
+                            })}
                         >
                             ¿Olvidaste tu contraseña?
                         </button>

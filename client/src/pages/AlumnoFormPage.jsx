@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAlumno, createAlumno, updateAlumno, deleteAlumno, addAsistencia, removeAsistencia, descargarPDF, uploadFoto } from "../api/alumnos";
+import { UPLOAD_URL } from "../api/axios";
+import { showAlert, showToast } from "../utils/alerts";
 import CartaoFrequencia from "../components/CartaoFrequencia";
 import ProgresoChart from "../components/ProgresoChart";
 import QRModal from "../components/QRModal";
@@ -46,8 +48,9 @@ export default function AlumnoFormPage() {
         try {
             const res = await uploadFoto(id, formData);
             setValue("fotoUrl", res.data.fotoUrl);
+            showToast("Foto de perfil actualizada");
         } catch (error) {
-            alert(error.response?.data?.message || "Error al subir foto");
+            showAlert({ title: "Error", text: error.response?.data?.message || "Error al subir foto", icon: "error" });
         }
     };
 
@@ -70,18 +73,35 @@ export default function AlumnoFormPage() {
             setAsistencias(data.asistencias ?? []);
             setCargando(false);
         })();
-    }, [id]);
+    }, [id, setValue]);
 
     /* Guardar */
     const onSubmit = handleSubmit(async (data) => {
         if (id) {
-            const res = await updateAlumno(id, data);
-            setAsistencias(res.data.asistencias || []);
-            setGuardado(true);
-            setTimeout(() => setGuardado(false), 2500);
+            try {
+                await updateAlumno(id, data);
+                showToast("Alumno actualizado correctamente");
+                setGuardado(true);
+                setTimeout(() => setGuardado(false), 2500);
+            } catch (error) {
+                showAlert({
+                    title: "Error",
+                    text: "No se pudo actualizar el alumno.",
+                    icon: "error"
+                });
+            }
         } else {
-            const { data: nuevo } = await createAlumno(data);
-            navigate(`/editar/${nuevo._id}`);
+            try {
+                const { data: nuevo } = await createAlumno(data);
+                showToast("Alumno creado correctamente");
+                navigate(`/editar/${nuevo._id}`);
+            } catch (error) {
+                showAlert({
+                    title: "Error",
+                    text: error.response?.data?.[0] || "No se pudo crear el alumno.",
+                    icon: "error"
+                });
+            }
         }
     });
 
@@ -99,45 +119,68 @@ export default function AlumnoFormPage() {
 
     /* Asistencia */
     async function marcarHoy() {
-        if (!id) return alert("Guarda el alumno primero.");
+        if (!id) return showAlert({ title: "Atención", text: "Guarda el alumno primero.", icon: "info" });
         try {
             await updateAlumno(id, watch());
             const { data } = await addAsistencia(id, new Date());
             syncAlumnoData(data);
+            showToast("Asistencia (Hoy) registrada");
         } catch (e) {
-            alert(e.response?.data?.message ?? "Error");
+            showAlert({ title: "Error", text: e.response?.data?.message ?? "Error", icon: "error" });
         }
     }
 
     async function marcarFecha() {
-        if (!id) return alert("Guarda el alumno primero.");
+        if (!id) return showAlert({ title: "Atención", text: "Guarda el alumno primero.", icon: "info" });
         try {
             await updateAlumno(id, watch());
             const { data } = await addAsistencia(id, new Date(fechaManual + "T12:00:00"));
             syncAlumnoData(data);
+            showToast("Asistencia manual registrada");
         } catch (e) {
-            alert(e.response?.data?.message ?? "Error");
+            showAlert({ title: "Error", text: e.response?.data?.message ?? "Error", icon: "error" });
         }
     }
 
     async function eliminarAsistencia(fecha) {
-        if (!window.confirm("¿Eliminar esta asistencia?")) return;
-        try {
-            await updateAlumno(id, watch());
-            const { data } = await removeAsistencia(id, fecha);
-            syncAlumnoData(data);
-        } catch (e) {
-            alert(e.response?.data?.message ?? "Error");
+        const confirm = await showAlert({
+            title: "¿Eliminar asistencia?",
+            text: "¿Estás seguro de que quieres borrar este registro?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, borrar"
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                await updateAlumno(id, watch());
+                const { data } = await removeAsistencia(id, fecha);
+                syncAlumnoData(data);
+                showToast("Asistencia eliminada", "info");
+            } catch (e) {
+                showAlert({ title: "Error", text: e.response?.data?.message ?? "Error", icon: "error" });
+            }
         }
     }
 
-    async function handleDelete() {
-        if (!window.confirm(`¿Estás seguro de que querés borrar este alumno? Esta acción no se puede deshacer.`)) return;
-        try {
-            await deleteAlumno(id);
-            navigate("/");
-        } catch (e) {
-            alert("Error al borrar el alumno.");
+    async function onDelete() {
+        const confirm = await showAlert({
+            title: "¿Eliminar alumno?",
+            text: "Esta acción borrará permanentemente el perfil y todo su historial.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                await deleteAlumno(id);
+                showToast("Alumno eliminado");
+                navigate("/");
+            } catch (error) {
+                showAlert({ title: "Error", text: "No se pudo eliminar al alumno.", icon: "error" });
+            }
         }
     }
 
@@ -220,10 +263,10 @@ export default function AlumnoFormPage() {
                     <div className="flex items-center gap-5 border-b border-slate-700/40 pb-6 relative z-10">
                         <div 
                             className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-3xl shadow-inner flex-shrink-0 border border-slate-600/50 cursor-pointer overflow-hidden group"
-                            onClick={() => id ? fileInputRef.current?.click() : alert("Guardá el alumno primero antes de subir su foto.")}
+                            onClick={() => id ? fileInputRef.current?.click() : showAlert({ title: "Atención", text: "Guardá el alumno primero antes de subir su foto.", icon: "info" })}
                         >
                             {watch("fotoUrl") ? (
-                                <img src={watch("fotoUrl").startsWith('http') ? watch("fotoUrl") : `http://${window.location.hostname}:4000/uploads/${watch("fotoUrl")}`} alt="Perfil" className="w-full h-full object-cover" />
+                                <img src={watch("fotoUrl").startsWith('http') ? watch("fotoUrl") : `${UPLOAD_URL}/${watch("fotoUrl")}`} alt="Perfil" className="w-full h-full object-cover" />
                             ) : (
                                 <span>{watch("nombre")?.charAt(0)?.toUpperCase() || "👤"}</span>
                             )}

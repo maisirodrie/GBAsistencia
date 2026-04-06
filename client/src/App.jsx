@@ -9,6 +9,7 @@ import CheckInPage from "./pages/CheckInPage";
 import PublicQRPage from "./pages/PublicQRPage";
 import LoginPage from "./pages/LoginPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import UsersPage from "./pages/UsersPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -37,6 +38,7 @@ function AppContent() {
                             <Route path="/editar/:id" element={<AlumnoFormPage />} />
                             <Route path="/finanzas" element={<FinanzasPage />} />
                             <Route path="/stock" element={<ProductosPage />} />
+                            <Route path="/usuarios" element={<UsersPage />} />
                             <Route path="/perfil/cambiar-password" element={<ChangePasswordPage />} />
                         </Route>
                     </Routes>

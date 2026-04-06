@@ -7,4 +7,8 @@ const api = axios.create({
   withCredentials: true
 });
 
+export const UPLOAD_URL = import.meta.env.DEV
+  ? 'http://localhost:4000/uploads'
+  : 'https://gbasistente.onrender.com/uploads';
+
 export default api;

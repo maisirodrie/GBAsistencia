@@ -14,6 +14,10 @@ export default function Navbar() {
         { to: "/stock", label: "Stock", icon: <Package size={20} />, active: isActive("/stock") },
     ];
 
+    if (user?.role === 'Admin') {
+        navLinks.push({ to: "/usuarios", label: "Usuarios", icon: <Shield size={20} />, active: isActive("/usuarios") });
+    }
+
     if (!isAuthenticated) return null;
 
     return (

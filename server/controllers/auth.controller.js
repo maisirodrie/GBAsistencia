@@ -220,3 +220,32 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Obtener todos los integrantes del staff
+export const getUsers = async (req, res) => {
+    try {
+        const users = await User.find({}, { password: 0 });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Borrar un integrante del staff
+export const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Evitar que un admin se borre a sí mismo
+        if (id === req.user.id) {
+            return res.status(400).json({ message: "No puedes eliminar tu propia cuenta administrativa." });
+        }
+
+        const userDeleted = await User.findByIdAndDelete(id);
+        if (!userDeleted) return res.status(404).json({ message: "Usuario no encontrado" });
+
+        res.sendStatus(204);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

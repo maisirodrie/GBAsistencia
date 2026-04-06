@@ -7,3 +7,6 @@ export const logoutRequest = () => axios.post(`/logout`);
 export const changePasswordRequest = (data) => axios.post(`/change-password`, data);
 export const forgotPasswordRequest = (dni) => axios.post(`/forgot-password`, { dni });
 export const resetPasswordRequest = (data) => axios.post(`/reset-password`, data);
+
+export const getUsersRequest = () => axios.get(`/users`);
+export const deleteUserRequest = (id) => axios.delete(`/users/${id}`);

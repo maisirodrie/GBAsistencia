@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAlumnos, addAsistencia, removeAsistencia, deleteAlumno } from "../api/alumnos";
+import { UPLOAD_URL } from "../api/axios";
+import { showAlert, showToast } from "../utils/alerts";
 
 const FAJA_STYLES = {
     Blanca: "bg-white text-gray-800 border border-gray-300",
@@ -34,28 +36,57 @@ export default function AlumnosPage() {
         try {
             let res;
             if (yaAsistio) {
-                if (!window.confirm(`¿Quitar el presente de HOY a ${alumno.nombre}?`)) return;
-                // Enviamos Date local
+                const confirm = await showAlert({
+                    title: `¿Quitar asistencia?`,
+                    text: `Se eliminará el presente de hoy para ${alumno.nombre}`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, quitar',
+                    cancelButtonText: 'Cancelar'
+                });
+                if (!confirm.isConfirmed) return;
+                
                 res = await removeAsistencia(alumno._id, new Date());
+                showToast(`Asistencia de ${alumno.nombre} eliminada`, 'info');
             } else {
                 res = await addAsistencia(alumno._id, new Date());
+                showToast(`¡Presente! ${alumno.nombre}`, 'success');
             }
             
             // Reemplazar al alumno en el state
             setAlumnos(prev => prev.map(a => a._id === alumno._id ? res.data : a));
         } catch (e) {
-            alert(e.response?.data?.message ?? "Error de red al actualizar asistencia.");
+            showAlert({
+                title: 'Error',
+                text: e.response?.data?.message ?? "Error de red al actualizar asistencia.",
+                icon: 'error'
+            });
             setAlumnos(prevAlumnos); // Rollback
         }
     }
 
     async function handleDelete(alumno) {
-        if (!window.confirm(`¿Estás seguro de que querés borrar a ${alumno.nombre}? Esta acción no se puede deshacer y se borrarán todos sus datos.`)) return;
-        try {
-            await deleteAlumno(alumno._id);
-            setAlumnos(prev => prev.filter(a => a._id !== alumno._id));
-        } catch (e) {
-            alert("Error al borrar el alumno.");
+        const confirm = await showAlert({
+            title: `¿Eliminar alumno?`,
+            text: `Esta acción no se puede deshacer y se borrarán todos los datos de ${alumno.nombre}.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'No, cancelar'
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                await deleteAlumno(alumno._id);
+                setAlumnos(prev => prev.filter(a => a._id !== alumno._id));
+                showToast('Alumno eliminado correctamente', 'success');
+            } catch (e) {
+                showAlert({
+                    title: 'Error',
+                    text: "No se pudo borrar al alumno.",
+                    icon: 'error'
+                });
+            }
         }
     }
 
@@ -103,35 +134,12 @@ export default function AlumnosPage() {
             ) : (
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {lista.map(a => {
-                        const todas = a.asistencias || [];
-                        const strUg = a.ultimaGraduacion 
-                            ? (() => {
-                                const d = new Date(a.ultimaGraduacion);
-                                const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-                                return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
-                            })()
-                            : "";
-                        
-                        const asistenciasValidas = strUg 
-                            ? todas.filter(iso => {
-                                const d = new Date(iso);
-                                const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-                                const strF = `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
-                                return strF >= strUg;
-                            })
-                            : todas;
-
+                        const yaAsistio = a.yaAsistioHoy;
                         const requeridasBase = a.clasesParaGraduacion || 30;
                         const gradoActual = a.grado || 0;
-                        const validasTotales = asistenciasValidas.length;
+                        const validasTotales = a.asistenciasDesdeUltimaGrad || 0;
                         const clasesHaciaProximo = Math.max(0, validasTotales - (gradoActual * requeridasBase));
                         const pct = Math.min((clasesHaciaProximo / requeridasBase) * 100, 100);
-
-                        const yaAsistio = todas.some(iso => {
-                            const d = new Date(iso);
-                            const localStr = new Date(d.getTime() + d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-                            return localStr === hoyStr;
-                        });
 
                         return (
                             <div
@@ -165,7 +173,7 @@ export default function AlumnosPage() {
                                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
                                         {a.fotoUrl ? (
                                             <img 
-                                                src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `http://${window.location.hostname}:4000/uploads/${a.fotoUrl}`} 
+                                                src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} 
                                                 alt="Perfil" 
                                                 className="w-full h-full object-cover" 
                                             />
