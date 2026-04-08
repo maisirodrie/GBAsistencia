@@ -19,7 +19,16 @@ const app = express();
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cors({
-    origin: FRONTEND_URL,
+    origin: (origin, callback) => {
+        // En desarrollo permitimos localhost. En producción, FRONTEND_URL.
+        const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173'];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log("CORS bloqueado para el origen:", origin);
+            callback(new Error('No permitido por CORS'));
+        }
+    },
     credentials: true
 }));
 
