@@ -80,10 +80,12 @@ export const register = async (req, res) => {
             `,
         };
 
-        // Enviamos el email en segundo plano sin 'await' para no bloquear la respuesta
-        sendEmail(email, mailOptions.subject, mailOptions.html).catch(err => {
-            console.error('Error enviando email de bienvenida:', err);
-        });
+        // Intentamos enviar el email, pero no dejamos que un error aquí rompa el flujo
+        try {
+            await sendEmail(email, mailOptions.subject, mailOptions.html);
+        } catch (mailError) {
+            console.error('Error no crítico enviando email:', mailError);
+        }
 
         return res.status(201).json({
             id: userSaved._id,
