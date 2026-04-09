@@ -82,25 +82,23 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         async function checkLogin() {
-            const cookies = Cookies.get();
-
-            if (!cookies.token) {
-                setIsAuthenticated(false);
-                setLoading(false);
-                return setUser(null);
-            }
-
             try {
-                const res = await verifyTokenRequest(cookies.token);
+                // No revisamos cookies.token aquí porque es HttpOnly y no es visible para JS.
+                // Simplemente le preguntamos al servidor si hay una sesión válida.
+                const res = await verifyTokenRequest();
+                
                 if (!res.data) {
                     setIsAuthenticated(false);
                     setLoading(false);
+                    setUser(null);
                     return;
                 }
+
                 setIsAuthenticated(true);
                 setUser(res.data);
                 setLoading(false);
             } catch (error) {
+                console.log("Sesión no encontrada o expirada");
                 setIsAuthenticated(false);
                 setUser(null);
                 setLoading(false);
