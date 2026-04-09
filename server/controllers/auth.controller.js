@@ -42,23 +42,40 @@ export const register = async (req, res) => {
         const userSaved = await newUser.save();
 
         const mailOptions = {
-            subject: 'Credenciales de acceso para GB Asistencia',
+            subject: '¡Bienvenido/a a GB ASISTENTE!',
             html: `
-                <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #e11d48; text-align: center;">Bienvenido/a a GB ASISTENTE</h2>
-                    <p>Estimado/a <strong>${apellido}, ${nombre}</strong></p>
-                    <p>Se han generado tus credenciales para acceder al sistema de gestión de la academia.</p>
-                    <p>Por favor, ingresa con los siguientes datos:</p>
-                    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                        <ul style="list-style: none; padding: 0;">
-                            <li><strong>DNI:</strong> ${dni}</li>
-                            <li><strong>Contraseña provisoria:</strong> ${tempPassword}</li>
-                        </ul>
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="background-color: #be123c; padding: 20px; text-align: center;">
+                        <img src="https://gbasistencia.vercel.app/logo-gb.png" alt="GB ASISTENTE" style="width: 80px; height: auto;">
                     </div>
-                    <p style="color: #ef4444;"><strong>Importante:</strong> Deberás cambiar esta contraseña en tu primer ingreso por seguridad.</p>
-                    <p>Link de acceso: <a href="${FRONTEND_URL}/login">${FRONTEND_URL}/login</a></p>
-                    <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
-                    <p style="text-align: center; font-size: 0.8rem; color: #6b7280;">Gracie Barra - GB ASISTENTE</p>
+                    <div style="padding: 40px 20px; color: #1e293b; line-height: 1.6;">
+                        <h2 style="color: #9f1239; margin-top: 0; text-align: center;">¡Bienvenido/a a GB ASISTENTE!</h2>
+                        <p>Estimado/a <strong>${nombre} ${apellido}</strong>,</p>
+                        <p>Se han generado tus credenciales para acceder al sistema de gestión de la academia <strong>Gracie Barra</strong>.</p>
+                        
+                        <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0; border-left: 4px solid #be123c;">
+                            <p style="margin: 0; font-size: 14px; text-transform: uppercase; color: #64748b; font-weight: bold;">Tus datos de acceso:</p>
+                            <p style="margin: 10px 0 0 0;"><strong>DNI:</strong> ${dni}</p>
+                            <p style="margin: 5px 0 0 0;"><strong>Contraseña Temporal:</strong> ${tempPassword}</p>
+                        </div>
+
+                        <p style="font-size: 14px; color: #64748b; background: #fffbeb; padding: 10px; border-radius: 6px; border: 1px solid #fde68a;">
+                            <strong>Nota importante:</strong> Por seguridad, deberás cambiar esta contraseña al ingresar por primera vez.
+                        </p>
+
+                        <div style="text-align: center; margin-top: 35px;">
+                            <a href="${FRONTEND_URL}/login" style="background-color: #be123c; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                                ENTRAR AL SISTEMA
+                            </a>
+                        </div>
+                        <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 30px;">
+                            Si el botón no funciona, copia y pega este enlace:<br>
+                            <a href="${FRONTEND_URL}/login" style="color: #be123c;">${FRONTEND_URL}/login</a>
+                        </p>
+                    </div>
+                    <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
+                        © ${new Date().getFullYear()} GB ASISTENTE - Gracie Barra Posadas
+                    </div>
                 </div>
             `,
         };
@@ -188,8 +205,39 @@ export const forgotPassword = async (req, res) => {
         
         await sendEmail(
             userFound.email,
-            'Recuperación de Contraseña - GB Asistencia',
-            `<p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace:</p><a href="${resetUrl}">${resetUrl}</a>`
+            'Recuperación de Contraseña - GB ASISTENTE',
+            `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="background-color: #be123c; padding: 20px; text-align: center;">
+                        <img src="https://gbasistencia.vercel.app/logo-gb.png" alt="GB ASISTENTE" style="width: 80px; height: auto;">
+                    </div>
+                    <div style="padding: 40px 20px; color: #1e293b; line-height: 1.6;">
+                        <h2 style="color: #9f1239; margin-top: 0; text-align: center;">Recuperación de Contraseña</h2>
+                        <p>Hola <strong>${userFound.nombre}</strong>,</p>
+                        <p>Has solicitado restablecer tu contraseña en el sistema <strong>GB ASISTENTE</strong>.</p>
+                        
+                        <p>Para crear una nueva contraseña, haz clic en el siguiente botón:</p>
+
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="${resetUrl}" style="background-color: #be123c; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                                RESTABLECER CONTRASEÑA
+                            </a>
+                        </div>
+
+                        <p style="font-size: 14px; color: #64748b; background: #f1f5f9; padding: 10px; border-radius: 6px;">
+                            <strong>Nota:</strong> Este enlace expirará en 1 hora por seguridad. Si no solicitaste este cambio, puedes ignorar este correo.
+                        </p>
+
+                        <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 30px;">
+                            Si el botón no funciona, copia y pega este enlace:<br>
+                            <a href="${resetUrl}" style="color: #be123c;">${resetUrl}</a>
+                        </p>
+                    </div>
+                    <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
+                        © ${new Date().getFullYear()} GB ASISTENTE - Gracie Barra Posadas
+                    </div>
+                </div>
+            `
         );
 
         res.json({ message: "Se ha enviado un enlace de recuperación a tu correo." });
