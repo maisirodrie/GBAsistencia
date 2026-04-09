@@ -59,18 +59,18 @@ export const register = async (req, res) => {
                             <p style="margin: 5px 0 0 0;"><strong>Contraseña Temporal:</strong> ${tempPassword}</p>
                         </div>
 
-                        <p style="font-size: 14px; color: #64748b; background: #fffbeb; padding: 10px; border-radius: 6px; border: 1px solid #fde68a;">
-                            <strong>Nota importante:</strong> Por seguridad, deberás cambiar esta contraseña al ingresar por primera vez.
+                        <p style="font-size: 14px; color: #64748b; background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #fde68a;">
+                            <strong>Importante:</strong> Deberás cambiar esta contraseña en tu primer ingreso por seguridad.
                         </p>
 
                         <div style="text-align: center; margin-top: 35px;">
                             <a href="${FRONTEND_URL}/login" style="background-color: #be123c; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                                ENTRAR AL SISTEMA
+                                INGRESAR
                             </a>
                         </div>
                         <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 30px;">
-                            Si el botón no funciona, copia y pega este enlace:<br>
-                            <a href="${FRONTEND_URL}/login" style="color: #be123c;">${FRONTEND_URL}/login</a>
+                            Link de acceso:<br>
+                            <a href="${FRONTEND_URL}/login" style="color: #be123c; text-decoration: none;">${FRONTEND_URL}</a>
                         </p>
                     </div>
                     <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
@@ -226,7 +226,7 @@ export const forgotPassword = async (req, res) => {
 
                         <div style="text-align: center; margin: 35px 0;">
                             <a href="${resetUrl}" style="background-color: #be123c; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                                RESTABLECER CONTRASEÑA
+                                INGRESAR
                             </a>
                         </div>
 
@@ -235,8 +235,8 @@ export const forgotPassword = async (req, res) => {
                         </p>
 
                         <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 30px;">
-                            Si el botón no funciona, copia y pega este enlace:<br>
-                            <a href="${resetUrl}" style="color: #be123c;">${resetUrl}</a>
+                            Link de acceso:<br>
+                            <a href="${resetUrl}" style="color: #be123c; text-decoration: none;">${resetUrl}</a>
                         </p>
                     </div>
                     <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
