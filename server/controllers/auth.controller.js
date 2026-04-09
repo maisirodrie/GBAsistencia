@@ -79,10 +79,13 @@ export const register = async (req, res) => {
                 </div>
             `,
         };
-        
-        await sendEmail(email, mailOptions.subject, mailOptions.html);
 
-        res.status(201).json({
+        // Enviamos el email en segundo plano sin 'await' para no bloquear la respuesta
+        sendEmail(email, mailOptions.subject, mailOptions.html).catch(err => {
+            console.error('Error enviando email de bienvenida:', err);
+        });
+
+        return res.status(201).json({
             id: userSaved._id,
             dni: userSaved.dni,
             email: userSaved.email,
@@ -203,7 +206,8 @@ export const forgotPassword = async (req, res) => {
 
         const resetUrl = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
         
-        await sendEmail(
+        // Enviamos el email en segundo plano
+        sendEmail(
             userFound.email,
             'Recuperación de Contraseña - GB ASISTENTE',
             `
@@ -238,9 +242,9 @@ export const forgotPassword = async (req, res) => {
                     </div>
                 </div>
             `
-        );
+        ).catch(err => console.error('Error enviando email recovery:', err));
 
-        res.json({ message: "Se ha enviado un enlace de recuperación a tu correo." });
+        return res.json({ message: "Se ha enviado un enlace de recuperación a tu correo." });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
