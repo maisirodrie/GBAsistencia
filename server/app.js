@@ -20,12 +20,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cors({
     origin: (origin, callback) => {
-        // En desarrollo permitimos localhost. En producción, FRONTEND_URL.
-        const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173'];
+        const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173', 'https://gb-asistencia.vercel.app'];
+        // Permitimos peticiones sin origen (como curl o apps móviles) o de orígenes permitidos
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            console.log("CORS bloqueado para el origen:", origin);
+            console.log("⚠️ CORS bloqueado para:", origin);
             callback(new Error('No permitido por CORS'));
         }
     },

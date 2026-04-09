@@ -1,19 +1,16 @@
 import app from './app.js';
 import { connectDB } from './db.js';
-import dotenv from 'dotenv';
+import { PORT, FRONTEND_URL } from './config.js';
 
-import { PORT, FRONTEND_URL, MONGODB_URI } from './config.js';
+console.log('--- Iniciando Servidor GB Asistencia ---');
+console.log('Puerto asignado:', PORT);
+console.log('Frontend Permitido:', FRONTEND_URL);
+console.log('---------------------------------------');
 
-dotenv.config();
-
-console.log('--- Configuración del Servidor ---');
-console.log('Puerto:', PORT);
-console.log('Frontend URL permitida:', FRONTEND_URL);
-console.log('DB URI (primeros 20 caracteres):', MONGODB_URI?.substring(0, 20) + '...');
-console.log('---------------------------------');
-
+// Iniciamos la conexión a la DB en segundo plano
 connectDB();
 
+// Escuchamos el puerto inmediatamente para evitar Timeouts en Render
 app.listen(PORT, () => {
-    console.log(`Server on port ${PORT}`);
+    console.log(`🚀 Servidor listo en puerto ${PORT}`);
 });
