@@ -16,7 +16,7 @@ export default function UsersPage() {
         email: "",
         nombre: "",
         apellido: "",
-        role: "Mestre"
+        role: "Profesor"
     });
     const [formLoading, setFormLoading] = useState(false);
     const [formError, setFormError] = useState(null);
@@ -49,7 +49,7 @@ export default function UsersPage() {
         try {
             await signup(formData); // Esto llama a api.post('/register') y envía el correo
             setShowModal(false);
-            setFormData({ dni: "", email: "", nombre: "", apellido: "", role: "Mestre" });
+            setFormData({ dni: "", email: "", nombre: "", apellido: "", role: "Profesor" });
             loadUsers();
             showAlert({
                 title: "¡Usuario Registrado!",
@@ -102,7 +102,7 @@ export default function UsersPage() {
                         <Shield className="text-rose-500" size={32} />
                         Gestión de Staff
                     </h1>
-                    <p className="text-slate-400 font-medium mt-1">Administra los accesos de Instructores y Administradores</p>
+                    <p className="text-slate-400 font-medium mt-1">Administra los accesos de Profesores y Administradores</p>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
@@ -233,7 +233,7 @@ export default function UsersPage() {
                                     name="role" value={formData.role} onChange={handleInputChange}
                                     className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-rose-500 transition-all font-semibold appearance-none"
                                 >
-                                    <option value="Mestre">Mestre (Instructor)</option>
+                                    <option value="Profesor">Profesor (Instructor)</option>
                                     <option value="Admin">Administrador (Control Total)</option>
                                 </select>
                             </div>

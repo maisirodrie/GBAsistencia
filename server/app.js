@@ -37,7 +37,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
-app.get('/', (req, res) => res.status(200).send('Servidor de Asistente Mestre funcionando!'));
+app.get('/', (req, res) => res.status(200).send('¡Servidor de GB ASISTENTE funcionando!'));
 
 app.use('/api', authRoutes);
 app.use('/api', validateToken, alumnoRoutes);

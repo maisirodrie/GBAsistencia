@@ -11,8 +11,8 @@ export default function TopMobileHeader() {
                     className="h-[6rem] w-auto object-contain" 
                 />
                 <div className="flex flex-col">
-                    <span className="text-slate-100 font-black text-md tracking-widest uppercase italic leading-none text-left">Asistente</span>
-                    <span className="text-slate-500 font-bold text-[9px] tracking-[0.15em] uppercase leading-none mt-1.5 text-left">Mestre Manager</span>
+                    <span className="text-slate-100 font-black text-md tracking-widest uppercase italic leading-none text-left">GB</span>
+                    <span className="text-slate-500 font-bold text-[9px] tracking-[0.15em] uppercase leading-none mt-1.5 text-left">Asistente</span>
                 </div>
             </Link>
             

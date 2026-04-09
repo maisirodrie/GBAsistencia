@@ -33,8 +33,8 @@ export default function Navbar() {
                             className="h-28 w-auto object-contain transition-transform group-hover:scale-105 duration-300" 
                         />
                         <div className="flex flex-col items-center">
-                            <span className="text-slate-100 font-black text-sm tracking-widest uppercase italic">Asistente</span>
-                            <span className="text-slate-500 font-bold text-[9px] tracking-[0.1em] uppercase leading-none mt-1 text-center">Mestre Manager</span>
+                            <span className="text-slate-100 font-black text-sm tracking-widest uppercase italic">GB</span>
+                            <span className="text-slate-500 font-bold text-[9px] tracking-[0.1em] uppercase leading-none mt-1 text-center">Asistente</span>
                         </div>
                     </Link>
                 </div>

@@ -12,8 +12,8 @@ export default function Header() {
                     className="h-10 w-auto" 
                 />
                 <div className="flex flex-col">
-                    <span className="text-white font-black text-xs tracking-widest uppercase italic leading-none">Asistente</span>
-                    <span className="text-slate-500 font-bold text-[8px] tracking-widest uppercase leading-none mt-1">Mestre Manager</span>
+                    <span className="text-white font-black text-xs tracking-widest uppercase italic leading-none">GB</span>
+                    <span className="text-slate-500 font-bold text-[8px] tracking-widest uppercase leading-none mt-1">Asistente</span>
                 </div>
             </div>
 

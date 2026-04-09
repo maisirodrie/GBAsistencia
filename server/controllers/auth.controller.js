@@ -45,7 +45,7 @@ export const register = async (req, res) => {
             subject: 'Credenciales de acceso para GB Asistencia',
             html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #e11d48; text-align: center;">Bienvenido/a a GB Asistencia</h2>
+                    <h2 style="color: #e11d48; text-align: center;">Bienvenido/a a GB ASISTENTE</h2>
                     <p>Estimado/a <strong>${apellido}, ${nombre}</strong></p>
                     <p>Se han generado tus credenciales para acceder al sistema de gestión de la academia.</p>
                     <p>Por favor, ingresa con los siguientes datos:</p>
@@ -58,7 +58,7 @@ export const register = async (req, res) => {
                     <p style="color: #ef4444;"><strong>Importante:</strong> Deberás cambiar esta contraseña en tu primer ingreso por seguridad.</p>
                     <p>Link de acceso: <a href="${FRONTEND_URL}/login">${FRONTEND_URL}/login</a></p>
                     <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
-                    <p style="text-align: center; font-size: 0.8rem; color: #6b7280;">Gracie Barra - Asistente Mestre Manager</p>
+                    <p style="text-align: center; font-size: 0.8rem; color: #6b7280;">Gracie Barra - GB ASISTENTE</p>
                 </div>
             `,
         };
