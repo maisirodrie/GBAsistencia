@@ -80,14 +80,8 @@ export const register = async (req, res) => {
             `,
         };
 
-        // Intentamos enviar el email, pero no dejamos que un error aquí rompa el flujo
-        try {
-            await sendEmail(email, mailOptions.subject, mailOptions.html);
-        } catch (mailError) {
-            console.error('Error no crítico enviando email:', mailError);
-        }
-
-        return res.status(201).json({
+        // ENVIAMOS RESPUESTA INMEDIATA AL FRONTEND
+        res.status(201).json({
             id: userSaved._id,
             dni: userSaved.dni,
             email: userSaved.email,
@@ -96,9 +90,20 @@ export const register = async (req, res) => {
             apellido: userSaved.apellido
         });
 
+        // PROCESAMOS EL EMAIL POR SEPARADO (Background)
+        setImmediate(async () => {
+            try {
+                await sendEmail(email, mailOptions.subject, mailOptions.html);
+            } catch (mailError) {
+                console.error('Error enviando email en 2do plano:', mailError);
+            }
+        });
+
     } catch (error) {
         console.error('Error en registro:', error);
-        res.status(500).json({ message: error.message });
+        if (!res.headersSent) {
+            res.status(500).json({ message: error.message });
+        }
     }
 };
 
