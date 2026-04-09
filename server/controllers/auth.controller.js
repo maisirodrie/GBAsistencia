@@ -19,27 +19,39 @@ const generateRandomPassword = (length = 12) => {
 // Registrar nuevo usuario
 export const register = async (req, res) => {
     const { dni, email, role, nombre, apellido } = req.body;
+    console.log(`[AUTH] Registro iniciado para DNI: ${dni}, Email: ${email}`);
 
     try {
+        console.log('[AUTH] Verificando DNI duplicado...');
         const userFoundByDni = await User.findOne({ dni });
-        if (userFoundByDni) return res.status(400).json(["El DNI ya está registrado"]);
+        if (userFoundByDni) {
+            console.log('[AUTH] DNI ya existe.');
+            return res.status(400).json(["El DNI ya está registrado"]);
+        }
 
+        console.log('[AUTH] Verificando Email duplicado...');
         const userFoundByEmail = await User.findOne({ email });
-        if (userFoundByEmail) return res.status(400).json(["El correo ya está registrado"]);
+        if (userFoundByEmail) {
+            console.log('[AUTH] Email ya existe.');
+            return res.status(400).json(["El correo ya está registrado"]);
+        }
 
         const tempPassword = generateRandomPassword();
+        console.log('[AUTH] Password temporal generado.');
         
         const newUser = new User({
             dni,
             email,
-            password: tempPassword, // El hashing se hace en el pre('save') del modelo
+            password: tempPassword,
             role,
             nombre,
             apellido,
             mustChangePassword: true,
         });
 
+        console.log('[AUTH] Intentando guardar usuario en DB...');
         const userSaved = await newUser.save();
+        console.log('[AUTH] Usuario guardado con éxito ID:', userSaved._id);
 
         const mailOptions = {
             subject: '¡Bienvenido/a a GB ASISTENTE!',
@@ -80,7 +92,7 @@ export const register = async (req, res) => {
             `,
         };
 
-        // ENVIAMOS RESPUESTA INMEDIATA AL FRONTEND
+        console.log('[AUTH] Enviando respuesta 201 al cliente...');
         res.status(201).json({
             id: userSaved._id,
             dni: userSaved.dni,
@@ -90,17 +102,19 @@ export const register = async (req, res) => {
             apellido: userSaved.apellido
         });
 
-        // PROCESAMOS EL EMAIL POR SEPARADO (Background)
+        console.log('[AUTH] Iniciando proceso de email en background...');
         setImmediate(async () => {
             try {
+                console.log('[AUTH] Intentando enviar email via transporter...');
                 await sendEmail(email, mailOptions.subject, mailOptions.html);
+                console.log('[AUTH] Email enviado correctamente.');
             } catch (mailError) {
-                console.error('Error enviando email en 2do plano:', mailError);
+                console.error('[AUTH] Error enviando email en 2do plano:', mailError.message);
             }
         });
 
     } catch (error) {
-        console.error('Error en registro:', error);
+        console.error('[AUTH] Error fatal en registro:', error);
         if (!res.headersSent) {
             res.status(500).json({ message: error.message });
         }
