@@ -39,6 +39,27 @@ app.use(cookieParser());
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/', (req, res) => res.status(200).send('¡Servidor de GB ASISTENTE funcionando!'));
 
+// RUTA DE DIAGNÓSTICO ROOT (Totalmente Pública)
+import { sendEmail } from './utils/nodemailer.js';
+app.get('/diagnostic-email', async (req, res) => {
+    try {
+        console.log('[DIAGNOSTIC] Root-level test starting...');
+        const passLength = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0;
+        console.log('[DIAGNOSTIC] EMAIL_PASS length:', passLength);
+        
+        const info = await sendEmail(process.env.EMAIL_USER, 'Diagnóstico Root', '<p>Prueba desde raíz</p>');
+        res.json({ success: true, messageId: info.messageId, passLength });
+    } catch (error) {
+        console.error('[DIAGNOSTIC] Root-level test failed:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message, 
+            code: error.code,
+            passLength: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0
+        });
+    }
+});
+
 app.use('/api', authRoutes);
 app.use('/api', validateToken, alumnoRoutes);
 app.use('/api', validateToken, finanzasRoutes);
