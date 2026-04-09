@@ -22,6 +22,9 @@ router.post('/change-password', validateToken, changePassword);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
+// RUTA TEMPORAL DE DIAGNÓSTICO (Borrar luego de arreglar)
+router.get('/diagnostic-email', testEmailDiagnostic);
+
 // Rutas de administración de usuarios (solo Admins)
 router.get('/users', validateToken, isAdmin, getUsers);
 router.delete('/users/:id', validateToken, isAdmin, deleteUser);
