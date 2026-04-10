@@ -11,7 +11,6 @@ import productosRoutes from './routes/productos.routes.js';
 import planPagoRoutes from './routes/planPago.routes.js';
 import { validateToken } from './middlewares/validateToken.js';
 import { FRONTEND_URL } from './config.js';
-import { sendEmail } from './utils/nodemailer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,26 +36,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
-app.get('/', (req, res) => res.status(200).send(`¡Servidor de GB ASISTENTE funcionando! (Versión: ${new Date().toLocaleTimeString()})`));
-
-// RUTA DE DIAGNÓSTICO GLOBAL (Pública)
-app.get('/test-global', async (req, res) => {
-    try {
-        const user = process.env.EMAIL_USER;
-        const pass = process.env.EMAIL_PASS ? 'Configurada' : 'NO CONFIGURADA';
-        console.log(`[TEST-GLOBAL] Probando envío a ${user}...`);
-        
-        const info = await sendEmail(user, 'Prueba Global', '<h1>Servidor Actualizado</h1>');
-        res.json({ success: true, messageId: info.messageId, time: new Date().toLocaleString(), user });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            error: error.message, 
-            code: error.code,
-            time: new Date().toLocaleString()
-        });
-    }
-});
+app.get('/', (req, res) => res.status(200).send(`¡Servidor de GB ASISTENTE funcionando! (v.1.1.2)`));
 
 app.use('/api', authRoutes);
 app.use('/api', validateToken, alumnoRoutes);

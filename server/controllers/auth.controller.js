@@ -322,25 +322,3 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-// DIAGNÓSTICO DE EMAIL (Temporal)
-export const testEmailDiagnostic = async (req, res) => {
-    try {
-        console.log('[DIAGNOSTIC] Iniciando prueba de email...');
-        const mailOptions = {
-            subject: 'Prueba de Diagnóstico - GB ASISTENTE',
-            html: `<h1>Prueba de Diagnóstico</h1><p>Enviado desde el servidor el ${new Date().toLocaleString()}</p>`
-        };
-        const info = await sendEmail(process.env.EMAIL_USER, mailOptions.subject, mailOptions.html);
-        res.json({ success: true, messageId: info.messageId, envUser: process.env.EMAIL_USER });
-    } catch (error) {
-        console.error('[DIAGNOSTIC] Error fallido:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message, 
-            code: error.code, 
-            command: error.command,
-            stack: error.stack
-        });
-    }
-};

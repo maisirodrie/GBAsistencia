@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Creamos el transportador optimizado para Gmail en la nube
 export const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
