@@ -39,22 +39,21 @@ app.use(cookieParser());
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/', (req, res) => res.status(200).send('¡Servidor de GB ASISTENTE funcionando!'));
 
-// RUTA DE DIAGNÓSTICO ROOT (Totalmente Pública y comprobada)
-app.get('/diagnostic-email', async (req, res) => {
+// RUTA DE DIAGNÓSTICO GLOBAL (Pública)
+app.get('/test-global', async (req, res) => {
     try {
-        console.log('[DIAGNOSTIC] Iniciando prueba root...');
         const user = process.env.EMAIL_USER;
         const pass = process.env.EMAIL_PASS ? 'Configurada' : 'NO CONFIGURADA';
-        const info = await sendEmail(user, 'Diagnóstico Final', '<p>Si lees esto, el servidor de Render puede enviar correos.</p>');
-        res.json({ success: true, messageId: info.messageId, user, pass });
+        console.log(`[TEST-GLOBAL] Probando envío a ${user}...`);
+        
+        const info = await sendEmail(user, 'Prueba Global', '<h1>Servidor Actualizado</h1>');
+        res.json({ success: true, messageId: info.messageId, time: new Date().toLocaleString(), user });
     } catch (error) {
-        console.error('[DIAGNOSTIC] Error en raíz:', error);
         res.status(500).json({ 
             success: false, 
             error: error.message, 
             code: error.code,
-            user: process.env.EMAIL_USER,
-            passStatus: process.env.EMAIL_PASS ? 'Presente' : 'Faltante'
+            time: new Date().toLocaleString()
         });
     }
 });
