@@ -13,4 +13,4 @@ export const EMAIL_PORT = process.env.EMAIL_PORT;
 export const EMAIL_USER = process.env.EMAIL_USER;
 export const EMAIL_PASS = process.env.EMAIL_PASS;
 export const EMAIL_SECURE = process.env.EMAIL_SECURE;
-export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+export const FRONTEND_URL = process.env.FRONTEND_URL || 'https://gbasistencia.vercel.app';

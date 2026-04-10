@@ -1,14 +1,22 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { EMAIL_USER, EMAIL_PASS } from './config.js';
 
 dotenv.config();
+
+const user = EMAIL_USER;
+const passRaw = EMAIL_PASS || '';
+const pass = passRaw.replace(/\s+/g, '');
+
+if (!user) console.error('[CRITICAL-MAIL] EMAIL_USER no está definido en config.js / env');
+if (!passRaw) console.error('[CRITICAL-MAIL] EMAIL_PASS no está definido en config.js / env');
 
 // Creamos el transportador optimizado para Gmail en la nube
 export const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
+        user: user,
+        pass: pass,
     },
     tls: {
         rejectUnauthorized: false
@@ -18,7 +26,7 @@ export const transporter = nodemailer.createTransport({
 export const sendEmail = async (to, subject, html) => {
     try {
         const mailOptions = {
-            from: `"GB ASISTENTE" <${process.env.EMAIL_USER}>`,
+            from: `"GB ASISTENTE" <${user}>`,
             to,
             subject,
             html
