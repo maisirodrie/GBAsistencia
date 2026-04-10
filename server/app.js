@@ -11,6 +11,7 @@ import productosRoutes from './routes/productos.routes.js';
 import planPagoRoutes from './routes/planPago.routes.js';
 import { validateToken } from './middlewares/validateToken.js';
 import { FRONTEND_URL } from './config.js';
+import { sendEmail } from './utils/nodemailer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,7 +22,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cors({
     origin: (origin, callback) => {
         const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173', 'https://gb-asistencia.vercel.app', 'https://gbasistencia.vercel.app'];
-        // Permitimos peticiones sin origen (como curl o apps móviles) o de orígenes permitidos
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -39,23 +39,22 @@ app.use(cookieParser());
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/', (req, res) => res.status(200).send('¡Servidor de GB ASISTENTE funcionando!'));
 
-// RUTA DE DIAGNÓSTICO ROOT (Totalmente Pública)
-import { sendEmail } from './utils/nodemailer.js';
+// RUTA DE DIAGNÓSTICO ROOT (Totalmente Pública y comprobada)
 app.get('/diagnostic-email', async (req, res) => {
     try {
-        console.log('[DIAGNOSTIC] Root-level test starting...');
-        const passLength = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0;
-        console.log('[DIAGNOSTIC] EMAIL_PASS length:', passLength);
-        
-        const info = await sendEmail(process.env.EMAIL_USER, 'Diagnóstico Root', '<p>Prueba desde raíz</p>');
-        res.json({ success: true, messageId: info.messageId, passLength });
+        console.log('[DIAGNOSTIC] Iniciando prueba root...');
+        const user = process.env.EMAIL_USER;
+        const pass = process.env.EMAIL_PASS ? 'Configurada' : 'NO CONFIGURADA';
+        const info = await sendEmail(user, 'Diagnóstico Final', '<p>Si lees esto, el servidor de Render puede enviar correos.</p>');
+        res.json({ success: true, messageId: info.messageId, user, pass });
     } catch (error) {
-        console.error('[DIAGNOSTIC] Root-level test failed:', error);
+        console.error('[DIAGNOSTIC] Error en raíz:', error);
         res.status(500).json({ 
             success: false, 
             error: error.message, 
             code: error.code,
-            passLength: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0
+            user: process.env.EMAIL_USER,
+            passStatus: process.env.EMAIL_PASS ? 'Presente' : 'Faltante'
         });
     }
 });
