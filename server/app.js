@@ -37,7 +37,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
-app.get('/', (req, res) => res.status(200).send('¡Servidor de GB ASISTENTE funcionando!'));
+app.get('/', (req, res) => res.status(200).send(`¡Servidor de GB ASISTENTE funcionando! (Versión: ${new Date().toLocaleTimeString()})`));
 
 // RUTA DE DIAGNÓSTICO GLOBAL (Pública)
 app.get('/test-global', async (req, res) => {
