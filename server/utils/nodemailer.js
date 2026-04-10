@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import { EMAIL_USER, EMAIL_PASS } from './config.js';
+import { EMAIL_USER, EMAIL_PASS } from '../config.js';
 
 dotenv.config();
 
