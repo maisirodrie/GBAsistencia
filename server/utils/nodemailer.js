@@ -8,10 +8,7 @@ const user = EMAIL_USER;
 const passRaw = EMAIL_PASS || '';
 const pass = passRaw.replace(/\s+/g, '');
 
-if (!user) console.error('[CRITICAL-MAIL] EMAIL_USER no está definido en config.js / env');
-if (!passRaw) console.error('[CRITICAL-MAIL] EMAIL_PASS no está definido en config.js / env');
-
-// Creamos el transportador optimizado para Gmail en la nube
+// Transportador optimizado para Gmail (Modo Servicio)
 export const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
