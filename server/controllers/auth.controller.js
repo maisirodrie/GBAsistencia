@@ -80,9 +80,6 @@ export const register = async (req, res) => {
                                 INGRESAR
                             </a>
                         </div>
-                        <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 30px;">
-                            Link de acceso:<br>
-                            <a href="${FRONTEND_URL}/login" style="color: #be123c; text-decoration: none;">${FRONTEND_URL}</a>
                         </p>
                     </div>
                     <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
@@ -253,9 +250,6 @@ export const forgotPassword = async (req, res) => {
                             <strong>Nota:</strong> Este enlace expirará en 1 hora por seguridad. Si no solicitaste este cambio, puedes ignorar este correo.
                         </p>
 
-                        <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 30px;">
-                            Link de acceso:<br>
-                            <a href="${resetUrl}" style="color: #be123c; text-decoration: none;">${resetUrl}</a>
                         </p>
                     </div>
                     <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
