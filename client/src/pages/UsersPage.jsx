@@ -221,14 +221,12 @@ export default function UsersPage() {
                 <Modal title="Nuevo Integrante" onClose={() => setShowCreate(false)}>
                     {createError && <ErrorBanner msg={createError} />}
                     <form onSubmit={handleCreate} className="space-y-5">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Nombre" name="nombre" value={createForm.nombre}
-                                onChange={e => setCreateForm(p => ({ ...p, nombre: e.target.value }))}
-                                placeholder="Ej: Pedro" required />
-                            <Field label="Apellido" name="apellido" value={createForm.apellido}
-                                onChange={e => setCreateForm(p => ({ ...p, apellido: e.target.value }))}
-                                placeholder="Ej: Gómez" required />
-                        </div>
+                        <Field label="Nombre" name="nombre" value={createForm.nombre}
+                            onChange={e => setCreateForm(p => ({ ...p, nombre: e.target.value }))}
+                            placeholder="Ej: Pedro" required />
+                        <Field label="Apellido" name="apellido" value={createForm.apellido}
+                            onChange={e => setCreateForm(p => ({ ...p, apellido: e.target.value }))}
+                            placeholder="Ej: Gómez" required />
                         <Field label="DNI (usuario de login)" name="dni" value={createForm.dni}
                             onChange={e => setCreateForm(p => ({ ...p, dni: e.target.value }))}
                             placeholder="Sin puntos ni espacios" required />
@@ -257,14 +255,12 @@ export default function UsersPage() {
                 <Modal title={`Editar — ${editTarget.nombre} ${editTarget.apellido}`} onClose={() => setShowEdit(false)}>
                     {editError && <ErrorBanner msg={editError} />}
                     <form onSubmit={handleEdit} className="space-y-5">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Field label="Nombre" value={editForm.nombre}
-                                onChange={e => setEditForm(p => ({ ...p, nombre: e.target.value }))}
-                                placeholder="Nombre" required />
-                            <Field label="Apellido" value={editForm.apellido}
-                                onChange={e => setEditForm(p => ({ ...p, apellido: e.target.value }))}
-                                placeholder="Apellido" required />
-                        </div>
+                        <Field label="Nombre" value={editForm.nombre}
+                            onChange={e => setEditForm(p => ({ ...p, nombre: e.target.value }))}
+                            placeholder="Nombre" required />
+                        <Field label="Apellido" value={editForm.apellido}
+                            onChange={e => setEditForm(p => ({ ...p, apellido: e.target.value }))}
+                            placeholder="Apellido" required />
                         <Field label="Email" type="email" value={editForm.email}
                             onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))}
                             placeholder="nombre@ejemplo.com" required />
