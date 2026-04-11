@@ -3,9 +3,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const DESTINO = 'maxi8_5@hotmail.com'; // ← tu hotmail para la prueba
+const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT, 10),
+    secure: process.env.EMAIL_SECURE === 'true',
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS?.replace(/\s+/g, ''),
@@ -18,7 +21,7 @@ console.log(`📤 Desde: ${process.env.EMAIL_USER}`);
 
 try {
     const info = await transporter.sendMail({
-        from: `"GB ASISTENTE" <${process.env.EMAIL_USER}>`,
+        from: `"GB ASISTENTE" <${emailFrom}>`,
         to: DESTINO,
         subject: '✅ Prueba de correo - GB ASISTENTE',
         html: `

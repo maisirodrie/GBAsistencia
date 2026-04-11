@@ -1,19 +1,19 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import { EMAIL_USER, EMAIL_PASS } from '../config.js';
+import { EMAIL_USER, EMAIL_PASS, EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE } from '../config.js';
 
 dotenv.config();
 
-const user = EMAIL_USER;
-const passRaw = EMAIL_PASS || '';
-const pass = passRaw.replace(/\s+/g, '');
+const emailFrom = process.env.EMAIL_FROM || EMAIL_USER;
 
-// Transportador optimizado para Gmail (Modo Servicio)
+// Transportador usando Brevo SMTP (funciona desde servidores cloud como Render)
 export const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: EMAIL_HOST,
+    port: parseInt(EMAIL_PORT, 10),
+    secure: EMAIL_SECURE === 'true',  // false para puerto 587 (STARTTLS), true para 465
     auth: {
-        user: user,
-        pass: pass,
+        user: EMAIL_USER,
+        pass: EMAIL_PASS?.replace(/\s+/g, ''),
     },
     tls: {
         rejectUnauthorized: false
@@ -23,7 +23,7 @@ export const transporter = nodemailer.createTransport({
 export const sendEmail = async (to, subject, html) => {
     try {
         const mailOptions = {
-            from: `"GB ASISTENTE" <${user}>`,
+            from: `"GB ASISTENTE" <${emailFrom}>`,
             to,
             subject,
             html
@@ -36,3 +36,4 @@ export const sendEmail = async (to, subject, html) => {
         throw error;
     }
 };
+
