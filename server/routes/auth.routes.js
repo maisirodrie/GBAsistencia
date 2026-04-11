@@ -8,7 +8,8 @@ import {
     forgotPassword, 
     resetPassword,
     getUsers,
-    deleteUser
+    deleteUser,
+    updateUser
 } from '../controllers/auth.controller.js';
 import { validateToken, isAdmin } from '../middlewares/validateToken.js';
 
@@ -24,6 +25,7 @@ router.post('/reset-password', resetPassword);
 
 // Rutas de administración de usuarios (solo Admins)
 router.get('/users', validateToken, isAdmin, getUsers);
+router.put('/users/:id', validateToken, isAdmin, updateUser);
 router.delete('/users/:id', validateToken, isAdmin, deleteUser);
 
 export default router;

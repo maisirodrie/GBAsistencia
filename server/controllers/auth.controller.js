@@ -303,6 +303,39 @@ export const getUsers = async (req, res) => {
     }
 };
 
+// Actualizar datos de un integrante del staff
+export const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, apellido, email, role } = req.body;
+
+        // No permitir que un admin se quite su propio rol de Admin
+        if (id === req.user.id && role !== 'Admin') {
+            return res.status(400).json({ message: "No puedes cambiar tu propio rol de Administrador." });
+        }
+
+        // Verificar que el email no esté en uso por otro usuario
+        if (email) {
+            const existingUser = await User.findOne({ email, _id: { $ne: id } });
+            if (existingUser) {
+                return res.status(400).json({ message: "El correo ya está registrado por otro usuario." });
+            }
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            { nombre, apellido, email, role },
+            { new: true, select: '-password' }
+        );
+
+        if (!updatedUser) return res.status(404).json({ message: "Usuario no encontrado" });
+
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // Borrar un integrante del staff
 export const deleteUser = async (req, res) => {
     try {

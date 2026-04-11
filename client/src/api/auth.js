@@ -9,4 +9,5 @@ export const forgotPasswordRequest = (dni) => axios.post(`/forgot-password`, { d
 export const resetPasswordRequest = (data) => axios.post(`/reset-password`, data);
 
 export const getUsersRequest = () => axios.get(`/users`);
+export const updateUserRequest = (id, data) => axios.put(`/users/${id}`, data);
 export const deleteUserRequest = (id) => axios.delete(`/users/${id}`);
