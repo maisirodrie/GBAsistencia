@@ -21,7 +21,15 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cors({
     origin: (origin, callback) => {
         const allowedOrigins = [FRONTEND_URL, 'http://localhost:5173', 'https://gb-asistencia.vercel.app', 'https://gbasistencia.vercel.app'];
-        if (!origin || allowedOrigins.includes(origin)) {
+        
+        // Permitir cualquier IP local en la red (192.168.x.x o 10.x.x.x) para acceso desde tablets/celulares
+        const isLocalNetwork = origin && (
+            /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
+            /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
+            /^http:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?$/.test(origin)
+        );
+
+        if (!origin || allowedOrigins.includes(origin) || isLocalNetwork) {
             callback(null, true);
         } else {
             console.log("⚠️ CORS bloqueado para:", origin);

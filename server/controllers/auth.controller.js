@@ -2,9 +2,22 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import { createAccessToken } from '../utils/jwt.js';
 import jwt from 'jsonwebtoken';
-import { TOKEN_SECRET, FRONTEND_URL, NODE_ENV } from '../config.js';
+import { TOKEN_SECRET, FRONTEND_URL } from '../config.js';
 import { sendEmail } from '../utils/nodemailer.js';
 import crypto from 'crypto';
+
+// Detectamos si estamos en producción según el FRONTEND_URL configurado
+// Esto es más confiable que NODE_ENV que puede no estar seteada en Render
+const isProduction = FRONTEND_URL.startsWith('https://');
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/'
+};
+
+console.log(`[CONFIG] Modo: ${isProduction ? 'PRODUCCIÓN' : 'DESARROLLO'} | FRONTEND: ${FRONTEND_URL}`);
 
 // Función para generar una contraseña temporal
 const generateRandomPassword = (length = 12) => {
@@ -131,12 +144,7 @@ export const login = async (req, res) => {
 
         const token = await createAccessToken({ id: userFound._id, role: userFound.role });
         
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: NODE_ENV === 'production',
-            sameSite: NODE_ENV === 'production' ? 'none' : 'lax',
-            path: '/',
-        });
+        res.cookie('token', token, cookieOptions);
 
         res.status(200).json({
             id: userFound._id,
@@ -156,10 +164,7 @@ export const login = async (req, res) => {
 // Cerrar sesión
 export const logout = (req, res) => {
     res.cookie('token', "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        path: '/',
+        ...cookieOptions,
         expires: new Date(0)
     });
     return res.sendStatus(200);
