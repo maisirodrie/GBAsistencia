@@ -93,7 +93,6 @@ export const register = async (req, res) => {
                                 INGRESAR
                             </a>
                         </div>
-                        </p>
                     </div>
                     <div style="background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
                         © ${new Date().getFullYear()} GB ASISTENTE - Gracie Barra Posadas
@@ -115,11 +114,11 @@ export const register = async (req, res) => {
         console.log('[AUTH] Iniciando proceso de email en background...');
         setImmediate(async () => {
             try {
-                console.log('[AUTH] Intentando enviar email via transporter...');
+                console.log(`[AUTH] Intentando enviar email de bienvenida a: ${email}`);
                 await sendEmail(email, mailOptions.subject, mailOptions.html);
-                console.log('[AUTH] Email enviado correctamente.');
+                console.log('[AUTH] Email de bienvenida enviado con éxito.');
             } catch (mailError) {
-                console.error('[AUTH] Error enviando email en 2do plano:', mailError.message);
+                console.error('[AUTH] ERROR CRÍTICO enviando email de bienvenida:', mailError);
             }
         });
 
