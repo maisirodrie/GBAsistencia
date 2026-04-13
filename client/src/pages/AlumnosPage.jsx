@@ -94,22 +94,32 @@ export default function AlumnosPage() {
     return (
         <div className="max-w-5xl mx-auto pb-20">
 
-            {/* Buscador */}
-            <div className="mb-6 flex gap-3 items-center sticky top-4 z-40 bg-slate-900 overflow-hidden shadow-lg border border-slate-700 rounded-2xl">
-                <div className="pl-4 text-slate-400">🔍</div>
-                <input
-                    type="text"
-                    placeholder="Buscar alumno…"
-                    className="flex-1 bg-transparent py-4 text-lg outline-none text-white placeholder-slate-500"
-                    value={filtro}
-                    onChange={e => setFiltro(e.target.value)}
-                />
-                {filtro && (
-                    <button
-                        onClick={() => setFiltro("")}
-                        className="text-slate-400 hover:text-white px-5 py-4 font-bold"
-                    >✕</button>
-                )}
+            {/* Header + Buscador */}
+            <div className="mb-8 flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+                <div className="flex-1 flex gap-3 items-center bg-slate-800/50 overflow-hidden shadow-lg border border-slate-700/50 rounded-2xl px-4 transition-all focus-within:border-blue-500/50">
+                    <span className="text-slate-400">🔍</span>
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre..."
+                        className="flex-1 bg-transparent py-4 text-lg outline-none text-white placeholder-slate-500"
+                        value={filtro}
+                        onChange={e => setFiltro(e.target.value)}
+                    />
+                    {filtro && (
+                        <button
+                            onClick={() => setFiltro("")}
+                            className="text-slate-400 hover:text-white font-bold px-2"
+                        >✕</button>
+                    )}
+                </div>
+
+                <button
+                    onClick={() => navigate('/nuevo')}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap uppercase tracking-wider"
+                >
+                    <span className="text-2xl leading-none">+</span>
+                    Nuevo Alumno
+                </button>
             </div>
 
             {/* Lista */}
