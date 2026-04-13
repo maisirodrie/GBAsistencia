@@ -3,14 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getAlumnos, addAsistencia, removeAsistencia, deleteAlumno } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
-
-const FAJA_STYLES = {
-    Blanca: "bg-white text-gray-800 border border-gray-300",
-    Azul: "bg-blue-700 text-white",
-    Morada: "bg-purple-700 text-white",
-    "Marrón": "bg-amber-900 text-white",
-    Negra: "bg-black text-white border border-red-700",
-};
+import { getFajaStyle, grauLabel } from "../utils/fajas";
 
 export default function AlumnosPage() {
     const [alumnos, setAlumnos] = useState([]);
@@ -183,9 +176,19 @@ export default function AlumnosPage() {
                                     </div>
                                     <div className="flex flex-col items-start gap-1 overflow-hidden">
                                         <h3 className="font-bold text-lg sm:text-xl text-white leading-tight break-words w-full">{`${a.nombre} ${a.apellido || ""}`.trim()}</h3>
-                                        <span className={`text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full whitespace-nowrap shadow-sm mt-1 ${FAJA_STYLES[a.faja] ?? "bg-slate-600"}`}>
-                                            {a.faja?.toUpperCase()} {a.grado}°
-                                        </span>
+                                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                            <span
+                                                className="text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full whitespace-nowrap shadow-sm border"
+                                                style={getFajaStyle(a.faja)}
+                                            >
+                                                {a.faja} · {grauLabel(a.grado)}
+                                            </span>
+                                            {a.categoria === 'Infantil' && (
+                                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-widest">
+                                                    Kids
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 

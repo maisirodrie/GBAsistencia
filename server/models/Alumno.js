@@ -16,10 +16,14 @@ const alumnoSchema = new mongoose.Schema({
         trim: true,
         default: ""
     },
+    categoria: {
+        type: String,
+        enum: ['Adulto', 'Infantil'],
+        default: 'Adulto'
+    },
     faja: {
         type: String,
-        enum: ['Blanca', 'Azul', 'Morada', 'Marrón', 'Negra'],
-        default: 'Blanca'
+        default: 'Branca'
     },
     grado: {
         type: Number,

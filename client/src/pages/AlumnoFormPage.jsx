@@ -9,6 +9,7 @@ import ProgresoChart from "../components/ProgresoChart";
 import QRModal from "../components/QRModal";
 import PhotoCropModal from "../components/PhotoCropModal";
 import { format } from "date-fns";
+import { FAJAS_POR_CATEGORIA } from "../utils/fajas";
 
 const MESES_ES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -31,7 +32,9 @@ export default function AlumnoFormPage() {
     const [cargando, setCargando] = useState(!!id);
     const [showQR, setShowQR] = useState(false);
     const [imageToCrop, setImageToCrop] = useState(null);
+    const [categoria, setCategoria] = useState('Adulto');
     const fileInputRef = useRef(null);
+
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -62,10 +65,11 @@ export default function AlumnoFormPage() {
             setValue("nombre", data.nombre);
             setValue("apellido", data.apellido || "");
             setValue("celular", data.celular || "");
-            setValue("faja", data.faja ?? "Blanca");
+            setValue("faja", data.faja ?? "Branca");
             setValue("grado", String(data.grado ?? 0));
             setValue("clasesParaGraduacion", data.clasesParaGraduacion || 30);
             setValue("fotoUrl", data.fotoUrl || "");
+            setCategoria(data.categoria || 'Adulto');
             if (data.ultimaGraduacion) {
                 const local = toLocal(data.ultimaGraduacion);
                 setValue("ultimaGraduacion", format(local, "yyyy-MM-dd"));
@@ -79,7 +83,7 @@ export default function AlumnoFormPage() {
     const onSubmit = handleSubmit(async (data) => {
         if (id) {
             try {
-                await updateAlumno(id, data);
+                await updateAlumno(id, { ...data, categoria });
                 showToast("Alumno actualizado correctamente");
                 setGuardado(true);
                 setTimeout(() => setGuardado(false), 2500);
@@ -92,7 +96,7 @@ export default function AlumnoFormPage() {
             }
         } else {
             try {
-                const { data: nuevo } = await createAlumno(data);
+                const { data: nuevo } = await createAlumno({ ...data, categoria });
                 showToast("Alumno creado correctamente");
                 navigate(`/editar/${nuevo._id}`);
             } catch (error) {
@@ -294,6 +298,32 @@ export default function AlumnoFormPage() {
                     </div>
 
                     <div className="space-y-6 relative z-10">
+                        {/* Categoría */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Categoría</label>
+                            <div className="flex gap-3">
+                                {['Adulto', 'Infantil'].map(cat => (
+                                    <button
+                                        key={cat}
+                                        type="button"
+                                        onClick={() => {
+                                            setCategoria(cat);
+                                            setValue('faja', FAJAS_POR_CATEGORIA[cat][0]);
+                                        }}
+                                        className={`flex-1 py-3 rounded-2xl text-sm font-black transition-all border ${
+                                            categoria === cat
+                                                ? cat === 'Infantil'
+                                                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
+                                                    : 'bg-blue-500/20 text-blue-400 border-blue-500/50'
+                                                : 'bg-slate-900/60 text-slate-500 border-slate-700/60 hover:border-slate-600'
+                                        }`}
+                                    >
+                                        {cat === 'Infantil' ? '👦 Infantil (hasta 15)' : '🥋 Adulto (16+)'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Nombre y Apellido */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
@@ -330,13 +360,13 @@ export default function AlumnoFormPage() {
                         {/* Fila Faja / Grado */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Faja (Cinturón)</label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Faixa (Cinturão)</label>
                                 <div className="relative">
                                     <select
                                         className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
                                         {...register("faja")}
                                     >
-                                        {["Blanca", "Azul", "Morada", "Marrón", "Negra"].map(f => (
+                                        {FAJAS_POR_CATEGORIA[categoria].map(f => (
                                             <option key={f}>{f}</option>
                                         ))}
                                     </select>
@@ -344,13 +374,13 @@ export default function AlumnoFormPage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Grado (Stripes)</label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Grau (Listras)</label>
                                 <div className="relative">
                                     <select
                                         className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
                                         {...register("grado")}
                                     >
-                                        {[0, 1, 2, 3, 4].map(g => <option key={g}>{g}</option>)}
+                                        {[0, 1, 2, 3, 4].map(g => <option key={g} value={g}>{g === 0 ? 'Sem Grau' : `${g}º Grau`}</option>)}
                                     </select>
                                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">▼</div>
                                 </div>
