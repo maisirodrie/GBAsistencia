@@ -10,14 +10,17 @@ const emailFrom = process.env.EMAIL_FROM || EMAIL_USER;
 export const transporter = nodemailer.createTransport({
     host: EMAIL_HOST,
     port: parseInt(EMAIL_PORT, 10),
-    secure: EMAIL_SECURE === 'true',  // false para puerto 587 (STARTTLS), true para 465
+    secure: EMAIL_SECURE === 'true' || EMAIL_SECURE === true, // true para 465, false para otros
     auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS?.replace(/\s+/g, ''),
     },
     tls: {
         rejectUnauthorized: false
-    }
+    },
+    connectionTimeout: 10000, // 10 segundos de espera
+    greetingTimeout: 10000,
+    socketTimeout: 15000
 });
 
 export const sendEmail = async (to, subject, html) => {
