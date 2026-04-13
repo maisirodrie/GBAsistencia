@@ -4,6 +4,7 @@ import { getAlumnos, addAsistencia, removeAsistencia, deleteAlumno } from "../ap
 import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
 import { getFajaStyle, grauLabel } from "../utils/fajas";
+import BeltBadge from "../components/BeltBadge";
 
 export default function AlumnosPage() {
     const [alumnos, setAlumnos] = useState([]);
@@ -174,15 +175,10 @@ export default function AlumnosPage() {
                                             <span className="text-white drop-shadow-md">{a.nombre?.charAt(0)?.toUpperCase() || "👤"}</span>
                                         )}
                                     </div>
-                                    <div className="flex flex-col items-start gap-1 overflow-hidden">
+                                    <div className="flex flex-col items-start gap-1.5 overflow-hidden">
                                         <h3 className="font-bold text-lg sm:text-xl text-white leading-tight break-words w-full">{`${a.nombre} ${a.apellido || ""}`.trim()}</h3>
-                                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                            <span
-                                                className="text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full whitespace-nowrap shadow-sm border"
-                                                style={getFajaStyle(a.faja)}
-                                            >
-                                                {a.faja} · {grauLabel(a.grado)}
-                                            </span>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <BeltBadge faja={a.faja} grado={a.grado} size="md" />
                                             {a.categoria === 'Infantil' && (
                                                 <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-widest">
                                                     Kids
