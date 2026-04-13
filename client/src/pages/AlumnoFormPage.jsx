@@ -232,7 +232,7 @@ export default function AlumnoFormPage() {
                     )}
                     {id && (
                         <button
-                            onClick={handleDelete}
+                            onClick={onDelete}
                             className="bg-slate-800/50 hover:bg-red-900/40 text-slate-400 hover:text-red-400 p-2.5 rounded-2xl border border-slate-700 transition-all active:scale-95"
                             title="Borrar Alumno"
                         >
