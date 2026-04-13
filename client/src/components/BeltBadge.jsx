@@ -41,7 +41,7 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
 
                 {/* Punta negra con rayas del grau */}
                 <div
-                    className="flex items-center justify-center gap-[2px] bg-[#0a0a0a] flex-shrink-0"
+                    className="flex flex-row-reverse items-center justify-start gap-[2px] bg-[#0a0a0a] flex-shrink-0"
                     style={{ minWidth: s.tipW, paddingLeft: 4, paddingRight: 4 }}
                 >
                     {numGrau === 0 ? null :
