@@ -374,20 +374,32 @@ export const testEmailDiagnostic = async (req, res) => {
             `
         );
         
-        res.json({ 
-            success: true, 
-            message: "Email enviado con éxito", 
-            target: testTarget,
-            messageId: info.messageId 
-        });
+        res.send(`
+            <div style="background: #0f172a; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+                <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #22c55e; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <h1 style="color: #22c55e; font-size: 40px; margin-bottom: 10px;">¡ÉXITO! ✅</h1>
+                    <p style="font-size: 18px; color: #94a3b8;">El servidor de Render envió el correo correctamente.</p>
+                    <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 15px; border-radius: 10px; font-family: monospace;">
+                        <p style="margin: 5px 0;"><strong>Destino:</strong> ${testTarget}</p>
+                        <p style="margin: 5px 0;"><strong>ID Mensaje:</strong> ${info.messageId}</p>
+                    </div>
+                    <p style="margin-top: 20px; font-size: 14px; color: #64748b;">Si no lo ves en tu bandeja, revisá SPAM.</p>
+                </div>
+            </div>
+        `);
     } catch (error) {
         console.error('[AUTH] ERROR EN DIAGNÓSTICO:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: error.message,
-            code: error.code,
-            command: error.command,
-            stack: error.stack
-        });
+        res.status(500).send(`
+            <div style="background: #0f172a; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+                <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #ef4444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <h1 style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">ERROR ❌</h1>
+                    <p style="font-size: 18px; color: #94a3b8;">El servidor NO pudo enviar el correo.</p>
+                    <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 20px; border-radius: 10px; font-family: monospace; color: #fda4af;">
+                        <p><strong>Mensaje:</strong> ${error.message}</p>
+                        <p><strong>Código:</strong> ${error.code || 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+        `);
     }
 };
