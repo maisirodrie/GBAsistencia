@@ -353,3 +353,41 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// Endpoint de diagnóstico para probar el envío de emails desde el servidor
+export const testEmailDiagnostic = async (req, res) => {
+    try {
+        console.log('[AUTH] Iniciando DIAGNÓSTICO de email...');
+        const testTarget = req.user?.email || 'maxi8_5@hotmail.com';
+        
+        const info = await sendEmail(
+            testTarget,
+            '🔍 DIAGNÓSTICO: Prueba de Correo desde Render',
+            `
+                <div style="font-family: Arial, sans-serif; border: 2px solid #0ea5e9; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #0ea5e9;">Prueba de Diagnóstico Correcta</h2>
+                    <p>Si recibes este correo, el servidor de Render tiene acceso correcto a Brevo.</p>
+                    <hr>
+                    <p><strong>Remitente configurado:</strong> ${process.env.EMAIL_FROM || 'Usando EMAIL_USER'}</p>
+                    <p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p>
+                </div>
+            `
+        );
+        
+        res.json({ 
+            success: true, 
+            message: "Email enviado con éxito", 
+            target: testTarget,
+            messageId: info.messageId 
+        });
+    } catch (error) {
+        console.error('[AUTH] ERROR EN DIAGNÓSTICO:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            code: error.code,
+            command: error.command,
+            stack: error.stack
+        });
+    }
+};
