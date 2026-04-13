@@ -25,17 +25,9 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
             >
                 {/* Cuerpo principal del cinturón */}
                 <div className="flex-1 flex">
-                    {/* Color primario (ocupa la mitad si hay bg2, o todo si es mono) */}
-                    <div
-                        className="flex-1"
-                        style={{ background: meta.bg }}
-                    />
-                    {/* Color secundario para fajas bicolores (infantil) */}
+                    <div className="flex-1" style={{ background: meta.bg }} />
                     {meta.bg2 && (
-                        <div
-                            className="flex-1"
-                            style={{ background: meta.bg2 }}
-                        />
+                        <div className="flex-1" style={{ background: meta.bg2 }} />
                     )}
                 </div>
 
@@ -44,23 +36,23 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
                     className="flex items-center justify-center gap-[2px] bg-[#0a0a0a] flex-shrink-0"
                     style={{ minWidth: s.tipW, paddingLeft: 3, paddingRight: 3 }}
                 >
-                    {numGrau === 0 ? null :
-                        [...Array(numGrau)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="rounded-[1px] flex-shrink-0"
-                                style={{
-                                    width: s.stripeW,
-                                    height: s.stripeH,
-                                    background: meta.stripeColor,
-                                }}
-                            />
-                        ))
-                    }
+                    {numGrau > 0 && [...Array(numGrau)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="rounded-[1px] flex-shrink-0"
+                            style={{ width: s.stripeW, height: s.stripeH, background: meta.stripeColor }}
+                        />
+                    ))}
                 </div>
+
+                {/* Cola del cinturón — mismo color que el cuerpo (simula el extremo colgante) */}
+                <div
+                    className="flex-shrink-0"
+                    style={{ width: s.tipW, background: meta.bg2 ?? meta.bg }}
+                />
             </div>
 
-            {/* Nombre de la faja + grau (opcional) */}
+            {/* Nombre */}
             {showLabel && (
                 <span className={`${s.text} font-black text-slate-400 leading-none pl-0.5`}>
                     {faja}{numGrau > 0 ? ` · ${numGrau}º` : ''}
@@ -68,4 +60,5 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
             )}
         </div>
     );
+
 }
