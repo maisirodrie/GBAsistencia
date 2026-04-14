@@ -2,9 +2,11 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import { createAccessToken } from '../utils/jwt.js';
 import jwt from 'jsonwebtoken';
-import { TOKEN_SECRET, FRONTEND_URL } from '../config.js';
+import { TOKEN_SECRET, FRONTEND_URL, EMAIL_PASS, EMAIL_USER } from '../config.js';
 import { sendEmail } from '../utils/nodemailer.js';
 import crypto from 'crypto';
+
+const emailFrom = process.env.EMAIL_FROM || EMAIL_USER;
 
 // Detectamos si estamos en producción según el FRONTEND_URL configurado
 // Esto es más confiable que NODE_ENV que puede no estar seteada en Render
