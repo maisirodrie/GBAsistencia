@@ -147,35 +147,35 @@ export default function UsersPage() {
                         <div key={u._id} className="bg-slate-800/40 border border-slate-700/50 rounded-[2rem] p-6 hover:bg-slate-800/60 transition-all group relative overflow-hidden">
 
                             {/* Acciones */}
-                            <div className="absolute top-4 right-4 flex gap-1">
+                            <div className="absolute top-3 right-3 flex gap-1 z-10">
                                 <button
                                     onClick={() => openEdit(u)}
-                                    className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all"
+                                    className="p-1.5 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all"
                                     title="Editar datos"
                                 >
-                                    <Pencil size={16} />
+                                    <Pencil size={14} />
                                 </button>
                                 {u._id !== currentUser.id && (
                                     <button
                                         onClick={() => handleDelete(u._id, u.nombre)}
-                                        className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                                        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
                                         title="Eliminar acceso"
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={14} />
                                     </button>
                                 )}
                             </div>
 
                             {/* Avatar + Nombre */}
-                            <div className="flex items-center gap-4 mb-5 pr-16">
-                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-2xl font-black text-white border border-slate-600/50 flex-shrink-0 group-hover:scale-105 transition-transform">
+                            <div className="flex items-center gap-3 mb-4 pr-12">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-xl font-black text-white border border-slate-600/50 flex-shrink-0 group-hover:scale-105 transition-transform">
                                     {u.nombre.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-lg font-black text-white leading-tight truncate">
+                                    <h3 className="text-base font-black text-white leading-tight truncate">
                                         {u.nombre} {u.apellido}
                                     </h3>
-                                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest mt-1 inline-block ${
+                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest mt-1 inline-block ${
                                         u.role === 'Admin'
                                             ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                                             : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
@@ -186,13 +186,13 @@ export default function UsersPage() {
                             </div>
 
                             {/* Info */}
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-3 text-slate-400 text-sm bg-slate-900/40 p-3 rounded-xl">
-                                    <Contact size={15} className="flex-shrink-0" />
-                                    <span className="font-bold">{u.dni}</span>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center gap-2.5 text-slate-400 text-[11px] bg-slate-900/40 p-2.5 rounded-xl border border-slate-700/10 mb-1.5">
+                                    <Contact size={13} className="flex-shrink-0 opacity-70" />
+                                    <span className="font-bold tracking-tight">{u.dni}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-slate-400 text-sm bg-slate-900/40 p-3 rounded-xl">
-                                    <Mail size={15} className="flex-shrink-0" />
+                                <div className="flex items-center gap-2.5 text-slate-400 text-[11px] bg-slate-900/40 p-2.5 rounded-xl border border-slate-700/10">
+                                    <Mail size={13} className="flex-shrink-0 opacity-70" />
                                     <span className="font-medium truncate">{u.email}</span>
                                 </div>
                             </div>

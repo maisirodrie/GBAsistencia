@@ -187,13 +187,13 @@ export default function FinanzasPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="text-right flex-shrink-0 flex flex-col items-end gap-0.5">
+                                    <div className="text-right flex-shrink-0 flex flex-col items-end gap-0.5 pr-6 sm:pr-0">
                                         <p className={`font-black text-base sm:text-lg leading-none ${t.tipo==="INGRESO" ? "text-green-400" : "text-red-400"}`}>
                                             {t.tipo==="INGRESO" ? "+" : "-"}{config.moneda}{fmt(t.monto)}
                                         </p>
                                         <p className="text-[10px] text-slate-500 font-bold">{format(new Date(t.fecha),"dd/MM/yy")}</p>
                                     </div>
-                                    <button onClick={() => handleEliminar(t._id)} className="absolute top-4 right-2 sm:static text-slate-600 hover:text-red-500 transition-colors sm:ml-2 flex-shrink-0 p-1" title="Eliminar">✕</button>
+                                    <button onClick={() => handleEliminar(t._id)} className="absolute top-4 right-1 sm:static text-slate-600 hover:text-red-500 transition-colors sm:ml-2 flex-shrink-0 p-1 bg-slate-900/40 rounded-md sm:bg-transparent" title="Eliminar">✕</button>
                                 </div>
                             ))}
                         </div>
@@ -229,9 +229,9 @@ export default function FinanzasPage() {
                                         <span className="text-white">{alumno.nombre?.charAt(0)}</span>
                                     )}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-white text-sm truncate">{alumno.nombre} {alumno.apellido || ""}</p>
-                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${FAJA_COLORS[alumno.faja] || "bg-slate-600 text-white"}`}>{alumno.faja} {alumno.grado}°</span>
+                                <div className="flex-1 min-w-0 pr-1">
+                                    <p className="block font-bold text-white text-sm truncate leading-tight mb-1">{alumno.nombre} {alumno.apellido || ""}</p>
+                                    <span className={`inline-block text-[9px] font-black px-2 py-0.5 rounded-full ${FAJA_COLORS[alumno.faja] || "bg-slate-600 text-white"}`}>{alumno.faja} {alumno.grado}°</span>
                                 </div>
                             </div>
 

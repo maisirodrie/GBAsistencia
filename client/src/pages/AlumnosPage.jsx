@@ -158,23 +158,23 @@ export default function AlumnosPage() {
                                 <div className="absolute top-2 right-2 flex gap-1 z-10">
                                     <button 
                                         onClick={() => navigate(`/editar/${a._id}`)}
-                                        className="text-slate-400 hover:text-white transition-all bg-slate-900/60 backdrop-blur-sm rounded-xl w-9 h-9 flex items-center justify-center hover:bg-slate-700 shadow-md border border-slate-700/50 active:scale-90"
+                                        className="text-slate-400 hover:text-white transition-all bg-slate-900/60 backdrop-blur-sm rounded-lg w-8 h-8 flex items-center justify-center hover:bg-slate-700 shadow-md border border-slate-700/50 active:scale-90"
                                         title="Editar Perfil"
                                     >
-                                        ✏️
+                                        <span className="text-xs">✏️</span>
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(a)}
-                                        className="text-slate-400 hover:text-red-400 transition-all bg-slate-900/60 backdrop-blur-sm rounded-xl w-9 h-9 flex items-center justify-center hover:bg-red-900/40 shadow-md border border-slate-700/50 active:scale-90"
+                                        className="text-slate-400 hover:text-red-400 transition-all bg-slate-900/60 backdrop-blur-sm rounded-lg w-8 h-8 flex items-center justify-center hover:bg-red-900/40 shadow-md border border-slate-700/50 active:scale-90"
                                         title="Borrar Alumno"
                                     >
-                                        🗑
+                                        <span className="text-xs">🗑</span>
                                     </button>
                                 </div>
 
                                 {/* Header */}
-                                <div className="flex items-center gap-3 pr-20 pb-4 flex-1 min-w-0">
-                                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-lg sm:text-xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
+                                <div className="flex items-center gap-3 pr-[70px] pb-3 flex-1 min-w-0">
+                                    <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-base sm:text-xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
                                         {a.fotoUrl ? (
                                             <img 
                                                 src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} 
@@ -186,7 +186,7 @@ export default function AlumnosPage() {
                                         )}
                                     </div>
                                     <div className="flex flex-col items-start min-w-0">
-                                        <h3 className="font-bold text-base sm:text-lg text-white leading-tight truncate w-full" title={`${a.nombre} ${a.apellido || ""}`}>
+                                        <h3 className="font-bold text-sm sm:text-lg text-white leading-tight truncate w-full" title={`${a.nombre} ${a.apellido || ""}`}>
                                             {a.nombre} <span className="opacity-70">{a.apellido || ""}</span>
                                         </h3>
                                         <div className="flex items-center gap-1.5 flex-wrap mt-1">
