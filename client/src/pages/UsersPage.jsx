@@ -171,8 +171,8 @@ export default function UsersPage() {
                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-xl font-black text-white border border-slate-600/50 flex-shrink-0 group-hover:scale-105 transition-transform">
                                     {u.nombre.charAt(0).toUpperCase()}
                                 </div>
-                                <div className="min-w-0">
-                                    <h3 className="text-base font-black text-white leading-tight truncate">
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="text-[14px] sm:text-base font-black text-white leading-tight break-words overflow-visible">
                                         {u.nombre} {u.apellido}
                                     </h3>
                                     <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest mt-1 inline-block ${

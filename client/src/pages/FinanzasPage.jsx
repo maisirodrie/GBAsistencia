@@ -170,7 +170,7 @@ export default function FinanzasPage() {
                                         {t.tipo==="INGRESO" ? "↑" : "↓"}
                                     </div>
                                     <div className="flex-1 min-w-0 pr-2">
-                                        <p className="font-bold text-white text-sm sm:text-base leading-tight truncate">
+                                        <p className="font-bold text-white text-sm sm:text-base leading-tight break-words">
                                             {t.descripcion || t.categoria}
                                         </p>
                                         <div className="flex flex-wrap items-center gap-1.5 mt-1">
@@ -230,7 +230,7 @@ export default function FinanzasPage() {
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0 pr-1">
-                                    <p className="block font-bold text-white text-sm truncate leading-tight mb-1">{alumno.nombre} {alumno.apellido || ""}</p>
+                                    <p className="block font-bold text-white text-[13px] leading-tight mb-1 break-words">{alumno.nombre} {alumno.apellido || ""}</p>
                                     <span className={`inline-block text-[9px] font-black px-2 py-0.5 rounded-full ${FAJA_COLORS[alumno.faja] || "bg-slate-600 text-white"}`}>{alumno.faja} {alumno.grado}°</span>
                                 </div>
                             </div>

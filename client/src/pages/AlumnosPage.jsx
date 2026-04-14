@@ -185,8 +185,8 @@ export default function AlumnosPage() {
                                             <span className="text-white drop-shadow-md font-black">{a.nombre?.charAt(0)?.toUpperCase() || "👤"}</span>
                                         )}
                                     </div>
-                                    <div className="flex flex-col items-start min-w-0">
-                                        <h3 className="font-bold text-sm sm:text-lg text-white leading-tight truncate w-full" title={`${a.nombre} ${a.apellido || ""}`}>
+                                    <div className="flex flex-col items-start min-w-0 pr-1">
+                                        <h3 className="font-bold text-[13px] sm:text-lg text-white leading-tight break-words overflow-visible" title={`${a.nombre} ${a.apellido || ""}`}>
                                             {a.nombre} <span className="opacity-70">{a.apellido || ""}</span>
                                         </h3>
                                         <div className="flex items-center gap-1.5 flex-wrap mt-1">
