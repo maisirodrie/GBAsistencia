@@ -155,17 +155,17 @@ export default function AlumnosPage() {
                                 }}
                             >
                                 {/* Editar IconButton */}
-                                <div className="absolute top-4 right-4 flex gap-2 z-10">
+                                <div className="absolute top-2 right-2 flex gap-1 z-10">
                                     <button 
                                         onClick={() => navigate(`/editar/${a._id}`)}
-                                        className="text-slate-400 hover:text-white transition-colors bg-slate-900/40 rounded-full w-10 h-10 flex items-center justify-center hover:bg-slate-700 shadow-sm"
+                                        className="text-slate-400 hover:text-white transition-all bg-slate-900/60 backdrop-blur-sm rounded-xl w-9 h-9 flex items-center justify-center hover:bg-slate-700 shadow-md border border-slate-700/50 active:scale-90"
                                         title="Editar Perfil"
                                     >
                                         ✏️
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(a)}
-                                        className="text-slate-400 hover:text-red-400 transition-colors bg-slate-900/40 rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-900/40 shadow-sm"
+                                        className="text-slate-400 hover:text-red-400 transition-all bg-slate-900/60 backdrop-blur-sm rounded-xl w-9 h-9 flex items-center justify-center hover:bg-red-900/40 shadow-md border border-slate-700/50 active:scale-90"
                                         title="Borrar Alumno"
                                     >
                                         🗑
@@ -173,8 +173,8 @@ export default function AlumnosPage() {
                                 </div>
 
                                 {/* Header */}
-                                <div className="flex items-start gap-3 pr-10 pb-3 flex-1 min-w-0">
-                                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
+                                <div className="flex items-center gap-3 pr-20 pb-4 flex-1 min-w-0">
+                                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-lg sm:text-xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
                                         {a.fotoUrl ? (
                                             <img 
                                                 src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} 
@@ -182,23 +182,23 @@ export default function AlumnosPage() {
                                                 className="w-full h-full object-cover" 
                                             />
                                         ) : (
-                                            <span className="text-white drop-shadow-md">{a.nombre?.charAt(0)?.toUpperCase() || "👤"}</span>
+                                            <span className="text-white drop-shadow-md font-black">{a.nombre?.charAt(0)?.toUpperCase() || "👤"}</span>
                                         )}
                                     </div>
-                                    <div className="flex flex-col items-start gap-1.5 overflow-hidden">
-                                        <h3 className="font-bold text-lg sm:text-xl text-white leading-tight break-words w-full">{`${a.nombre} ${a.apellido || ""}`.trim()}</h3>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <BeltBadge faja={a.faja} grado={a.grado} size="md" />
+                                    <div className="flex flex-col items-start min-w-0">
+                                        <h3 className="font-bold text-base sm:text-lg text-white leading-tight truncate w-full" title={`${a.nombre} ${a.apellido || ""}`}>
+                                            {a.nombre} <span className="opacity-70">{a.apellido || ""}</span>
+                                        </h3>
+                                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                            <BeltBadge faja={a.faja} grado={a.grado} size="sm" />
                                             {a.categoria === 'Infantil' && (
-                                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-widest">
+                                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-[0.15em]">
                                                     Kids
                                                 </span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
-
-
 
                                 {/* Botón Gigante */}
                                 <div className="mt-auto pt-2 border-t border-slate-700/50">

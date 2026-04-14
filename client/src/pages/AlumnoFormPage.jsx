@@ -592,16 +592,25 @@ export default function AlumnoFormPage() {
                         </div>
                     </div>
                     
-                    <div className="bg-[#0B1120] p-6 rounded-2xl border border-slate-800 overflow-x-auto custom-scrollbar shadow-inner relative">
-                        <div className="min-w-[900px] flex justify-center py-4">
-                            <CartaoFrequencia
-                                asistencias={asistencias.filter(iso => toLocal(iso).getFullYear().toString() === anioFicha)}
-                                alumnoNombre={`${watch("nombre") || ""} ${watch("apellido") || ""}`.trim()}
-                                faja={watch("faja")}
-                                grado={watch("grado")}
-                                ultimaGraduacion={watch("ultimaGraduacion")}
-                            />
+                    <div className="relative group">
+                        {/* Indicadores de Scroll Movil */}
+                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0B1120] to-transparent z-10 pointer-events-none sm:hidden opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0B1120] to-transparent z-10 pointer-events-none sm:hidden opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        
+                        <div className="bg-[#0B1120] p-4 sm:p-6 rounded-2xl border border-slate-800 overflow-x-auto custom-scrollbar shadow-inner relative">
+                            <div className="min-w-[850px] flex justify-center py-2 sm:py-4">
+                                <CartaoFrequencia
+                                    asistencias={asistencias.filter(iso => toLocal(iso).getFullYear().toString() === anioFicha)}
+                                    alumnoNombre={`${watch("nombre") || ""} ${watch("apellido") || ""}`.trim()}
+                                    faja={watch("faja")}
+                                    grado={watch("grado")}
+                                    ultimaGraduacion={watch("ultimaGraduacion")}
+                                />
+                            </div>
                         </div>
+                        <p className="sm:hidden text-center text-[10px] text-slate-500 font-bold mt-3 uppercase tracking-widest animate-pulse">
+                            ↔ Desliza para ver ficha completa ↔
+                        </p>
                     </div>
                 </div>
             )}

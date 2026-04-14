@@ -136,30 +136,30 @@ function PlanesSection({ alumnos, onUpdate }) {
     return (
         <div className="space-y-5">
             {/* Selector de alumno */}
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
                 <div className="flex-1 space-y-1.5">
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Alumno</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">Alumno</label>
                     <select value={selAlumnoId} onChange={e => setSelAlumnoId(e.target.value)}
-                        className="w-full bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500 transition-all font-semibold">
+                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-xl sm:rounded-2xl px-4 py-3 text-sm sm:text-base text-white outline-none focus:border-blue-500/50 transition-all font-semibold shadow-inner">
                         <option value="">— Seleccioná un alumno —</option>
                         {alumnos.map(a => <option key={a._id} value={a._id}>{a.nombre} {a.apellido || ''}</option>)}
                     </select>
                 </div>
                 {selAlumnoId && (
                     <button onClick={() => setModal("crear")}
-                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-3 rounded-2xl text-sm transition-all active:scale-95 border border-blue-500/50">
-                        + Nueva Venta / Plan
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-black px-5 py-3.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm shadow-lg shadow-blue-900/20 transition-all active:scale-95 border border-blue-500/50 uppercase tracking-wider">
+                        + Nueva Venta
                     </button>
                 )}
             </div>
 
             {/* Deuda resumen */}
             {deudaTotal > 0 && (
-                <div className="bg-orange-900/20 border border-orange-700/30 rounded-2xl px-5 py-3 flex items-center gap-3">
-                    <span className="text-orange-400 text-xl">⚠</span>
-                    <div>
-                        <p className="text-xs text-orange-400 font-black uppercase tracking-wider">Saldo pendiente del alumno</p>
-                        <p className="text-white font-black text-lg">${fmt(deudaTotal)}</p>
+                <div className="bg-orange-950/20 border border-orange-500/20 rounded-xl sm:rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 flex-shrink-0 border border-orange-500/10">⚠</div>
+                    <div className="min-w-0">
+                        <p className="text-[9px] text-orange-400 font-black uppercase tracking-widest leading-none mb-1">Saldo pendiente acumulado</p>
+                        <p className="text-white font-black text-base sm:text-lg tabular-nums leading-none">${fmt(deudaTotal)}</p>
                     </div>
                 </div>
             )}
@@ -438,27 +438,27 @@ export default function ProductosPage() {
                         const warn = p.stock > 0 && p.stock <= STOCK_MIN;
                         const sin = p.stock === 0;
                         return (
-                            <div key={p._id} className="bg-slate-800/30 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden flex flex-col">
-                                <div className="p-5 flex-1">
-                                    <div className="flex items-start justify-between gap-3 mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl">{CAT_ICONS[p.categoria]||'📦'}</span>
-                                            <div>
-                                                <h3 className="font-black text-white text-base leading-tight">{p.nombre}</h3>
-                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{p.categoria}</span>
+                            <div key={p._id} className="bg-slate-800/30 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden flex flex-col group hover:border-slate-600 transition-all">
+                                <div className="p-4 sm:p-5 flex-1 flex flex-col gap-2">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="text-xl sm:text-2xl flex-shrink-0">{CAT_ICONS[p.categoria]||'📦'}</span>
+                                            <div className="min-w-0">
+                                                <h3 className="font-black text-white text-sm sm:text-base leading-tight truncate">{p.nombre}</h3>
+                                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{p.categoria}</span>
                                             </div>
                                         </div>
-                                        <div className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-black border ${ok?'bg-green-900/30 text-green-400 border-green-700/30':warn?'bg-orange-900/30 text-orange-400 border-orange-700/30':'bg-red-900/30 text-red-400 border-red-700/30'}`}>
-                                            {sin?'Sin stock':`${p.stock} unid.`}
+                                        <div className={`flex-shrink-0 px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-black border tabular-nums ${ok?'bg-green-900/30 text-green-400 border-green-700/30':warn?'bg-orange-900/30 text-orange-400 border-orange-700/30':'bg-red-900/30 text-red-400 border-red-700/30'}`}>
+                                            {sin?'Sin stock':`${p.stock} u.`}
                                         </div>
                                     </div>
-                                    {p.descripcion && <p className="text-xs text-slate-400 mb-3">{p.descripcion}</p>}
-                                    <p className="text-2xl font-black text-white">${fmt(p.precio)}</p>
+                                    {p.descripcion && <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{p.descripcion}</p>}
+                                    <p className="text-xl sm:text-2xl font-black text-white mt-auto pt-2">${fmt(p.precio)}</p>
                                 </div>
-                                <div className="border-t border-slate-700/50 p-3 flex gap-2">
-                                    <button onClick={() => openStock(p)} className="flex-1 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 text-sm font-bold transition-all" title="Ajustar Stock">Stock: + / −</button>
-                                    <button onClick={() => openEditar(p)} className="px-3 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 text-sm transition-all" title="Editar">✏️</button>
-                                    <button onClick={() => handleDelete(p)} className="px-3 py-2.5 rounded-xl bg-slate-700 hover:bg-red-800/60 text-slate-400 hover:text-red-400 border border-slate-600 text-sm transition-all" title="Desactivar">🗑</button>
+                                <div className="border-t border-slate-700/40 p-3 flex gap-2 bg-slate-900/20">
+                                    <button onClick={() => openStock(p)} className="flex-1 py-2 sm:py-2.5 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white border border-slate-600/50 text-xs sm:text-sm font-bold transition-all active:scale-95" title="Ajustar Stock">Stock</button>
+                                    <button onClick={() => openEditar(p)} className="px-3 py-2 sm:py-2.5 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-white border border-slate-600/50 text-xs sm:text-sm transition-all active:scale-95" title="Editar">✏️</button>
+                                    <button onClick={() => handleDelete(p)} className="px-3 py-2 sm:py-2.5 rounded-xl bg-slate-700/50 hover:bg-red-900/40 text-slate-400 hover:text-red-400 border border-slate-600/50 text-xs sm:text-sm transition-all active:scale-95" title="Desactivar">🗑</button>
                                 </div>
                             </div>
                         );
@@ -470,16 +470,16 @@ export default function ProductosPage() {
             {tab === "graficos" && (
                 <div className="space-y-6">
                     {/* Summary cards */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                         {[
-                            { label:"Vendido (Total)", value:`$${fmt(totalVentas)}`, color:"text-white", bg:"bg-slate-800/30 border-slate-700/50" },
-                            { label:"Cobrado (Efectivo)", value:`$${fmt(totalCobrado)}`, color:"text-green-400", bg:"bg-green-500/10 border-green-500/20" },
-                            { label:"Pendiente (Deuda)", value:`$${fmt(totalPendiente)}`, color:"text-orange-400", bg:"bg-orange-500/10 border-orange-500/20" },
+                            { label:"Vendido", value:`$${fmt(totalVentas)}`, color:"text-white", bg:"bg-slate-800/30 border-slate-700/50" },
+                            { label:"En Efectivo", value:`$${fmt(totalCobrado)}`, color:"text-green-400", bg:"bg-green-500/10 border-green-500/20" },
+                            { label:"Pendiente", value:`$${fmt(totalPendiente)}`, color:"text-orange-400", bg:"bg-orange-500/10 border-orange-500/20" },
                             { label:"En Stock", value:productos.filter(p=>p.activo).reduce((s,p)=>s+p.stock,0), color:"text-purple-400", bg:"bg-purple-500/10 border-purple-500/20" },
                         ].map(({label,value,color,bg}) => (
-                            <div key={label} className={`rounded-xl p-4 border ${bg} text-center shadow-sm`}>
-                                <p className={`text-2xl font-black ${color}`}>{value}</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">{label}</p>
+                            <div key={label} className={`rounded-2xl p-3 sm:p-4 border ${bg} text-center shadow-sm flex flex-col justify-center gap-1 min-h-[80px]`}>
+                                <p className={`text-base sm:text-2xl font-black ${color} truncate tabular-nums`}>{value}</p>
+                                <p className="text-[8px] sm:text-[10px] text-slate-400 font-black uppercase tracking-widest">{label}</p>
                             </div>
                         ))}
                     </div>
@@ -556,24 +556,34 @@ export default function ProductosPage() {
                         <span className="text-xs text-slate-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">{ventas.length} registros</span>
                     </div>
                     {ventas.length === 0 ? (
-                        <div className="py-16 text-center text-slate-500"><p className="text-3xl mb-2">🧾</p><p className="font-bold">Sin ventas</p></div>
+                        <div className="py-16 text-center text-slate-500">
+                            <p className="text-3xl mb-2">🧾</p>
+                            <p className="font-bold">Sin ventas</p>
+                        </div>
                     ) : (
                         <div className="divide-y divide-slate-700/30">
                             {ventas.map(v => (
-                                <div key={v._id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-800/40 transition-all">
-                                    <div className="text-2xl w-10 text-center flex-shrink-0">{CAT_ICONS[v.productoId?.categoria]||'📦'}</div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-white text-sm">{v.productoId?.nombre||'Producto eliminado'}{v.cantidad>1&&<span className="text-slate-400 ml-1">×{v.cantidad}</span>}</p>
-                                        <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
-                                            {v.alumnoId ? <span className="text-blue-400">{v.alumnoId.nombre} {v.alumnoId.apellido||''}</span> : <span>Sin alumno</span>}
-                                            {v.nota?.includes('cuotas') && <span className="bg-blue-900/30 text-blue-400 text-[10px] font-black px-1.5 py-0.5 rounded border border-blue-700/30 uppercase tracking-tighter">Cuotas</span>}
-                                            {v.nota && !v.nota.includes('cuotas') && <span className="text-slate-500">· {v.nota}</span>}
+                                <div key={v._id} className="flex items-start sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-slate-800/40 transition-all border-b border-slate-700/10 last:border-0 relative">
+                                    <div className="text-xl sm:text-2xl w-8 sm:w-10 text-center flex-shrink-0 mt-0.5 sm:mt-0">{CAT_ICONS[v.productoId?.categoria]||'📦'}</div>
+                                    <div className="flex-1 min-w-0 pr-12 sm:pr-0">
+                                        <p className="font-bold text-white text-sm sm:text-base leading-tight">
+                                            {v.productoId?.nombre||'Producto eliminado'}
+                                            {v.cantidad>1 && <span className="text-slate-400 ml-1 text-xs">×{v.cantidad}</span>}
+                                        </p>
+                                        <p className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                            {v.alumnoId ? <span className="text-blue-400 font-medium">{v.alumnoId.nombre} {v.alumnoId.apellido||''}</span> : <span className="text-slate-500 italic">Sin alumno</span>}
+                                            {v.nota?.toLowerCase().includes('cuota') && (
+                                                <span className="bg-blue-900/40 text-blue-400 text-[9px] font-black px-1.5 py-0.5 rounded border border-blue-700/30 uppercase tracking-tighter">Plan</span>
+                                            )}
+                                            {v.nota && !v.nota.toLowerCase().includes('cuota') && (
+                                                <span className="text-slate-500 italic truncate max-w-[150px]">· {v.nota}</span>
+                                            )}
                                         </p>
                                     </div>
-                                    <div className="text-right flex-shrink-0">
-                                        <p className="font-black text-green-400">+${fmt(v.montoTotal)}</p>
-                                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter mb-1">Venta Total</p>
-                                        <p className="text-[10px] text-slate-600">{format(new Date(v.fecha), "dd/MM/yyyy HH:mm")}</p>
+                                    <div className="text-right flex-shrink-0 flex flex-col items-end gap-0.5">
+                                        <p className="font-black text-green-400 text-sm sm:text-base leading-none">+${fmt(v.montoTotal)}</p>
+                                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter sm:tracking-normal">Vendido</p>
+                                        <p className="text-[10px] text-slate-600 tabular-nums">{format(new Date(v.fecha), "dd/MM/yyyy HH:mm")}</p>
                                     </div>
                                 </div>
                             ))}

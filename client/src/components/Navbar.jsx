@@ -75,30 +75,31 @@ export default function Navbar() {
             </aside>
 
             {/* BOTTOM NAV (MOBILE) */}
-            <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-slate-900/80 backdrop-blur-xl border-t border-slate-800 flex items-center justify-around px-2 py-3 z-[60] pb-safe-area shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+            <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-slate-900/80 backdrop-blur-xl border-t border-slate-800 flex items-center justify-around px-1 py-2 z-[60] pb-safe-area shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
                 {navLinks.map((link) => (
                     <Link
                         key={link.to}
                         to={link.to}
-                        className={`flex flex-col items-center gap-1 p-2 transition-all ${
-                            link.active ? "text-rose-400" : "text-slate-500"
+                        className={`flex flex-col items-center gap-0.5 min-w-[60px] p-1 transition-all ${
+                            link.active ? "text-rose-500" : "text-slate-500"
                         }`}
                     >
-                        <div className={`p-2 rounded-xl transition-all ${link.active ? "bg-rose-500/10 scale-110" : ""}`}>
+                        <div className={`p-1.5 rounded-lg transition-all ${link.active ? "bg-rose-500/10 scale-105" : ""}`}>
+                            {/* Ajuste de tamaño de icono p/ móviles pequeños */}
                             {link.icon}
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest">{link.label}</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider">{link.label}</span>
                     </Link>
                 ))}
                 
                 <button
                     onClick={logout}
-                    className="flex flex-col items-center gap-1 p-2 text-slate-500"
+                    className="flex flex-col items-center gap-0.5 min-w-[60px] p-1 text-slate-500"
                 >
-                    <div className="p-2">
+                    <div className="p-1.5">
                         <LogOut size={20} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Salir</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider">Salir</span>
                 </button>
             </nav>
         </>

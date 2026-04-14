@@ -165,25 +165,35 @@ export default function FinanzasPage() {
                     ) : (
                         <div className="divide-y divide-slate-700/30">
                             {resumen.transacciones.map(t => (
-                                <div key={t._id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-800/50 transition-all">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black flex-shrink-0 ${t.tipo==="INGRESO" ? "bg-green-900/50 text-green-400 border border-green-700/40" : "bg-red-900/50 text-red-400 border border-red-700/40"}`}>
+                                <div key={t._id} className="flex items-start sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 hover:bg-slate-800/50 transition-all border-b border-slate-700/10 last:border-0 relative">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black flex-shrink-0 mt-1 sm:mt-0 ${t.tipo==="INGRESO" ? "bg-green-900/50 text-green-400 border border-green-700/40" : "bg-red-900/50 text-red-400 border border-red-700/40"}`}>
                                         {t.tipo==="INGRESO" ? "↑" : "↓"}
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-white text-sm truncate">{t.descripcion || t.categoria}</p>
-                                        <p className="text-xs text-slate-400 mt-0.5">
-                                            <span className="bg-slate-900 px-1.5 py-0.5 rounded-md border border-slate-700 mr-1">{t.categoria}</span>
-                                            {t.alumnoId && <span className="text-blue-400">{t.alumnoId.nombre} {t.alumnoId.apellido || ""}</span>}
-                                            {t.tuvoRecargo && <span className="text-orange-400 ml-1">⚠ Con mora</span>}
+                                    <div className="flex-1 min-w-0 pr-2">
+                                        <p className="font-bold text-white text-sm sm:text-base leading-tight truncate">
+                                            {t.descripcion || t.categoria}
                                         </p>
+                                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                            <span className="bg-slate-900 px-1.5 py-0.5 rounded-md border border-slate-700 text-[9px] text-slate-400 font-black uppercase tracking-wider flex-shrink-0">{t.categoria}</span>
+                                            {t.alumnoId && (
+                                                <span className="text-blue-400 text-[11px] font-bold truncate max-w-[120px]">
+                                                    {t.alumnoId.nombre} {t.alumnoId.apellido || ""}
+                                                </span>
+                                            )}
+                                            {t.tuvoRecargo && (
+                                                <span className="text-orange-400 text-[9px] font-black uppercase tracking-tighter bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20 flex-shrink-0">
+                                                    ⚠ Mora
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="text-right flex-shrink-0">
-                                        <p className={`font-black text-lg ${t.tipo==="INGRESO" ? "text-green-400" : "text-red-400"}`}>
+                                    <div className="text-right flex-shrink-0 flex flex-col items-end gap-0.5">
+                                        <p className={`font-black text-base sm:text-lg leading-none ${t.tipo==="INGRESO" ? "text-green-400" : "text-red-400"}`}>
                                             {t.tipo==="INGRESO" ? "+" : "-"}{config.moneda}{fmt(t.monto)}
                                         </p>
-                                        <p className="text-[10px] text-slate-500">{format(new Date(t.fecha),"dd/MM/yyyy")}</p>
+                                        <p className="text-[10px] text-slate-500 font-bold">{format(new Date(t.fecha),"dd/MM/yy")}</p>
                                     </div>
-                                    <button onClick={() => handleEliminar(t._id)} className="text-slate-600 hover:text-red-500 transition-colors ml-2 flex-shrink-0" title="Eliminar">✕</button>
+                                    <button onClick={() => handleEliminar(t._id)} className="absolute top-4 right-2 sm:static text-slate-600 hover:text-red-500 transition-colors sm:ml-2 flex-shrink-0 p-1" title="Eliminar">✕</button>
                                 </div>
                             ))}
                         </div>
