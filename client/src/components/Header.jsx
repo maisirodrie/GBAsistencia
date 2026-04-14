@@ -4,16 +4,16 @@ import UserProfile from "./UserProfile";
 export default function Header() {
     return (
         <header className="fixed top-0 left-0 lg:left-72 right-0 h-auto min-h-[5rem] lg:h-20 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 z-[70] flex flex-col lg:flex-row items-center justify-between px-6 py-4 lg:py-0 gap-4 lg:gap-0">
-            {/* Logo y Marca centrados en móvil */}
-            <div className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3">
+            {/* Logo y Marca centrados en móvil (Branding en una sola línea) */}
+            <div className="flex flex-row items-center justify-center gap-3 lg:gap-3">
                 <img 
                     src="/gbnorte_v4.png" 
                     alt="Logo" 
-                    className="h-12 lg:h-12 w-auto object-contain" 
+                    className="h-10 lg:h-12 w-auto object-contain" 
                 />
-                <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+                <div className="flex flex-col items-start text-left">
                     <span className="text-white font-black text-sm lg:text-xs tracking-widest uppercase italic leading-none">GB</span>
-                    <span className="text-slate-500 font-bold text-[9px] lg:text-[8px] tracking-widest uppercase leading-none mt-1">Asistente</span>
+                    <span className="text-slate-500 font-bold text-[8px] lg:text-[8px] tracking-widest uppercase leading-none mt-1">Asistente</span>
                 </div>
             </div>
 
