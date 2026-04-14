@@ -354,5 +354,3 @@ export const deleteUser = async (req, res) => {
     }
 };
 
-// Endpoint de diagnóstico para probar el envío de emails desde el servidor
-};
