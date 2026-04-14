@@ -23,7 +23,7 @@ function AppContent() {
         <div className="flex min-h-screen bg-slate-900 text-white flex-col lg:flex-row font-sans">
             {!isPublic && <Header />}
             {!isPublic && <Navbar />}
-            <main className={`flex-1 ${!isPublic ? "pt-20 pb-24 lg:pb-0" : "w-full h-screen overflow-hidden"}`}>
+            <main className={`flex-1 ${!isPublic ? "pt-44 sm:pt-48 lg:pt-20 pb-28 sm:pb-32 lg:pb-0" : "w-full h-screen overflow-hidden"}`}>
                 <div className={`${!isPublic ? "container mx-auto px-4 py-8" : "w-full h-full"}`}>
                     <Routes>
                         {/* Rutas Públicas */}
