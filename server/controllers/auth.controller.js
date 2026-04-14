@@ -360,20 +360,65 @@ export const testEmailDiagnostic = async (req, res) => {
         console.log('[AUTH] Iniciando DIAGNÓSTICO de email...');
         const testTarget = req.user?.email || 'maxi8_5@hotmail.com';
         
-        const info = await sendEmail(
-            testTarget,
-            '🔍 DIAGNÓSTICO: Prueba de Correo desde Render',
-            `
-                <div style="font-family: Arial, sans-serif; border: 2px solid #0ea5e9; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #0ea5e9;">Prueba de Diagnóstico Correcta</h2>
-                    <p>Si recibes este correo, el servidor de Render tiene acceso correcto a Brevo.</p>
-                    <hr>
-                    <p><strong>Remitente configurado:</strong> ${process.env.EMAIL_FROM || 'Usando EMAIL_USER'}</p>
-                    <p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p>
+        console.log(`[BREVO-API] Intentando enviar email a: ${testTarget}`);
+        const cleanKey = EMAIL_PASS?.replace(/\s+/g, '');
+        const keyPrefix = cleanKey ? cleanKey.substring(0, 10) : 'NO-KEY';
+        const keySuffix = cleanKey ? cleanKey.substring(cleanKey.length - 4) : 'N/A';
+        const keyShape = `${keyPrefix}...${keySuffix} (Largo: ${cleanKey?.length || 0})`;
+
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': cleanKey,
+                'x-sib-api-key': cleanKey, // Formato alternativo por compatibilidad
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: {
+                    name: "GB ASISTENTE",
+                    email: emailFrom
+                },
+                to: [{ email: testTarget }],
+                subject: '🔍 DIAGNÓSTICO: Prueba de Correo desde Render',
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; border: 2px solid #0ea5e9; padding: 20px; border-radius: 10px;">
+                        <h2 style="color: #0ea5e9;">Prueba de Diagnóstico Correcta</h2>
+                        <p>Si recibes este correo, el servidor de Render tiene acceso correcto a Brevo.</p>
+                        <hr>
+                        <p><strong>Remitente configurado:</strong> ${emailFrom}</p>
+                        <p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+                `
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("[BREVO-API] Error de respuesta detallado:", data);
+            return res.status(response.status).send(`
+                <div style="background: #0f172a; color: white; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+                    <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #ef4444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 600px;">
+                        <h1 style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">ERROR ❌</h1>
+                        <p style="font-size: 18px; color: #94a3b8;">Brevo rechazó la clave.</p>
+                        
+                        <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 20px; border-radius: 10px; font-family: monospace; color: #fda4af; overflow-wrap: break-word;">
+                            <p><strong>Clave Detectada:</strong> ${keyShape}</p>
+                            <p><strong>Error Brevo:</strong> ${data.message || 'Sin mensaje'}</p>
+                            <p><strong>Código Brevo:</strong> ${data.code || 'Sin código'}</p>
+                            <p><strong>Status HTTP:</strong> ${response.status}</p>
+                        </div>
+                        
+                        <div style="margin-top: 20px; font-size: 13px; color: #64748b; text-align: left;">
+                            💡 <b>Tip:</b> La clave debe empezar por <code>xkeysib-</code> y ser bastante larga (aprox 64-100 caracteres). 
+                            Si ves que mide solo 16, pegaste la clave SMTP vieja por error.
+                        </div>
+                    </div>
                 </div>
-            `
-        );
-        
+            `);
+        }
+
         res.send(`
             <div style="background: #0f172a; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
                 <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #22c55e; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
@@ -381,7 +426,7 @@ export const testEmailDiagnostic = async (req, res) => {
                     <p style="font-size: 18px; color: #94a3b8;">El servidor de Render envió el correo correctamente.</p>
                     <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 15px; border-radius: 10px; font-family: monospace;">
                         <p style="margin: 5px 0;"><strong>Destino:</strong> ${testTarget}</p>
-                        <p style="margin: 5px 0;"><strong>ID Mensaje:</strong> ${info.messageId}</p>
+                        <p style="margin: 5px 0;"><strong>ID Mensaje:</strong> ${data.messageId || 'N/A'}</p>
                     </div>
                     <p style="margin-top: 20px; font-size: 14px; color: #64748b;">Si no lo ves en tu bandeja, revisá SPAM.</p>
                 </div>
@@ -392,11 +437,10 @@ export const testEmailDiagnostic = async (req, res) => {
         res.status(500).send(`
             <div style="background: #0f172a; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
                 <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #ef4444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <h1 style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">ERROR ❌</h1>
-                    <p style="font-size: 18px; color: #94a3b8;">El servidor NO pudo enviar el correo.</p>
+                    <h1 style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">ERROR CRÍTICO ❌</h1>
+                    <p style="font-size: 18px; color: #94a3b8;">Falla de conexión interna.</p>
                     <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 20px; border-radius: 10px; font-family: monospace; color: #fda4af;">
                         <p><strong>Mensaje:</strong> ${error.message}</p>
-                        <p><strong>Código:</strong> ${error.code || 'N/A'}</p>
                     </div>
                 </div>
             </div>
