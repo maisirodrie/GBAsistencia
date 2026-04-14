@@ -12,6 +12,12 @@ const CATEGORIAS_EGRESO  = ["Mantenimiento/Servicios","Artículo","Otros"];
 const FAJA_COLORS = { Blanca:"bg-white text-gray-900", Azul:"bg-blue-700 text-white", Morada:"bg-purple-700 text-white", "Marrón":"bg-amber-900 text-white", Negra:"bg-black text-white" };
 
 function fmt(n) { return Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 0 }); }
+// Helper para formatear fecha evitando el shift de zona horaria (mantiene el día real)
+function fmtFecha(d, f = "dd/MM") {
+    const date = new Date(d);
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return format(new Date(date.getTime() + userTimezoneOffset), f);
+}
 
 const initialForm = { tipo:"INGRESO", categoria:"Artículo", monto:"", descripcion:"", fecha: format(new Date(),"yyyy-MM-dd"), alumnoId:"" };
 
@@ -197,7 +203,7 @@ export default function FinanzasPage() {
                                         <p className={`font-black text-base sm:text-lg leading-none ${t.tipo==="INGRESO" ? "text-green-400" : "text-red-400"}`}>
                                             {t.tipo==="INGRESO" ? "+" : "-"}{config.moneda}{fmt(t.monto)}
                                         </p>
-                                        <p className="text-[10px] text-slate-500 font-bold">{format(new Date(t.fecha),"dd/MM/yy")}</p>
+                                        <p className="text-[10px] text-slate-500 font-bold">{fmtFecha(t.fecha, "dd/MM/yy")}</p>
                                     </div>
                                     <button onClick={() => handleEliminar(t._id)} className="absolute top-4 right-1 sm:static text-slate-600 hover:text-red-500 transition-colors sm:ml-2 flex-shrink-0 p-1 bg-slate-900/40 rounded-md sm:bg-transparent" title="Eliminar">✕</button>
                                 </div>
@@ -244,7 +250,7 @@ export default function FinanzasPage() {
                             {pago ? (
                                 <div className="bg-green-900/30 border border-green-700/30 rounded-xl px-3 py-2 text-center">
                                     <p className="text-green-400 font-black text-sm">✔ Pago</p>
-                                    <p className="text-green-300 text-xs">{config.moneda}{fmt(pago.monto)} · {format(new Date(pago.fecha),"dd/MM")}{pago.tuvoRecargo && " ⚠ mora"}</p>
+                                    <p className="text-green-300 text-xs">{config.moneda}{fmt(pago.monto)} · {fmtFecha(pago.fecha)}{pago.tuvoRecargo && " ⚠ mora"}</p>
                                 </div>
                             ) : (
                                 <button onClick={() => handlePagarMembresia(alumno._id)}
