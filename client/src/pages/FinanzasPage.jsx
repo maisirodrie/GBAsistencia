@@ -174,12 +174,18 @@ export default function FinanzasPage() {
                                             {t.descripcion || t.categoria}
                                         </p>
                                         <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                            <span className="bg-slate-900 px-1.5 py-0.5 rounded-md border border-slate-700 text-[9px] text-slate-400 font-black uppercase tracking-wider flex-shrink-0">{t.categoria}</span>
-                                            {t.alumnoId && (
+                                            {/* Solo mostrar categoría si no es Membresía (ya está en la descripción) */}
+                                            {t.categoria !== 'Membresía' && (
+                                                <span className="bg-slate-900 px-1.5 py-0.5 rounded-md border border-slate-700 text-[9px] text-slate-400 font-black uppercase tracking-wider flex-shrink-0">{t.categoria}</span>
+                                            )}
+                                            
+                                            {/* Solo mostrar nombre si no está ya incluido en la descripción (evita redundancia) */}
+                                            {t.alumnoId && !t.descripcion?.includes(t.alumnoId.nombre) && (
                                                 <span className="text-blue-400 text-[11px] font-bold truncate max-w-[120px]">
                                                     {t.alumnoId.nombre} {t.alumnoId.apellido || ""}
                                                 </span>
                                             )}
+                                            
                                             {t.tuvoRecargo && (
                                                 <span className="text-orange-400 text-[9px] font-black uppercase tracking-tighter bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20 flex-shrink-0">
                                                     ⚠ Mora
