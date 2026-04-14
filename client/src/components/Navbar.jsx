@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Users, DollarSign, Package, LogOut, UserPlus, Shield, User as UserIcon } from "lucide-react";
+import { Users, DollarSign, Package, LogOut, UserPlus, Shield, Menu, ChevronLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-export default function Navbar() {
+export default function Navbar({ isCollapsed, onToggle }) {
     const location = useLocation();
     const { user, logout, isAuthenticated } = useAuth();
 
@@ -23,29 +23,39 @@ export default function Navbar() {
     return (
         <>
             {/* SIDEBAR (DESKTOP) */}
-            <aside className="hidden lg:flex flex-col w-72 bg-slate-900 border-r border-slate-800 h-screen sticky top-0 fixed left-0 z-50">
-                {/* Logo Section */}
-                <div className="p-8 pb-10">
-                    <Link to="/" className="flex flex-col items-center gap-2 group">
-                        <img 
-                            src="/gbnorte_v4.png" 
-                            alt="GB Norte Logo" 
-                            className="h-28 w-auto object-contain transition-transform group-hover:scale-105 duration-300" 
-                        />
-                        <div className="flex flex-col items-center">
-                            <span className="text-slate-100 font-black text-sm tracking-widest uppercase italic">GB</span>
-                            <span className="text-slate-500 font-bold text-[9px] tracking-[0.1em] uppercase leading-none mt-1 text-center">Asistente</span>
-                        </div>
-                    </Link>
+            <aside className={`hidden lg:flex flex-col ${isCollapsed ? "w-20" : "w-72"} bg-slate-900 border-r border-slate-800 h-screen sticky top-0 fixed left-0 z-50 transition-all duration-300`}>
+                {/* Logo & Toggle Section */}
+                <div className={`p-6 flex items-center ${isCollapsed ? "justify-center" : "justify-between"} mb-4`}>
+                    {!isCollapsed && (
+                        <Link to="/" className="flex flex-col items-center gap-1 group">
+                            <img 
+                                src="/gbnorte_v4.png" 
+                                alt="GB Norte Logo" 
+                                className="h-16 w-auto object-contain transition-transform group-hover:scale-105 duration-300" 
+                            />
+                            <div className="flex flex-col items-center">
+                                <span className="text-slate-100 font-black text-[10px] tracking-widest uppercase italic">GB</span>
+                                <span className="text-slate-500 font-bold text-[7px] tracking-[0.1em] uppercase leading-none mt-0.5 text-center">Asistente</span>
+                            </div>
+                        </Link>
+                    )}
+                    
+                    <button 
+                        onClick={onToggle}
+                        className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
+                        title={isCollapsed ? "Expandir menú" : "Contraer menú"}
+                    >
+                        {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
+                    </button>
                 </div>
 
                 {/* Navigation Links */}
-                <nav className="flex-1 px-4 space-y-2">
+                <nav className="flex-1 px-3 space-y-2">
                     {navLinks.map((link) => (
                         <Link
                             key={link.to}
                             to={link.to}
-                            className={`flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-sm transition-all duration-300 group ${
+                            className={`flex items-center ${isCollapsed ? "justify-center" : "gap-4 px-6"} py-4 rounded-2xl font-black text-sm transition-all duration-300 group ${
                                 link.active
                                     ? "bg-slate-800 text-white border border-slate-700"
                                     : "text-slate-400 hover:text-white hover:bg-slate-800/50"
@@ -54,8 +64,8 @@ export default function Navbar() {
                             <span className={`${link.active ? "text-white" : "text-slate-500 group-hover:text-rose-400"} transition-colors`}>
                                 {link.icon}
                             </span>
-                            <span className="tracking-wide">{link.label}</span>
-                            {link.active && (
+                            {!isCollapsed && <span className="tracking-wide whitespace-nowrap">{link.label}</span>}
+                            {link.active && !isCollapsed && (
                                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></div>
                             )}
                         </Link>
@@ -63,13 +73,14 @@ export default function Navbar() {
                 </nav>
 
                 {/* Footer Action */}
-                <div className="p-6">
+                <div className="p-4">
                     <Link
                         to="/nuevo"
-                        className="w-full bg-gradient-to-br from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all border border-red-500/20"
+                        className={`w-full bg-gradient-to-br from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black py-4 rounded-2xl flex items-center justify-center ${isCollapsed ? "" : "gap-2"} shadow-xl active:scale-95 transition-all border border-red-500/20`}
+                        title="Nuevo Alumno"
                     >
                         <UserPlus size={18} />
-                        <span>NUEVO ALUMNO</span>
+                        {!isCollapsed && <span className="whitespace-nowrap">NUEVO ALUMNO</span>}
                     </Link>
                 </div>
             </aside>

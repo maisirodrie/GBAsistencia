@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Header from "./components/Header";
@@ -15,15 +16,19 @@ import { AuthProvider } from "./context/AuthContext";
 
 function AppContent() {
     const location = useLocation();
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    
     const isPublic = location.pathname === "/checkin" || 
                      location.pathname.startsWith("/mi-pase/") || 
                      location.pathname === "/login";
 
+    const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+
     return (
-        <div className="flex min-h-screen bg-slate-900 text-white flex-col lg:flex-row font-sans">
-            {!isPublic && <Header />}
-            {!isPublic && <Navbar />}
-            <main className={`flex-1 ${!isPublic ? "pt-44 sm:pt-48 lg:pt-20 pb-28 sm:pb-32 lg:pb-0" : "w-full h-screen overflow-hidden"}`}>
+        <div className="flex min-h-screen bg-slate-900 text-white flex-col lg:flex-row font-sans overflow-x-hidden">
+            {!isPublic && <Header isSidebarCollapsed={isSidebarCollapsed} />}
+            {!isPublic && <Navbar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />}
+            <main className={`flex-1 transition-all duration-300 ${!isPublic ? `pt-44 sm:pt-48 lg:pt-20 pb-28 sm:pb-32 lg:pb-0 ${isSidebarCollapsed ? "lg:pl-20" : "lg:pl-72"}` : "w-full h-screen overflow-hidden"}`}>
                 <div className={`${!isPublic ? "container mx-auto px-4 py-8" : "w-full h-full"}`}>
                     <Routes>
                         {/* Rutas Públicas */}

@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import UserProfile from "./UserProfile";
 
-export default function Header() {
+export default function Header({ isSidebarCollapsed }) {
     return (
-        <header className="fixed top-0 left-0 lg:left-72 right-0 h-auto min-h-[5rem] lg:h-20 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 z-[70] flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-4 lg:py-0 gap-4 lg:gap-0">
-            {/* Logo y Marca alineados a la izquierda en móvil */}
-            <div className="flex flex-row items-center justify-start gap-3 lg:gap-3">
+        <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? "lg:left-20" : "lg:left-72"} right-0 h-auto min-h-[5rem] lg:h-20 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 z-[70] flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-4 lg:py-0 gap-4 lg:gap-0 transition-all duration-300`}>
+            {/* Logo y Marca alineados a la izquierda en móvil (Se oculta en desktop si la sidebar ya tiene el logo) */}
+            <div className={`flex flex-row items-center justify-start gap-3 lg:gap-3 ${!isSidebarCollapsed ? "lg:hidden" : "lg:flex"}`}>
                 <img 
                     src="/gbnorte_v4.png" 
                     alt="Logo" 
