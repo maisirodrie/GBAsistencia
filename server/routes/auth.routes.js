@@ -9,8 +9,7 @@ import {
     resetPassword,
     getUsers,
     deleteUser,
-    updateUser,
-    testEmailDiagnostic
+    updateUser
 } from '../controllers/auth.controller.js';
 import { validateToken, isAdmin } from '../middlewares/validateToken.js';
 
