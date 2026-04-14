@@ -363,9 +363,10 @@ export const testEmailDiagnostic = async (req, res) => {
         const testTarget = req.user?.email || 'maxi8_5@hotmail.com';
         
         console.log(`[BREVO-API] Intentando enviar email a: ${testTarget}`);
-        const cleanKey = EMAIL_PASS?.replace(/\s+/g, '');
+        const rawKey = process.env.EMAIL_PASS || (typeof EMAIL_PASS !== 'undefined' ? EMAIL_PASS : '');
+        const cleanKey = rawKey?.replace(/\s+/g, '');
         const keyPrefix = cleanKey ? cleanKey.substring(0, 10) : 'NO-KEY';
-        const keySuffix = cleanKey ? cleanKey.substring(cleanKey.length - 4) : 'N/A';
+        const keySuffix = cleanKey ? cleanKey.substring(Math.max(0, cleanKey.length - 4)) : 'N/A';
         const keyShape = `${keyPrefix}...${keySuffix} (Largo: ${cleanKey?.length || 0})`;
 
         const response = await fetch('https://api.brevo.com/v3/smtp/email', {
