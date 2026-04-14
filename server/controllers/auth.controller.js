@@ -2,11 +2,9 @@ import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import { createAccessToken } from '../utils/jwt.js';
 import jwt from 'jsonwebtoken';
-import { TOKEN_SECRET, FRONTEND_URL, EMAIL_PASS, EMAIL_USER } from '../config.js';
+import { TOKEN_SECRET, FRONTEND_URL } from '../config.js';
 import { sendEmail } from '../utils/nodemailer.js';
 import crypto from 'crypto';
-
-const emailFrom = process.env.EMAIL_FROM || EMAIL_USER;
 
 // Detectamos si estamos en producción según el FRONTEND_URL configurado
 // Esto es más confiable que NODE_ENV que puede no estar seteada en Render
@@ -357,96 +355,4 @@ export const deleteUser = async (req, res) => {
 };
 
 // Endpoint de diagnóstico para probar el envío de emails desde el servidor
-export const testEmailDiagnostic = async (req, res) => {
-    try {
-        console.log('[AUTH] Iniciando DIAGNÓSTICO de email...');
-        const testTarget = req.user?.email || 'maxi8_5@hotmail.com';
-        
-        console.log(`[BREVO-API] Intentando enviar email a: ${testTarget}`);
-        const rawKey = process.env.EMAIL_PASS || (typeof EMAIL_PASS !== 'undefined' ? EMAIL_PASS : '');
-        const cleanKey = rawKey?.replace(/\s+/g, '');
-        const keyPrefix = cleanKey ? cleanKey.substring(0, 10) : 'NO-KEY';
-        const keySuffix = cleanKey ? cleanKey.substring(Math.max(0, cleanKey.length - 4)) : 'N/A';
-        const keyShape = `${keyPrefix}...${keySuffix} (Largo: ${cleanKey?.length || 0})`;
-
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-                'accept': 'application/json',
-                'api-key': cleanKey,
-                'x-sib-api-key': cleanKey, // Formato alternativo por compatibilidad
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                sender: {
-                    name: "GB ASISTENTE",
-                    email: emailFrom
-                },
-                to: [{ email: testTarget }],
-                subject: '🔍 DIAGNÓSTICO: Prueba de Correo desde Render',
-                htmlContent: `
-                    <div style="font-family: Arial, sans-serif; border: 2px solid #0ea5e9; padding: 20px; border-radius: 10px;">
-                        <h2 style="color: #0ea5e9;">Prueba de Diagnóstico Correcta</h2>
-                        <p>Si recibes este correo, el servidor de Render tiene acceso correcto a Brevo.</p>
-                        <hr>
-                        <p><strong>Remitente configurado:</strong> ${emailFrom}</p>
-                        <p><strong>Fecha:</strong> ${new Date().toLocaleString()}</p>
-                    </div>
-                `
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error("[BREVO-API] Error de respuesta detallado:", data);
-            return res.status(response.status).send(`
-                <div style="background: #0f172a; color: white; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-                    <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #ef4444; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 600px;">
-                        <h1 style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">ERROR ❌</h1>
-                        <p style="font-size: 18px; color: #94a3b8;">Brevo rechazó la clave.</p>
-                        
-                        <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 20px; border-radius: 10px; font-family: monospace; color: #fda4af; overflow-wrap: break-word;">
-                            <p><strong>Clave Detectada:</strong> ${keyShape}</p>
-                            <p><strong>Error Brevo:</strong> ${data.message || 'Sin mensaje'}</p>
-                            <p><strong>Código Brevo:</strong> ${data.code || 'Sin código'}</p>
-                            <p><strong>Status HTTP:</strong> ${response.status}</p>
-                        </div>
-                        
-                        <div style="margin-top: 20px; font-size: 13px; color: #64748b; text-align: left;">
-                            💡 <b>Tip:</b> La clave debe empezar por <code>xkeysib-</code> y ser bastante larga (aprox 64-100 caracteres). 
-                            Si ves que mide solo 16, pegaste la clave SMTP vieja por error.
-                        </div>
-                    </div>
-                </div>
-            `);
-        }
-
-        res.send(`
-            <div style="background: #0f172a; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-                <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #22c55e; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <h1 style="color: #22c55e; font-size: 40px; margin-bottom: 10px;">¡ÉXITO! ✅</h1>
-                    <p style="font-size: 18px; color: #94a3b8;">El servidor de Render envió el correo correctamente.</p>
-                    <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 15px; border-radius: 10px; font-family: monospace;">
-                        <p style="margin: 5px 0;"><strong>Destino:</strong> ${testTarget}</p>
-                        <p style="margin: 5px 0;"><strong>ID Mensaje:</strong> ${data.messageId || 'N/A'}</p>
-                    </div>
-                    <p style="margin-top: 20px; font-size: 14px; color: #64748b;">Si no lo ves en tu bandeja, revisá SPAM.</p>
-                </div>
-            </div>
-        `);
-    } catch (error) {
-        console.error('[AUTH] ERROR EN DIAGNÓSTICO:', error);
-        res.status(500).send(`
-            <div style="background: #0f172a; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-                <div style="background: #1e293b; padding: 40px; border-radius: 20px; border: 2px solid #ef4444; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                    <h1 style="color: #ef4444; font-size: 40px; margin-bottom: 10px;">ERROR CRÍTICO ❌</h1>
-                    <p style="font-size: 18px; color: #94a3b8;">Falla de conexión interna.</p>
-                    <div style="margin-top: 30px; text-align: left; background: #0f172a; padding: 20px; border-radius: 10px; font-family: monospace; color: #fda4af;">
-                        <p><strong>Mensaje:</strong> ${error.message}</p>
-                    </div>
-                </div>
-            </div>
-        `);
-    }
 };

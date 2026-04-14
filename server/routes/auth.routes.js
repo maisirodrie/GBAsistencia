@@ -29,7 +29,4 @@ router.get('/users', validateToken, isAdmin, getUsers);
 router.put('/users/:id', validateToken, isAdmin, updateUser);
 router.delete('/users/:id', validateToken, isAdmin, deleteUser);
 
-// Diagnóstico (Sin protección temporalmente para facilitar la prueba)
-router.get('/test-diagnostic', testEmailDiagnostic);
-
 export default router;
