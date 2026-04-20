@@ -570,7 +570,7 @@ export default function AlumnoFormPage() {
             </div>
 
             {/* ── GRÁFICO DE PROGRESO (ancho completo) ── */}
-            {id && asistencias.length > 0 && watch("trackProgreso") !== false && (
+            {id && asistencias.length > 0 && (
                 <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-slate-700/50 shadow-2xl animate-in fade-in duration-700">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/50 pb-4 mb-6">
                         <h3 className="text-sm font-black text-white flex items-center gap-2">
