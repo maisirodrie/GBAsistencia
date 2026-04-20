@@ -63,9 +63,12 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, faja, grado, ultimaGraduacion, clasesParaGraduacion, trackProgreso } = req.body;
+        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, trackProgreso } = req.body;
         const newAlumno = new Alumno({
             nombre,
+            apellido,
+            celular,
+            categoria,
             faja,
             grado,
             clasesParaGraduacion: clasesParaGraduacion || 30,
