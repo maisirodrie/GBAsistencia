@@ -68,6 +68,7 @@ export default function AlumnoFormPage() {
             setValue("faja", data.faja ?? "Branca");
             setValue("grado", String(data.grado ?? 0));
             setValue("clasesParaGraduacion", data.clasesParaGraduacion || 30);
+            setValue("trackProgreso", data.trackProgreso ?? true);
             setValue("fotoUrl", data.fotoUrl || "");
             setCategoria(data.categoria || 'Adulto');
             if (data.ultimaGraduacion) {
@@ -324,6 +325,21 @@ export default function AlumnoFormPage() {
                             </div>
                         </div>
 
+                        {/* Seguimiento de Graduación Toggle */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Sistema de Graduación</label>
+                            <div className="flex items-center gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-700/40 hover:border-slate-600/60 transition-all cursor-pointer shadow-md" onClick={() => setValue("trackProgreso", watch("trackProgreso") === false ? true : false)}>
+                                <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${watch("trackProgreso") !== false ? 'bg-red-600' : 'bg-slate-700'}`}>
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${watch("trackProgreso") !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-white tracking-wide">Seguimiento Automático</span>
+                                    <span className="text-[10px] text-slate-400 font-medium">Habilitar cálculo de grados y barra de progreso</span>
+                                </div>
+                                <input type="checkbox" className="hidden" {...register("trackProgreso")} />
+                            </div>
+                        </div>
+
                         {/* Nombre y Apellido */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
@@ -406,20 +422,22 @@ export default function AlumnoFormPage() {
                                     {...register("ultimaGraduacion")}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Req. p/ Graduar</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
-                                    {...register("clasesParaGraduacion", { required: true, valueAsNumber: true })}
-                                />
-                            </div>
+                            {watch("trackProgreso") !== false && (
+                                <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Req. p/ Graduar (Clases)</label>
+                                    <input
+                                        type="number"
+                                        placeholder="Por defecto: 30"
+                                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                        {...register("clasesParaGraduacion", { valueAsNumber: true })}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Progreso Visual */}
-                        {id && (
-                            <div className="pt-8">
+                        {id && watch("trackProgreso") !== false && (
+                            <div className="pt-8 animate-in zoom-in-95 duration-500">
                                 {(() => {
                                     const reqBase = watch("clasesParaGraduacion") || 30;
                                     const gradoActual = parseInt(watch("grado") || 0, 10);
@@ -428,9 +446,12 @@ export default function AlumnoFormPage() {
                                     const strUg = watch("ultimaGraduacion");
                                     const isFuture = strUg && (new Date(strUg + "T12:00:00") > new Date());
                                     
-                                    const validasParaCalculo = (strUg && !isFuture) ? asistenciasValidas.length : asistencias.length;
-                                    const clasesHaciaProximo = validasParaCalculo - (gradoActual * reqBase);
-                                    const clasesProgreso = Math.max(0, clasesHaciaProximo);
+                                    const validasoAcumuladas = (strUg && !isFuture) ? asistenciasValidas.length : asistencias.length;
+                                    
+                                    // Usamos el residuo (%) para que el progreso sea siempre relativo al próximo grado/faja
+                                    // Si tiene grado 4, el progreso es hacia la faja. 
+                                    // Si tiene grado 0-3, es hacia la siguiente raya.
+                                    const clasesProgreso = validasoAcumuladas % reqBase;
                                     const pct = Math.min((clasesProgreso / reqBase) * 100, 100);
                                     
                                     return (
@@ -453,9 +474,8 @@ export default function AlumnoFormPage() {
                                             </div>
                                             <p className="text-xs text-slate-500 mt-4 font-medium text-center">
                                                 {strUg && !isFuture 
-                                                    ? `Clases desde última graducación: ${asistenciasValidas.length}` 
+                                                    ? `Clases desde última graduación: ${asistenciasValidas.length}` 
                                                     : `Total de clases acumuladas: ${asistencias.length}`}
-                                                {gradoActual > 0 && ` (-${gradoActual * reqBase} por grados)`}
                                             </p>
                                         </div>
                                     );
@@ -550,8 +570,8 @@ export default function AlumnoFormPage() {
             </div>
 
             {/* ── GRÁFICO DE PROGRESO (ancho completo) ── */}
-            {id && asistencias.length > 0 && (
-                <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-slate-700/50 shadow-2xl">
+            {id && asistencias.length > 0 && watch("trackProgreso") !== false && (
+                <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-slate-700/50 shadow-2xl animate-in fade-in duration-700">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/50 pb-4 mb-6">
                         <h3 className="text-sm font-black text-white flex items-center gap-2">
                             <span className="bg-blue-500/20 text-blue-400 p-2 rounded-xl leading-none border border-blue-500/20">📈</span>

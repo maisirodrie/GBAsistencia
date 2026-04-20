@@ -48,6 +48,10 @@ const alumnoSchema = new mongoose.Schema({
         default: 30,
         min: 1
     },
+    trackProgreso: {
+        type: Boolean,
+        default: true
+    },
     historicoGraduaciones: [
         {
             faja: String,

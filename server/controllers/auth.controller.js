@@ -6,15 +6,17 @@ import { TOKEN_SECRET, FRONTEND_URL } from '../config.js';
 import { sendEmail } from '../utils/nodemailer.js';
 import crypto from 'crypto';
 
-// Detectamos si estamos en producción según el FRONTEND_URL configurado
-// Esto es más confiable que NODE_ENV que puede no estar seteada en Render
-const isProduction = FRONTEND_URL.startsWith('https://');
+// Detectamos si estamos en producción basándonos en NODE_ENV
+// En Render, NODE_ENV suele ser 'production' automáticamente.
+// En local, será 'development' o undefined.
+const isProduction = process.env.NODE_ENV === 'production';
 
 const cookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    path: '/'
+    secure: isProduction, // Solo seguro en producción (HTTPS obligatorio)
+    sameSite: isProduction ? 'none' : 'lax', // 'none' permite cross-site (Vercel<->Render), 'lax' es para local
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000 // 24 horas
 };
 
 console.log(`[CONFIG] Modo: ${isProduction ? 'PRODUCCIÓN' : 'DESARROLLO'} | FRONTEND: ${FRONTEND_URL}`);
