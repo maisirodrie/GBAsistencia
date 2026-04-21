@@ -9,6 +9,7 @@ import alumnoRoutes from './routes/alumno.routes.js';
 import finanzasRoutes from './routes/finanzas.routes.js';
 import productosRoutes from './routes/productos.routes.js';
 import planPagoRoutes from './routes/planPago.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
 import { validateToken } from './middlewares/validateToken.js';
 import { FRONTEND_URL } from './config.js';
 
@@ -51,5 +52,6 @@ app.use('/api', validateToken, alumnoRoutes);
 app.use('/api', validateToken, finanzasRoutes);
 app.use('/api', validateToken, productosRoutes);
 app.use('/api', validateToken, planPagoRoutes);
+app.use('/api', validateToken, dashboardRoutes);
 
 export default app;

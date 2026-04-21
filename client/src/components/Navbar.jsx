@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Users, DollarSign, Package, LogOut, UserPlus, Shield, Menu, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, Users, DollarSign, Package, LogOut, UserPlus, Shield, Menu, ChevronLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar({ isCollapsed, onToggle }) {
@@ -9,7 +9,8 @@ export default function Navbar({ isCollapsed, onToggle }) {
     const isActive = (path) => location.pathname === path;
 
     const navLinks = [
-        { to: "/", label: "Alumnos", icon: <Users size={20} />, active: isActive("/") },
+        { to: "/", label: "Panel", icon: <LayoutDashboard size={20} />, active: isActive("/") },
+        { to: "/alumnos", label: "Alumnos", icon: <Users size={20} />, active: isActive("/alumnos") },
         { to: "/finanzas", label: "Finanzas", icon: <DollarSign size={20} />, active: isActive("/finanzas") },
         { to: "/stock", label: "Stock", icon: <Package size={20} />, active: isActive("/stock") },
     ];

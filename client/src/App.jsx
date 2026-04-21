@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Header from "./components/Header";
 import AlumnosPage from "./pages/AlumnosPage";
 import AlumnoFormPage from "./pages/AlumnoFormPage";
+import DashboardPage from "./pages/DashboardPage";
 import FinanzasPage from "./pages/FinanzasPage";
 import ProductosPage from "./pages/ProductosPage";
 import CheckInPage from "./pages/CheckInPage";
@@ -38,7 +39,8 @@ function AppContent() {
 
                         {/* Rutas Protegidas */}
                         <Route element={<ProtectedRoute />}>
-                            <Route path="/" element={<AlumnosPage />} />
+                            <Route path="/" element={<DashboardPage />} />
+                            <Route path="/alumnos" element={<AlumnosPage />} />
                             <Route path="/nuevo" element={<AlumnoFormPage />} />
                             <Route path="/editar/:id" element={<AlumnoFormPage />} />
                             <Route path="/finanzas" element={<FinanzasPage />} />
