@@ -4,6 +4,6 @@ import { validateToken } from '../middlewares/validateToken.js';
 
 const router = Router();
 
-router.get('/dashboard/stats', validateToken, getStats);
+router.get('/dashboard/stats', getStats);
 
 export default router;

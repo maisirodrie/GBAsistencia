@@ -14,7 +14,7 @@ import { validateToken, hasRole } from '../middlewares/validateToken.js';
 const router = Router();
 const isGestion = hasRole(['Admin', 'Encargado']);
 
-router.use(validateToken, isGestion);
+router.use(isGestion);
 
 router.get('/productos', getProductos);
 router.get('/productos/todos', getTodosProductos);

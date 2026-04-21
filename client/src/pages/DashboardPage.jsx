@@ -37,6 +37,24 @@ export default function DashboardPage() {
         </div>
     );
 
+    if (!data) return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center p-10 bg-red-500/10 border border-red-500/20 rounded-[2.5rem] max-w-md">
+                <span className="text-5xl mb-4 block">⚠️</span>
+                <h2 className="text-xl font-black text-red-500 uppercase tracking-tighter mb-2">Error de Conexión</h2>
+                <p className="text-slate-400 font-bold text-sm leading-relaxed mb-6">
+                    No pudimos cargar las estadísticas. Es posible que tu sesión haya expirado debido a la reciente actualización de seguridad.
+                </p>
+                <button 
+                    onClick={() => window.location.reload()} 
+                    className="bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black transition-all active:scale-95 shadow-lg shadow-red-600/20"
+                >
+                    REINTENTAR ACCESO
+                </button>
+            </div>
+        </div>
+    );
+
     const { stats, ultimasTransacciones, proximosAGraduar } = data;
 
     return (

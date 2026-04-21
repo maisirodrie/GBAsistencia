@@ -12,8 +12,9 @@ export const validateToken = (req, res, next) => {
 
     jwt.verify(token, TOKEN_SECRET, (err, user) => {
         if (err) {
-            console.log("Token verification failed:", err.message);
-            return res.status(403).json({ message: "Token inválido" });
+            console.log(`[AUTH] Fallo en verificación de token: ${err.message}`);
+            const errorMsg = err.name === 'TokenExpiredError' ? "Tu sesión ha expirado" : "Error de autenticación";
+            return res.status(403).json({ message: errorMsg, code: err.name });
         }
 
         req.user = user;
@@ -23,9 +24,14 @@ export const validateToken = (req, res, next) => {
 
 export const hasRole = (rolesAllowed) => {
     return (req, res, next) => {
-        if (!req.user || !rolesAllowed.includes(req.user.role)) {
+        if (!req.user) {
+            return res.status(401).json({ message: "No autenticado" });
+        }
+        
+        if (!rolesAllowed.includes(req.user.role)) {
+            console.log(`[AUTH] Acceso denegado: Usuario ${req.user.id} con rol '${req.user.role}' intentó acceder a ruta para [${rolesAllowed.join(', ')}]`);
             return res.status(403).json({ 
-                message: `Acceso denegado. Se requiere uno de los siguientes roles: ${rolesAllowed.join(', ')}` 
+                message: `No tienes permisos suficientes para realizar esta acción.` 
             });
         }
         next();
