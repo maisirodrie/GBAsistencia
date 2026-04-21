@@ -6,11 +6,11 @@ import {
     updateAlumno,
     deleteAlumno,
     subirFotoAlumno,
-    generarCartaoPDF,
     addAsistencia,
     removeAsistencia,
     checkIn
 } from '../controllers/alumno.controller.js';
+import { generarCartaoPDF } from '../controllers/pdf.controller.js';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
