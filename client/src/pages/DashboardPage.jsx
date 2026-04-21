@@ -47,9 +47,19 @@ export default function DashboardPage() {
                 </p>
                 <button 
                     onClick={() => {
-                        // Forzamos limpieza y redirección
-                        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                        window.location.href = "/login";
+                        // Limpieza profunda de cookies en todos los dominios posibles
+                        const clearCookie = (name) => {
+                            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;';
+                            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; domain=' + window.location.hostname + ';';
+                        };
+                        clearCookie('token');
+                        
+                        // Forzar limpieza de localStorage por si acaso
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        
+                        // Redirección definitiva
+                        window.location.replace("/login");
                     }} 
                     className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-xl font-black transition-all active:scale-95 shadow-lg shadow-red-600/20 uppercase tracking-widest text-sm"
                 >

@@ -5,7 +5,7 @@ export const createAccessToken = (payload) => {
     return new Promise((resolve, reject) => {
         jwt.sign(
             payload,
-            process.env.TOKEN_SECRET || 'some_secret_key', // Usando la variable de entorno o fallback
+            TOKEN_SECRET,
             {
                 expiresIn: "1d"
             },
