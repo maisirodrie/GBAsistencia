@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardStats } from "../api/dashboard";
 import { UPLOAD_URL } from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 import BeltBadge from "../components/BeltBadge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export default function DashboardPage() {
+    const { user } = useAuth();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -43,7 +45,7 @@ export default function DashboardPage() {
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-red-600/5 rounded-full blur-[80px]"></div>
                 <div className="relative z-10 font-[Outfit]">
                     <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                        ¡Bienvenido, <span className="bg-gradient-to-r from-red-400 to-rose-300 bg-clip-text text-transparent italic">Mestre</span>!
+                        ¡Bienvenido, <span className="bg-gradient-to-r from-red-400 to-rose-300 bg-clip-text text-transparent italic">{user?.nombre || "Mestre"}</span>!
                     </h1>
                     <p className="text-slate-400 font-bold mt-2 text-lg uppercase tracking-[0.2em]">{format(new Date(), "EEEE d 'de' MMMM", { locale: es })}</p>
                 </div>
