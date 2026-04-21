@@ -14,7 +14,7 @@ export default function Navbar({ isCollapsed, onToggle }) {
     ];
 
     const canSeeFinance = ['Admin', 'Encargado'].includes(user?.role);
-    const canSeeStock = ['Admin', 'Encargado', 'Profesor'].includes(user?.role);
+    const canSeeStock = ['Admin', 'Encargado'].includes(user?.role);
 
     if (canSeeFinance) {
         navLinks.push({ to: "/finanzas", label: "Finanzas", icon: <DollarSign size={20} />, active: isActive("/finanzas") });

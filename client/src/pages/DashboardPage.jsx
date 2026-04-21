@@ -55,9 +55,11 @@ export default function DashboardPage() {
                     <button onClick={() => navigate('/nuevo')} className="flex-1 md:flex-none bg-red-600 hover:bg-red-500 text-white px-6 py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-red-800 active:border-b-0 uppercase tracking-wider text-sm">
                         <span className="text-xl leading-none">+</span> Alumno
                     </button>
-                    <button onClick={() => navigate('/finanzas')} className="flex-1 md:flex-none bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 border border-slate-700 flex items-center justify-center gap-2 uppercase tracking-wider text-sm">
-                        <span className="text-lg leading-none">💰</span> Nueva Venta
-                    </button>
+                    {isAdminOrEncargado && (
+                        <button onClick={() => navigate('/finanzas')} className="flex-1 md:flex-none bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 border border-slate-700 flex items-center justify-center gap-2 uppercase tracking-wider text-sm">
+                            <span className="text-lg leading-none">💰</span> Nueva Venta
+                        </button>
+                    )}
                 </div>
             </div>
 
