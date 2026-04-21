@@ -41,15 +41,19 @@ export default function DashboardPage() {
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center p-10 bg-red-500/10 border border-red-500/20 rounded-[2.5rem] max-w-md">
                 <span className="text-5xl mb-4 block">⚠️</span>
-                <h2 className="text-xl font-black text-red-500 uppercase tracking-tighter mb-2">Error de Conexión</h2>
+                <h2 className="text-xl font-black text-red-500 uppercase tracking-tighter mb-2">Sesión Inválida</h2>
                 <p className="text-slate-400 font-bold text-sm leading-relaxed mb-6">
-                    No pudimos cargar las estadísticas. Es posible que tu sesión haya expirado debido a la reciente actualización de seguridad.
+                    Debido a la actualización de seguridad, tu sesión actual ya no es válida. Debes volver a ingresar para continuar.
                 </p>
                 <button 
-                    onClick={() => window.location.reload()} 
-                    className="bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-xl font-black transition-all active:scale-95 shadow-lg shadow-red-600/20"
+                    onClick={() => {
+                        // Forzamos limpieza y redirección
+                        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                        window.location.href = "/login";
+                    }} 
+                    className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-xl font-black transition-all active:scale-95 shadow-lg shadow-red-600/20 uppercase tracking-widest text-sm"
                 >
-                    REINTENTAR ACCESO
+                    Volver a Ingresar
                 </button>
             </div>
         </div>
