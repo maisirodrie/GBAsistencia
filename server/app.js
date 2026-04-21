@@ -47,11 +47,11 @@ app.use(cookieParser());
 app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/', (req, res) => res.status(200).send(`¡Servidor de GB ASISTENTE funcionando! (v.1.1.2)`));
 
-app.use('/api', authRoutes);
-app.use('/api', validateToken, alumnoRoutes);
-app.use('/api', validateToken, finanzasRoutes);
-app.use('/api', validateToken, productosRoutes);
-app.use('/api', validateToken, planPagoRoutes);
-app.use('/api', validateToken, dashboardRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/alumnos', validateToken, alumnoRoutes);
+app.use('/api/finanzas', validateToken, finanzasRoutes);
+app.use('/api/productos', validateToken, productosRoutes);
+app.use('/api/planes', validateToken, planPagoRoutes);
+app.use('/api/dashboard', validateToken, dashboardRoutes);
 
 export default app;

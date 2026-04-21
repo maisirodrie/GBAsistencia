@@ -9,20 +9,21 @@ import {
     venderProducto,
     ajustarStock
 } from '../controllers/productos.controller.js';
-import { validateToken, hasRole } from '../middlewares/validateToken.js';
+import { hasRole } from '../middlewares/validateToken.js';
 
 const router = Router();
 const isGestion = hasRole(['Admin', 'Encargado']);
 
-router.use(isGestion);
-
-router.get('/productos', getProductos);
-router.get('/productos/todos', getTodosProductos);
-router.get('/productos/ventas', getVentas);
-router.post('/productos', crearProducto);
-router.put('/productos/:id', updateProducto);
-router.delete('/productos/:id', deleteProducto);
-router.put('/productos/:id/stock', ajustarStock);
-router.post('/productos/vender', venderProducto);
+// Aplicamos el permiso a todas las rutas de este módulo
+// Note: router.use(isGestion) could still work here because this router is isolated now,
+// but applying it to routes is slightly more explicit.
+router.get('/', isGestion, getProductos);
+router.get('/todos', isGestion, getTodosProductos);
+router.get('/ventas', isGestion, getVentas);
+router.post('/', isGestion, crearProducto);
+router.put('/:id', isGestion, updateProducto);
+router.delete('/:id', isGestion, deleteProducto);
+router.put('/:id/stock', isGestion, ajustarStock);
+router.post('/vender', isGestion, venderProducto);
 
 export default router;
