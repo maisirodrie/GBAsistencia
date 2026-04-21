@@ -9,8 +9,12 @@ import {
     pagarMembresia,
     getEstadoMembresias
 } from '../controllers/finanzas.controller.js';
+import { validateToken, hasRole } from '../middlewares/validateToken.js';
 
 const router = Router();
+const isFinanzas = hasRole(['Admin', 'Encargado']);
+
+router.use(validateToken, isFinanzas);
 
 router.get('/finanzas/configuracion', getConfiguracion);
 router.put('/finanzas/configuracion', updateConfiguracion);

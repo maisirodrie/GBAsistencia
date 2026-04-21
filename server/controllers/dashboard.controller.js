@@ -61,13 +61,15 @@ export const getStats = async (req, res) => {
             .sort((a, b) => b.progreso - a.progreso)
             .slice(0, 5);
 
+        const isAdminOrEncargado = ['Admin', 'Encargado'].includes(req.user.role);
+
         res.json({
             stats: {
                 totalAlumnos,
                 asistenciasHoy,
-                ingresosMes
+                ingresosMes: isAdminOrEncargado ? ingresosMes : null
             },
-            ultimasTransacciones,
+            ultimasTransacciones: isAdminOrEncargado ? ultimasTransacciones : [],
             proximosAGraduar
         });
     } catch (error) {

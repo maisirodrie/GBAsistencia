@@ -21,9 +21,15 @@ export const validateToken = (req, res, next) => {
     });
 };
 
-export const isAdmin = (req, res, next) => {
-    if (req.user.role !== 'Admin') {
-        return res.status(403).json({ message: "Se requieren permisos de administrador" });
-    }
-    next();
+export const hasRole = (rolesAllowed) => {
+    return (req, res, next) => {
+        if (!req.user || !rolesAllowed.includes(req.user.role)) {
+            return res.status(403).json({ 
+                message: `Acceso denegado. Se requiere uno de los siguientes roles: ${rolesAllowed.join(', ')}` 
+            });
+        }
+        next();
+    };
 };
+
+export const isAdmin = hasRole(['Admin']);

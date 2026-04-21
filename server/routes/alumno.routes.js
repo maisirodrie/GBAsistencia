@@ -35,17 +35,21 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-const router = Router();
+import { validateToken, hasRole, isAdmin } from '../middlewares/validateToken.js';
 
-router.get('/alumnos', getAlumnos);
-router.post('/alumnos', createAlumno);
-router.get('/alumnos/:id', getAlumno);
-router.get('/alumnos/:id/pdf', generarCartaoPDF);
-router.put('/alumnos/:id', updateAlumno);
-router.delete('/alumnos/:id', deleteAlumno);
-router.post('/alumnos/:id/asistencia', addAsistencia);
-router.delete('/alumnos/:id/asistencia', removeAsistencia);
-router.post('/alumnos/:id/foto', upload.single('foto'), subirFotoAlumno);
-router.post('/alumnos/:id/checkin', checkIn);
+const router = Router();
+const isStaff = validateToken; // Todos los logueados
+const isGestion = hasRole(['Admin', 'Encargado']);
+
+router.get('/alumnos', isStaff, getAlumnos);
+router.post('/alumnos', isStaff, isGestion, createAlumno);
+router.get('/alumnos/:id', isStaff, getAlumno);
+router.get('/alumnos/:id/pdf', isStaff, generarCartaoPDF);
+router.put('/alumnos/:id', isStaff, isGestion, updateAlumno);
+router.delete('/alumnos/:id', isStaff, isAdmin, deleteAlumno);
+router.post('/alumnos/:id/asistencia', isStaff, addAsistencia);
+router.delete('/alumnos/:id/asistencia', isStaff, removeAsistencia);
+router.post('/alumnos/:id/foto', isStaff, isGestion, upload.single('foto'), subirFotoAlumno);
+router.post('/alumnos/:id/checkin', isStaff, checkIn);
 
 export default router;

@@ -11,9 +11,18 @@ export default function Navbar({ isCollapsed, onToggle }) {
     const navLinks = [
         { to: "/", label: "Panel", icon: <LayoutDashboard size={20} />, active: isActive("/") },
         { to: "/alumnos", label: "Alumnos", icon: <Users size={20} />, active: isActive("/alumnos") },
-        { to: "/finanzas", label: "Finanzas", icon: <DollarSign size={20} />, active: isActive("/finanzas") },
-        { to: "/stock", label: "Stock", icon: <Package size={20} />, active: isActive("/stock") },
     ];
+
+    const canSeeFinance = ['Admin', 'Encargado'].includes(user?.role);
+    const canSeeStock = ['Admin', 'Encargado', 'Profesor'].includes(user?.role);
+
+    if (canSeeFinance) {
+        navLinks.push({ to: "/finanzas", label: "Finanzas", icon: <DollarSign size={20} />, active: isActive("/finanzas") });
+    }
+
+    if (canSeeStock) {
+        navLinks.push({ to: "/stock", label: "Stock", icon: <Package size={20} />, active: isActive("/stock") });
+    }
 
     if (user?.role === 'Admin') {
         navLinks.push({ to: "/usuarios", label: "Usuarios", icon: <Shield size={20} />, active: isActive("/usuarios") });

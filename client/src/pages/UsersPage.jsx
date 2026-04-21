@@ -178,9 +178,13 @@ export default function UsersPage() {
                                     <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest mt-1 inline-block ${
                                         u.role === 'Admin'
                                             ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                                            : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                            : u.role === 'Encargado'
+                                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                                : u.role === 'Profesor'
+                                                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                                    : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
                                     }`}>
-                                        {u.role}
+                                        {u.role === 'Encargado' ? 'Prof. Encargado' : u.role}
                                     </span>
                                 </div>
                             </div>
@@ -240,8 +244,10 @@ export default function UsersPage() {
                                 onChange={e => setCreateForm(p => ({ ...p, role: e.target.value }))}
                                 className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-rose-500 transition-all font-semibold appearance-none"
                             >
-                                <option value="Profesor">Profesor (Instructor)</option>
-                                <option value="Admin">Administrador (Control Total)</option>
+                                <option value="Profesor">Profesor (Clases + Asistencia)</option>
+                                <option value="Ayudante">Ayudante (Asistencia)</option>
+                                <option value="Encargado">Profesor Encargado (Finanzas + Clases)</option>
+                                <option value="Admin">Administrador (Control Total Staff)</option>
                             </select>
                         </div>
                         <SubmitBtn loading={createLoading} icon={<Mail size={20} />} label="REGISTRAR Y ENVIAR EMAIL" />
@@ -271,8 +277,10 @@ export default function UsersPage() {
                                 onChange={e => setEditForm(p => ({ ...p, role: e.target.value }))}
                                 className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-blue-500 transition-all font-semibold appearance-none"
                             >
-                                <option value="Profesor">Profesor (Instructor)</option>
-                                <option value="Admin">Administrador (Control Total)</option>
+                                <option value="Profesor">Profesor (Clases + Asistencia)</option>
+                                <option value="Ayudante">Ayudante (Asistencia)</option>
+                                <option value="Encargado">Profesor Encargado (Finanzas + Clases)</option>
+                                <option value="Admin">Administrador (Control Total Staff)</option>
                             </select>
                         </div>
                         <div className="p-3 bg-slate-900/60 rounded-xl text-xs text-slate-500 font-medium">

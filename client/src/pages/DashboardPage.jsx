@@ -13,6 +13,8 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    const isAdminOrEncargado = ['Admin', 'Encargado'].includes(user?.role);
+
     useEffect(() => {
         const fetchStats = async () => {
             try {
@@ -62,10 +64,10 @@ export default function DashboardPage() {
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {[
-                    { label: "Alumnos Totales", value: stats.totalAlumnos, icon: "👤", color: "from-blue-600 to-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20 shadow-blue-500/10" },
-                    { label: "Asistencias Hoy", value: stats.asistenciasHoy, icon: "🥋", color: "from-emerald-600 to-teal-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20 shadow-emerald-500/10" },
-                    { label: "Ingresos del Mes", value: `$${stats.ingresosMes.toLocaleString()}`, icon: "💵", color: "from-amber-600 to-orange-400", bg: "bg-amber-500/10", border: "border-amber-500/20 shadow-amber-500/10" }
-                ].map((kpi, i) => (
+                    { label: "Alumnos Totales", value: stats.totalAlumnos, icon: "👤", color: "from-blue-600 to-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20 shadow-blue-500/10", show: true },
+                    { label: "Asistencias Hoy", value: stats.asistenciasHoy, icon: "🥋", color: "from-emerald-600 to-teal-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20 shadow-emerald-500/10", show: true },
+                    { label: "Ingresos del Mes", value: stats.ingresosMes ? `$${stats.ingresosMes.toLocaleString()}` : null, icon: "💵", color: "from-amber-600 to-orange-400", bg: "bg-amber-500/10", border: "border-amber-500/20 shadow-amber-500/10", show: stats.ingresosMes !== null }
+                ].filter(kpi => kpi.show).map((kpi, i) => (
                     <div key={i} className={`group ${kpi.bg} p-8 rounded-[2.2rem] border ${kpi.border} shadow-2xl relative overflow-hidden transition-all hover:scale-[1.02] duration-300`}>
                         <div className="absolute top-0 right-0 p-6 text-5xl opacity-40 group-hover:scale-125 transition-transform duration-500 pointer-events-none">{kpi.icon}</div>
                         <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">{kpi.label}</p>
@@ -120,42 +122,44 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Actividad Reciente */}
-                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col min-h-[480px]">
-                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
-                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">⚡</span> Caja Reciente
-                        </h3>
-                        <button onClick={() => navigate('/finanzas')} className="text-[10px] font-black text-slate-500 hover:text-red-400 uppercase tracking-widest transition-all">Ver Historial →</button>
-                    </div>
+                {isAdminOrEncargado && (
+                    <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col min-h-[480px]">
+                        <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
+                            <h3 className="text-xl font-black text-white flex items-center gap-3">
+                                <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">⚡</span> Caja Reciente
+                            </h3>
+                            <button onClick={() => navigate('/finanzas')} className="text-[10px] font-black text-slate-500 hover:text-red-400 uppercase tracking-widest transition-all">Ver Historial →</button>
+                        </div>
 
-                    <div className="space-y-4 flex-1">
-                        {ultimasTransacciones.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full opacity-30">
-                                <span className="text-7xl mb-4">💳</span>
-                                <p className="font-bold text-lg uppercase tracking-widest">Sin movimientos</p>
-                            </div>
-                        ) : ultimasTransacciones.map(t => (
-                            <div key={t._id} className="flex items-center gap-5 bg-slate-900/40 p-5 rounded-3xl border border-slate-800/50 shadow-lg">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border-2 ${t.tipo === 'INGRESO' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                                    {t.tipo === 'INGRESO' ? '↑' : '↓'}
+                        <div className="space-y-4 flex-1">
+                            {ultimasTransacciones.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full opacity-30">
+                                    <span className="text-7xl mb-4">💳</span>
+                                    <p className="font-bold text-lg uppercase tracking-widest">Sin movimientos</p>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-black text-white text-base truncate mb-0.5">{t.descripcion}</p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.categoria}</span>
-                                        <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                                        <span className="text-[10px] font-bold text-slate-600 uppercase">{format(new Date(t.fecha), "d MMM", { locale: es })}</span>
+                            ) : ultimasTransacciones.map(t => (
+                                <div key={t._id} className="flex items-center gap-5 bg-slate-900/40 p-5 rounded-3xl border border-slate-800/50 shadow-lg">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border-2 ${t.tipo === 'INGRESO' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                                        {t.tipo === 'INGRESO' ? '↑' : '↓'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-black text-white text-base truncate mb-0.5">{t.descripcion}</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.categoria}</span>
+                                            <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
+                                            <span className="text-[10px] font-bold text-slate-600 uppercase">{format(new Date(t.fecha), "d MMM", { locale: es })}</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`font-black text-xl tracking-tight ${t.tipo === 'INGRESO' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                            {t.tipo === 'INGRESO' ? '+' : '-'}${t.monto.toLocaleString()}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className={`font-black text-xl tracking-tight ${t.tipo === 'INGRESO' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                        {t.tipo === 'INGRESO' ? '+' : '-'}${t.monto.toLocaleString()}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
         </div>
