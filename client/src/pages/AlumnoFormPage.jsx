@@ -10,6 +10,7 @@ import QRModal from "../components/QRModal";
 import PhotoCropModal from "../components/PhotoCropModal";
 import { format } from "date-fns";
 import { FAJAS_POR_CATEGORIA } from "../utils/fajas";
+import Swal from "sweetalert2";
 
 const MESES_ES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -34,7 +35,39 @@ export default function AlumnoFormPage() {
     const [imageToCrop, setImageToCrop] = useState(null);
     const [categoria, setCategoria] = useState('Adulto');
     const fileInputRef = useRef(null);
+    const cameraInputRef = useRef(null);
 
+    const handlePhotoClick = async () => {
+        if (!id) return showAlert({ title: "Atención", text: "Guardá el alumno primero antes de subir su foto.", icon: "info" });
+        
+        const result = await Swal.fire({
+            title: 'Actualizar Foto',
+            text: '¿Cómo deseas subir la foto?',
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: '📷 Tomar Foto',
+            denyButtonText: '🖼️ Galería',
+            cancelButtonText: 'Cancelar',
+            background: '#0f172a',
+            color: '#f8fafc',
+            confirmButtonColor: '#e11d48',
+            denyButtonColor: '#2563eb',
+            cancelButtonColor: '#334155',
+            customClass: {
+                popup: 'rounded-[2rem] border border-slate-800',
+                confirmButton: 'rounded-xl px-4 py-3 font-black uppercase text-xs',
+                denyButton: 'rounded-xl px-4 py-3 font-black uppercase text-xs',
+                cancelButton: 'rounded-xl px-4 py-3 font-black uppercase text-xs'
+            }
+        });
+
+        if (result.isConfirmed) {
+            cameraInputRef.current?.click();
+        } else if (result.isDenied) {
+            fileInputRef.current?.click();
+        }
+    };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -268,7 +301,7 @@ export default function AlumnoFormPage() {
                     <div className="flex items-center gap-5 border-b border-slate-700/40 pb-6 relative z-10">
                         <div 
                             className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-3xl shadow-inner flex-shrink-0 border border-slate-600/50 cursor-pointer overflow-hidden group"
-                            onClick={() => id ? fileInputRef.current?.click() : showAlert({ title: "Atención", text: "Guardá el alumno primero antes de subir su foto.", icon: "info" })}
+                            onClick={handlePhotoClick}
                         >
                             {watch("fotoUrl") ? (
                                 <img src={watch("fotoUrl").startsWith('http') ? watch("fotoUrl") : `${UPLOAD_URL}/${watch("fotoUrl")}`} alt="Perfil" className="w-full h-full object-cover" />
@@ -281,6 +314,7 @@ export default function AlumnoFormPage() {
                                 </div>
                             )}
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                            <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
