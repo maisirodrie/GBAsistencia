@@ -15,6 +15,14 @@ const api = axios.create({
   withCredentials: true
 });
 
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export const UPLOAD_URL = import.meta.env.DEV
   ? `http://${window.location.hostname}:4000/uploads`
   : 'https://gbasistente.onrender.com/uploads';

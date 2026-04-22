@@ -2,11 +2,18 @@ import jwt from 'jsonwebtoken';
 import { TOKEN_SECRET } from '../config.js';
 
 export const validateToken = (req, res, next) => {
-    const { token } = req.cookies;
-    console.log("ValidateToken - Cookies:", req.cookies);
+    let token = req.cookies?.token;
+    
+    // Fallback if missing (for mobile devices, cross-site tracking prevention)
+    const authHeader = req.headers['authorization'];
+    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    }
+    
+    console.log("ValidateToken - Token presente:", !!token);
 
     if (!token) {
-        console.log("No token found in cookies");
+        console.log("No token found in cookies or headers");
         return res.status(401).json({ message: "La sesión ha expirado o no existe el token" });
     }
 

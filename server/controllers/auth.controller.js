@@ -154,7 +154,8 @@ export const login = async (req, res) => {
             role: userFound.role,
             nombre: userFound.nombre,
             apellido: userFound.apellido,
-            mustChangePassword: userFound.mustChangePassword
+            mustChangePassword: userFound.mustChangePassword,
+            token
         });
 
     } catch (error) {
@@ -173,7 +174,14 @@ export const logout = (req, res) => {
 
 // Verificar token
 export const verifyToken = async (req, res) => {
-    const { token } = req.cookies;
+    let { token } = req.cookies;
+    
+    // Fallback token desde headers
+    const authHeader = req.headers['authorization'];
+    if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    }
+
     if (!token) return res.status(401).json({ message: "No autorizado" });
 
     jwt.verify(token, TOKEN_SECRET, async (error, user) => {
@@ -189,7 +197,8 @@ export const verifyToken = async (req, res) => {
             role: userFound.role,
             nombre: userFound.nombre,
             apellido: userFound.apellido,
-            mustChangePassword: userFound.mustChangePassword
+            mustChangePassword: userFound.mustChangePassword,
+            token
         });
     });
 };
