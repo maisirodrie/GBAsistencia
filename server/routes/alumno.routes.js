@@ -54,7 +54,7 @@ const upload = multer({ storage: storage });
 import { hasRole, isAdmin } from '../middlewares/validateToken.js';
 
 const router = Router();
-const isGestion = hasRole(['Admin', 'Encargado']);
+const isGestion = hasRole(['Admin', 'Encargado', 'Profesor', 'Ayudante']);
 
 router.get('/', getAlumnos);
 router.post('/', isGestion, createAlumno);
