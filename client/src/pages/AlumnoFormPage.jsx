@@ -313,8 +313,8 @@ export default function AlumnoFormPage() {
                                     <span className="text-white text-xs font-bold text-center leading-tight tracking-wider">Cambiar<br/>Foto</span>
                                 </div>
                             )}
-                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                            <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onClick={e => e.stopPropagation()} onChange={handleFileChange} />
+                            <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onClick={e => e.stopPropagation()} onChange={handleFileChange} />
                         </div>
                         <div>
                             <div className="flex items-center gap-3">
