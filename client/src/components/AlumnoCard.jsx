@@ -65,7 +65,7 @@ function AlumnoCard({ alumno, onDelete }) {
                     <span>Asistencias: <span className="text-white font-medium">{alumno.asistenciasDesdeUltimaGrad}</span> / {alumno.clasesRequeridas}</span>
                     {alumno.clasesCumplidas && alumno.tiempoCumplido && (
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-green-500/20 text-green-500 text-[10px] px-2 py-0.5 rounded-full font-black border border-green-500/50 animate-pulse">
-                            LISTO
+                            ELEGIBLE
                         </span>
                     )}
                 </div>

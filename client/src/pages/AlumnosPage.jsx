@@ -194,7 +194,7 @@ export default function AlumnosPage() {
                                             )}
                                             {listo && (
                                                 <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-500 border border-green-500/30 uppercase tracking-[0.15em] animate-pulse">
-                                                    Listo
+                                                    Elegible
                                                 </span>
                                             )}
                                         </div>

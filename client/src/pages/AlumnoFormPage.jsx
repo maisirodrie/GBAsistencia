@@ -417,7 +417,7 @@ export default function AlumnoFormPage() {
                         {/* Fila Faja / Grado */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Faixa (Cinturão)</label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Cinturón (Faja)</label>
                                 <div className="relative">
                                     <select
                                         className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
@@ -431,13 +431,13 @@ export default function AlumnoFormPage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Grau (Listras)</label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Grado (Rayas)</label>
                                 <div className="relative">
                                     <select
                                         className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
                                         {...register("grado")}
                                     >
-                                        {[0, 1, 2, 3, 4].map(g => <option key={g} value={g}>{g === 0 ? 'Sem Grau' : `${g}º Grau`}</option>)}
+                                        {[0, 1, 2, 3, 4].map(g => <option key={g} value={g}>{g === 0 ? 'Sin Grado' : `${g}º Grado`}</option>)}
                                     </select>
                                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">▼</div>
                                 </div>
@@ -529,11 +529,11 @@ export default function AlumnoFormPage() {
                                                     type="button"
                                                     onClick={async () => {
                                                         const confirm = await showAlert({
-                                                            title: '¿Confirmar Graduación?',
+                                                            title: '¿Confirmar Promoción?',
                                                             text: `Se subirá un grado a ${alumnoData.nombre} y se reiniciará su progreso.`,
                                                             icon: 'question',
                                                             showCancelButton: true,
-                                                            confirmButtonText: 'Sí, Graduar',
+                                                            confirmButtonText: 'Sí, Promover',
                                                             cancelButtonText: 'Cancelar'
                                                         });
                                                         
@@ -560,7 +560,7 @@ export default function AlumnoFormPage() {
                                                     }}
                                                     className="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-green-900/20 transition-all active:scale-95 border-b-4 border-green-800 active:border-b-0"
                                                 >
-                                                    🎓 Graduar Ahora
+                                                    🎓 Promover de Grado
                                                 </button>
                                             </div>
                                         ) : (
