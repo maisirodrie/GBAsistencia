@@ -139,11 +139,7 @@ export default function AlumnosPage() {
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {lista.map(a => {
                         const yaAsistio = a.yaAsistioHoy;
-                        const requeridasBase = a.clasesParaGraduacion || 30;
-                        const gradoActual = a.grado || 0;
-                        const validasTotales = a.asistenciasDesdeUltimaGrad || 0;
-                        const clasesHaciaProximo = Math.max(0, validasTotales - (gradoActual * requeridasBase));
-                        const pct = Math.min((clasesHaciaProximo / requeridasBase) * 100, 100);
+                        const listo = a.clasesCumplidas && a.tiempoCumplido;
 
                         return (
                             <div
@@ -194,6 +190,11 @@ export default function AlumnosPage() {
                                             {a.categoria === 'Infantil' && (
                                                 <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-[0.15em]">
                                                     Kids
+                                                </span>
+                                            )}
+                                            {listo && (
+                                                <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-500 border border-green-500/30 uppercase tracking-[0.15em] animate-pulse">
+                                                    Listo
                                                 </span>
                                             )}
                                         </div>

@@ -62,13 +62,18 @@ function AlumnoCard({ alumno, onDelete }) {
                 </div>
                 <div className="flex items-center gap-2 text-sm bg-slate-900/50 p-2 rounded-lg relative overflow-hidden">
                     <Award size={16} className="text-red-500" />
-                    <span>Asistencias totales: <span className="text-white font-medium">{alumno.asistencias.length}</span></span>
-                    {alumno.asistencias.length >= 30 && (
+                    <span>Asistencias: <span className="text-white font-medium">{alumno.asistenciasDesdeUltimaGrad}</span> / {alumno.clasesRequeridas}</span>
+                    {alumno.clasesCumplidas && alumno.tiempoCumplido && (
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-green-500/20 text-green-500 text-[10px] px-2 py-0.5 rounded-full font-black border border-green-500/50 animate-pulse">
                             LISTO
                         </span>
                     )}
                 </div>
+                <div className="flex items-center gap-2 text-sm bg-slate-900/50 p-2 rounded-lg">
+                    <span className="text-red-500">⏳</span>
+                    <span>Tiempo: <span className="text-white font-medium">{alumno.diasTranscurridos}</span> / {alumno.diasRequeridos} días</span>
+                </div>
+
             </div>
 
             <button

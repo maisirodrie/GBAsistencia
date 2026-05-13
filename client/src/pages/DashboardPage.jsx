@@ -8,11 +8,16 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export default function DashboardPage() {
-    const { user } = useAuth();
-    const [data, setData] = useState(null);
+    const [candidatosAGrado, setCandidatosAGrado] = useState([]);
+    const [candidatosAFaja, setCandidatosAFaja] = useState([]);
+    const [currentPageGrado, setCurrentPageGrado] = useState(1);
+    const [currentPageFaja, setCurrentPageFaja] = useState(1);
+    const itemsPerPage = 8;
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    const { user } = useAuth();
+    const [data, setData] = useState(null);
     const isAdminOrEncargado = ['Admin', 'Encargado'].includes(user?.role);
 
     useEffect(() => {
@@ -20,6 +25,8 @@ export default function DashboardPage() {
             try {
                 const res = await getDashboardStats();
                 setData(res.data);
+                setCandidatosAGrado(res.data.candidatosAGrado || []);
+                setCandidatosAFaja(res.data.candidatosAFaja || []);
             } catch (error) {
                 console.error("Error al cargar dashboard:", error);
             } finally {
@@ -111,48 +118,112 @@ export default function DashboardPage() {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="flex flex-col gap-10">
                 
-                {/* Alertas de Graduación */}
-                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col min-h-[480px]">
+                {/* Panel 1: Próximos Grados (Técnica lista) */}
+                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
                     <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
                         <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">🎓</span> Próximas Graduaciones
+                            <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">🥋</span> Próximos Grados (Técnica)
                         </h3>
-                        <span className="text-[10px] font-black bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full border border-red-500/30 uppercase tracking-widest animate-pulse">Checkpoints</span>
+                        <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/30 uppercase tracking-widest">Listo para Raya</span>
                     </div>
                     
-                    <div className="space-y-4 flex-1">
-                        {proximosAGraduar.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-full opacity-30">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {candidatosAGrado.length === 0 ? (
+                            <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-30">
                                 <span className="text-7xl mb-4">🏆</span>
-                                <p className="font-bold text-lg uppercase tracking-widest">Todo al día</p>
+                                <p className="font-bold text-lg uppercase tracking-widest">Sin grados pendientes</p>
                             </div>
-                        ) : proximosAGraduar.map(a => (
-                            <div key={a._id} className="group bg-slate-900/60 hover:bg-slate-800/60 p-5 rounded-3xl border border-slate-800/80 hover:border-red-500/30 transition-all cursor-pointer flex items-center gap-5 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
-                                <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-slate-800 group-hover:border-red-500/50 relative shrink-0 transition-all shadow-xl">
+                        ) : candidatosAGrado.slice((currentPageGrado - 1) * itemsPerPage, currentPageGrado * itemsPerPage).map(a => (
+                            <div key={a._id} className="group bg-slate-900/60 hover:bg-slate-800/60 p-5 rounded-3xl border border-slate-800/80 hover:border-emerald-500/30 transition-all cursor-pointer flex items-center gap-5 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
+                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-800 group-hover:border-emerald-500/50 relative shrink-0 transition-all shadow-xl">
                                     {a.fotoUrl ? (
                                         <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-2xl">{a.nombre[0]}</div>
+                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-xl">{a.nombre[0]}</div>
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <p className="font-black text-white text-lg leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
-                                    <div className="flex items-center gap-3">
-                                        <BeltBadge faja={a.faja} grado={a.grado} size="sm" showLabel={false} />
-                                        <span className="text-[10px] font-black text-red-400/80 uppercase tracking-widest bg-red-400/5 px-2 py-0.5 rounded-md border border-red-400/10">Faltan {a.clasesRestantes} clases</span>
+                                    <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
+                                    <div className="flex items-center gap-2">
+                                        <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
+                                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-2 py-0.5 rounded-md border border-emerald-400/20 animate-pulse">
+                                            ¡RAYA LISTA!
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-3xl font-black text-white leading-none mb-1 tracking-tighter">{a.progreso}%</p>
-                                    <div className="w-20 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 shadow-inner">
-                                        <div className="h-full bg-gradient-to-r from-red-600 to-rose-400 transition-all duration-1000" style={{ width: `${a.progreso}%` }}></div>
-                                    </div>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Técnica</span>
+                                    <p className="text-sm font-black text-white leading-none tracking-tighter">{a.asistenciasDesdeUltimaGrad} / {a.clasesRequeridas}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
+
+                    {candidatosAGrado.length > itemsPerPage && (
+                        <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-slate-800/50">
+                            <button onClick={() => setCurrentPageGrado(p => Math.max(1, p - 1))} disabled={currentPageGrado === 1} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">◀</button>
+                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Página {currentPageGrado} de {Math.ceil(candidatosAGrado.length / itemsPerPage)}</span>
+                            <button onClick={() => setCurrentPageGrado(p => Math.min(Math.ceil(candidatosAGrado.length / itemsPerPage), p + 1))} disabled={currentPageGrado === Math.ceil(candidatosAGrado.length / itemsPerPage)} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">▶</button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Panel 2: Cambios de Faja (Permanencia completa) */}
+                <div className="bg-slate-900/40 border border-blue-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
+                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-blue-500/10">
+                        <h3 className="text-xl font-black text-white flex items-center gap-3">
+                            <span className="bg-blue-900/30 p-2.5 rounded-xl border border-blue-500/20 shadow-inner">🎓</span> Cambios de Cinturón
+                        </h3>
+                        <span className="text-[10px] font-black bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-full border border-blue-500/30 uppercase tracking-widest animate-pulse">Ciclo Completo</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {candidatosAFaja.length === 0 ? (
+                            <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-30">
+                                <span className="text-7xl mb-4">🥋</span>
+                                <p className="font-bold text-lg uppercase tracking-widest">Sin cambios de faja pendientes</p>
+                            </div>
+                        ) : candidatosAFaja.slice((currentPageFaja - 1) * itemsPerPage, currentPageFaja * itemsPerPage).map(a => (
+                            <div key={a._id} className="group bg-blue-900/10 hover:bg-blue-900/20 p-5 rounded-3xl border border-blue-500/10 hover:border-blue-500/40 transition-all cursor-pointer flex items-center gap-5 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
+                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-blue-900 group-hover:border-blue-500/50 relative shrink-0 transition-all shadow-xl">
+                                    {a.fotoUrl ? (
+                                        <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-xl">{a.nombre[0]}</div>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
+                                    <div className="flex items-center gap-2">
+                                        <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
+                                        {a.pctTiempo >= 100 ? (
+                                            <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest bg-blue-400/10 px-2 py-0.5 rounded-md border border-blue-400/20 animate-pulse">
+                                                ¡LISTO PARA CINTA!
+                                            </span>
+                                        ) : (
+                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700">
+                                                {a.pctTiempo}% PERMANENCIA
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Total</span>
+                                    <p className="text-sm font-black text-white leading-none tracking-tighter">{a.asistenciasPermanencia} / {a.metaPermanencia}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {candidatosAFaja.length > itemsPerPage && (
+                        <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-blue-500/10">
+                            <button onClick={() => setCurrentPageFaja(p => Math.max(1, p - 1))} disabled={currentPageFaja === 1} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">◀</button>
+                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Página {currentPageFaja} de {Math.ceil(candidatosAFaja.length / itemsPerPage)}</span>
+                            <button onClick={() => setCurrentPageFaja(p => Math.min(Math.ceil(candidatosAFaja.length / itemsPerPage), p + 1))} disabled={currentPageFaja === Math.ceil(candidatosAFaja.length / itemsPerPage)} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">▶</button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actividad Reciente */}

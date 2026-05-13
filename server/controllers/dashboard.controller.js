@@ -1,5 +1,7 @@
 import Alumno from '../models/Alumno.js';
 import Transaccion from '../models/Transaccion.js';
+import { TIEMPOS_GRADUACION, CLASES_POR_MES } from '../constants/graduation.js';
+
 
 export const getStats = async (req, res) => {
     try {
@@ -36,15 +38,24 @@ export const getStats = async (req, res) => {
         const alumnos = await Alumno.find({ trackProgreso: { $ne: false } });
         const proximosAGraduar = alumnos
             .map(alumno => {
-                const reqBase = alumno.clasesParaGraduacion || 30;
-                // Contar asistencias válidas desde última graduación
-                const validas = alumno.asistencias.filter(iso => {
-                    if (!alumno.ultimaGraduacion) return true;
-                    return new Date(iso) >= new Date(alumno.ultimaGraduacion);
-                }).length;
+                const tiempos = TIEMPOS_GRADUACION[alumno.faja] || TIEMPOS_GRADUACION['Branca'];
+                const mesesRequeridos = (alumno.grado >= 0 && alumno.grado < tiempos.length) ? tiempos[alumno.grado] : 1;
+                const reqBase = mesesRequeridos * CLASES_POR_MES;
                 
-                const clasesProgreso = validas % reqBase;
-                const pct = clasesProgreso / reqBase;
+                // Contar asistencias válidas desde última graduación
+                const fechaUg = alumno.ultimaGraduacion ? new Date(alumno.ultimaGraduacion) : new Date(alumno.createdAt);
+                const validas = alumno.asistencias.filter(iso => new Date(iso) >= fechaUg).length;
+                
+                // Cálculo de progreso basado en clases y tiempo
+                const hoy = new Date();
+                const diasTranscurridos = Math.max(0, Math.floor((hoy - fechaUg) / (1000 * 60 * 60 * 24)));
+                const diasRequeridos = mesesRequeridos * 30;
+                
+                const pctClases = Math.min(validas / reqBase, 1);
+                const pctTiempo = Math.min(validas / diasRequeridos, 1);
+                
+                // El progreso real es el mínimo de ambos (ambos deben cumplirse)
+                const progresoReal = Math.min(pctClases, pctTiempo);
                 
                 return {
                     _id: alumno._id,
@@ -52,14 +63,23 @@ export const getStats = async (req, res) => {
                     apellido: alumno.apellido,
                     faja: alumno.faja,
                     grado: alumno.grado,
-                    progreso: Math.round(pct * 100),
-                    clasesRestantes: reqBase - clasesProgreso,
+                    pctClases: Math.round(pctClases * 100),
+                    pctTiempo: Math.round(pctTiempo * 100),
+                    asistenciasPermanencia: validas,
+                    metaPermanencia: diasRequeridos,
+                    asistenciasDesdeUltimaGrad: validas,
+                    clasesRequeridas: reqBase,
                     fotoUrl: alumno.fotoUrl
                 };
-            })
-            .filter(a => a.progreso >= 85)
-            .sort((a, b) => b.progreso - a.progreso)
-            .slice(0, 5);
+            });
+
+        const candidatosAGrado = proximosAGraduar
+            .filter(a => a.pctClases >= 100 && a.grado < 4)
+            .sort((a, b) => b.pctClases - a.pctClases);
+
+        const candidatosAFaja = proximosAGraduar
+            .filter(a => a.grado >= 4 && (a.pctClases >= 100 || a.pctTiempo >= 50))
+            .sort((a, b) => b.pctTiempo - a.pctTiempo);
 
         const isAdminOrEncargado = ['Admin', 'Encargado'].includes(req.user.role);
 
@@ -70,7 +90,8 @@ export const getStats = async (req, res) => {
                 ingresosMes: isAdminOrEncargado ? ingresosMes : null
             },
             ultimasTransacciones: isAdminOrEncargado ? ultimasTransacciones : [],
-            proximosAGraduar
+            candidatosAGrado: candidatosAGrado.slice(0, 50),
+            candidatosAFaja: candidatosAFaja.slice(0, 50)
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

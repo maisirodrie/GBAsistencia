@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { TIEMPOS_GRADUACION, CLASES_POR_MES } from "../constants/graduation";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAlumno, createAlumno, updateAlumno, deleteAlumno, addAsistencia, removeAsistencia, descargarPDF, uploadFoto } from "../api/alumnos";
@@ -34,8 +35,10 @@ export default function AlumnoFormPage() {
     const [showQR, setShowQR] = useState(false);
     const [imageToCrop, setImageToCrop] = useState(null);
     const [categoria, setCategoria] = useState('Adulto');
+    const [alumnoData, setAlumnoData] = useState(null);
     const fileInputRef = useRef(null);
     const cameraInputRef = useRef(null);
+
 
     const handlePhotoClick = async () => {
         if (!id) return showAlert({ title: "Atención", text: "Guardá el alumno primero antes de subir su foto.", icon: "info" });
@@ -95,6 +98,7 @@ export default function AlumnoFormPage() {
         if (!id) { setCargando(false); return; }
         (async () => {
             const { data } = await getAlumno(id);
+            setAlumnoData(data);
             setValue("nombre", data.nombre);
             setValue("apellido", data.apellido || "");
             setValue("celular", data.celular || "");
@@ -112,6 +116,7 @@ export default function AlumnoFormPage() {
             setCargando(false);
         })();
     }, [id, setValue]);
+
 
     /* Guardar */
     const onSubmit = handleSubmit(async (data) => {
@@ -145,6 +150,7 @@ export default function AlumnoFormPage() {
 
     /* Sincronizar UI con datos del servidor tras modificar asistencias */
     const syncAlumnoData = (data) => {
+        setAlumnoData(data);
         setAsistencias(data.asistencias);
         setValue("grado", String(data.grado ?? 0));
         if (data.ultimaGraduacion) {
@@ -154,6 +160,7 @@ export default function AlumnoFormPage() {
             setValue("ultimaGraduacion", "");
         }
     };
+
 
     /* Asistencia */
     async function marcarHoy() {
@@ -456,66 +463,116 @@ export default function AlumnoFormPage() {
                                     {...register("ultimaGraduacion")}
                                 />
                             </div>
-                            {watch("trackProgreso") !== false && (
-                                <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Req. p/ Graduar (Clases)</label>
-                                    <input
-                                        type="number"
-                                        placeholder="Por defecto: 30"
-                                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
-                                        {...register("clasesParaGraduacion", { valueAsNumber: true })}
-                                    />
-                                </div>
-                            )}
                         </div>
 
+
                         {/* Progreso Visual */}
-                        {id && watch("trackProgreso") !== false && (
-                            <div className="pt-8 animate-in zoom-in-95 duration-500">
-                                {(() => {
-                                    const reqBase = watch("clasesParaGraduacion") || 30;
-                                    const gradoActual = parseInt(watch("grado") || 0, 10);
-                                    
-                                    // Si la fecha es futura, la ignoramos para el cálculo de progreso (fail-safe)
-                                    const strUg = watch("ultimaGraduacion");
-                                    const isFuture = strUg && (new Date(strUg + "T12:00:00") > new Date());
-                                    
-                                    const validasoAcumuladas = (strUg && !isFuture) ? asistenciasValidas.length : asistencias.length;
-                                    
-                                    // Usamos el residuo (%) para que el progreso sea siempre relativo al próximo grado/faja
-                                    // Si tiene grado 4, el progreso es hacia la faja. 
-                                    // Si tiene grado 0-3, es hacia la siguiente raya.
-                                    const clasesProgreso = validasoAcumuladas % reqBase;
-                                    const pct = Math.min((clasesProgreso / reqBase) * 100, 100);
-                                    
-                                    return (
-                                        <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-700/50 shadow-inner">
-                                            <div className="flex justify-between items-end mb-4">
-                                                <div>
-                                                    <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-[0.2em] mb-1.5">PROGRESO ACTUAL</p>
-                                                    <p className="text-lg font-black text-white">Hacia {gradoActual < 4 ? `Grado ${gradoActual + 1}` : "Nueva Faja"}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-3xl font-black text-white">{clasesProgreso}</span>
-                                                    <span className="text-sm text-slate-400 font-bold ml-1">/ {reqBase}</span>
+                        {id && watch("trackProgreso") !== false && alumnoData && (() => {
+                            const currentFaja = watch("faja") || alumnoData.faja;
+                            const currentGrado = parseInt(watch("grado")) || 0;
+                            
+                            const tiempos = TIEMPOS_GRADUACION[currentFaja] || TIEMPOS_GRADUACION['Branca'];
+                            const mesesReq = (currentGrado >= 0 && currentGrado < tiempos.length) ? tiempos[currentGrado] : 1;
+                            const reqTécnica = mesesReq * CLASES_POR_MES;
+                            const reqPermanencia = mesesReq * 30;
+
+                            return (
+                                <div className="pt-8 animate-in zoom-in-95 duration-500">
+                                    <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-700/50 shadow-inner">
+                                        <div className="flex justify-between items-end mb-4">
+                                            <div>
+                                                <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-[0.2em] mb-1.5">PROGRESO REQUERIDO</p>
+                                                <p className="text-lg font-black text-white">Hacia {currentGrado < 4 ? `Grado ${currentGrado + 1}` : "Nueva Faja"}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-sm font-bold text-slate-400">Barra para grado: <span className="text-white text-xl">{Math.min(alumnoData.asistenciasDesdeUltimaGrad, reqTécnica)}</span> / {reqTécnica}</span>
+                                                    <span className="text-sm font-bold text-slate-400">Barra de asistencia: <span className="text-white text-xl">{Math.min(alumnoData.asistenciasDesdeUltimaGrad, reqPermanencia)}</span> / {reqPermanencia}</span>
                                                 </div>
                                             </div>
-                                            <div className="h-3.5 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
+                                        </div>
+                                        
+                                        {/* Barra de Clases */}
+                                        <div className="space-y-1 mb-3">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                                                <span>Progreso Técnico (Grado)</span>
+                                                <span>{Math.round(Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqTécnica, 1) * 100)}%</span>
+                                            </div>
+                                            <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
                                                 <div
-                                                    className="h-full bg-gradient-to-r from-red-600 to-rose-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(225,29,72,0.4)]"
-                                                    style={{ width: `${pct}%` }}
+                                                    className="h-full bg-blue-500 rounded-full transition-all duration-700 ease-out"
+                                                    style={{ width: `${Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqTécnica, 1) * 100}%` }}
                                                 />
                                             </div>
-                                            <p className="text-xs text-slate-500 mt-4 font-medium text-center">
-                                                {strUg && !isFuture 
-                                                    ? `Clases desde última graduación: ${asistenciasValidas.length}` 
-                                                    : `Total de clases acumuladas: ${asistencias.length}`}
-                                            </p>
                                         </div>
-                                    );
-                                })()}
-                            </div>
-                        )}
+
+                                        {/* Barra de Tiempo */}
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                                                <span>Asistencia Total (Permanencia)</span>
+                                                <span>{Math.round(Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqPermanencia, 1) * 100)}%</span>
+                                            </div>
+                                            <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
+                                                <div
+                                                    className="h-full bg-purple-500 rounded-full transition-all duration-700 ease-out"
+                                                    style={{ width: `${Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqPermanencia, 1) * 100}%` }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {(alumnoData.asistenciasDesdeUltimaGrad >= reqTécnica && alumnoData.asistenciasDesdeUltimaGrad >= reqPermanencia) ? (
+                                            <div className="mt-6 flex flex-col gap-3">
+                                                <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-xl text-center animate-pulse">
+                                                    <p className="text-green-400 font-black text-xs uppercase tracking-widest">🏆 ¡Elegible para Graduación! 🏆</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        const confirm = await showAlert({
+                                                            title: '¿Confirmar Graduación?',
+                                                            text: `Se subirá un grado a ${alumnoData.nombre} y se reiniciará su progreso.`,
+                                                            icon: 'question',
+                                                            showCancelButton: true,
+                                                            confirmButtonText: 'Sí, Graduar',
+                                                            cancelButtonText: 'Cancelar'
+                                                        });
+                                                        
+                                                        if (confirm.isConfirmed) {
+                                                            let nuevoGrado = currentGrado + 1;
+                                                            let nuevaFaja = currentFaja;
+
+                                                            // Lógica de cambio de faja al superar el grado 4
+                                                            if (currentGrado >= 4) {
+                                                                const fajasOrden = ['Branca', 'Azul', 'Roxa', 'Marrom', 'Preta', 'Coral', 'Vermelha e Branca', 'Vermelha'];
+                                                                const currentIndex = fajasOrden.indexOf(currentFaja);
+                                                                if (currentIndex !== -1 && currentIndex < fajasOrden.length - 1) {
+                                                                    nuevaFaja = fajasOrden[currentIndex + 1];
+                                                                    nuevoGrado = 0;
+                                                                    showToast(`¡Promovido a cinturón ${nuevaFaja}!`, "success");
+                                                                }
+                                                            }
+
+                                                            setValue("faja", nuevaFaja);
+                                                            setValue("grado", nuevoGrado);
+                                                            setValue("ultimaGraduacion", new Date().toISOString().split('T')[0]);
+                                                            showToast("Datos preparados. Haz click en 'Guardar Cambios' para finalizar.", "info");
+                                                        }
+                                                    }}
+                                                    className="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-green-900/20 transition-all active:scale-95 border-b-4 border-green-800 active:border-b-0"
+                                                >
+                                                    🎓 Graduar Ahora
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <p className="text-[10px] text-slate-500 mt-4 font-medium text-center italic leading-relaxed">
+                                                El alumno debe cumplir con ambos requisitos para avanzar al siguiente nivel.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                     </div>
                 </div>
 
