@@ -114,13 +114,14 @@ export const eliminarTransaccion = async (req, res) => {
 /* ── POST /api/finanzas/pagar-membresia ── */
 export const pagarMembresia = async (req, res) => {
     try {
-        const { alumnoId, periodo } = req.body; // periodo: "2026-03"
+        const { alumnoId, periodo, fechaPago } = req.body; // periodo: "2026-03", fechaPago: "2026-03-15"
         const config = await getConfig();
 
-        // Calcular si hay recargo
-        const hoy = new Date();
-        const diaHoy = hoy.getDate();
-        const hayRecargo = diaHoy > config.diaCierreCobranza;
+        // Calcular si hay recargo basándose en la fecha de pago elegida
+        const fechaReferencia = fechaPago ? new Date(fechaPago + "T12:00:00") : new Date();
+        const diaPago = fechaReferencia.getDate();
+        const hayRecargo = diaPago > config.diaCierreCobranza;
+        
         const montoPago = hayRecargo
             ? config.precioMembresia * (1 + config.porcentajeRecargo / 100)
             : config.precioMembresia;
@@ -146,7 +147,7 @@ export const pagarMembresia = async (req, res) => {
             alumnoId,
             periodoMembresia: periodo,
             tuvoRecargo: hayRecargo,
-            fecha: hoy
+            fecha: fechaReferencia
         });
 
         const populated = await t.populate('alumnoId', 'nombre apellido');

@@ -76,7 +76,7 @@ export default function DashboardPage() {
         </div>
     );
 
-    const { stats, ultimasTransacciones, proximosAGraduar } = data;
+    const { stats, ultimasTransacciones, proximosAGraduar, pendientesPago } = data;
 
     return (
         <div className="max-w-7xl mx-auto space-y-10 pb-20 animate-in fade-in duration-700">
@@ -118,123 +118,139 @@ export default function DashboardPage() {
                 ))}
             </div>
 
-            <div className="flex flex-col gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                {/* Panel 1: Próximos Grados (Técnica lista) */}
-                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
-                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
-                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">🥋</span> Graduación de Progreso
+                {/* Panel 1: Próximos Grados */}
+                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-6 shadow-2xl flex flex-col">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-700/50">
+                        <h3 className="text-lg font-black text-white flex items-center gap-3">
+                            <span className="bg-slate-800/80 p-2 rounded-xl border border-slate-700 shadow-inner">🥋</span> Grados
                         </h3>
-                        <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/30 uppercase tracking-widest animate-pulse">Elegible para Grado</span>
+                        <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest animate-pulse">Listos</span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3 flex-1">
                         {candidatosAGrado.length === 0 ? (
-                            <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-30">
-                                <span className="text-7xl mb-4">🏆</span>
-                                <p className="font-bold text-lg uppercase tracking-widest">Sin grados pendientes</p>
+                            <div className="py-12 flex flex-col items-center justify-center opacity-30">
+                                <span className="text-5xl mb-3">🏆</span>
+                                <p className="font-bold text-xs uppercase tracking-widest text-center">Sin grados<br/>pendientes</p>
                             </div>
                         ) : candidatosAGrado.slice((currentPageGrado - 1) * itemsPerPage, currentPageGrado * itemsPerPage).map(a => (
-                            <div key={a._id} className="group bg-slate-900/60 hover:bg-slate-800/60 p-5 rounded-3xl border border-slate-800/80 hover:border-emerald-500/30 transition-all cursor-pointer flex items-center gap-5 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
-                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-800 group-hover:border-emerald-500/50 relative shrink-0 transition-all shadow-xl">
+                            <div key={a._id} className="group bg-slate-900/60 hover:bg-slate-800/60 p-4 rounded-2xl border border-slate-800/80 hover:border-emerald-500/30 transition-all cursor-pointer flex items-center gap-4 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
+                                <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-slate-800 group-hover:border-emerald-500/50 relative shrink-0 transition-all shadow-xl">
                                     {a.fotoUrl ? (
                                         <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-xl">{a.nombre[0]}</div>
+                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-lg">{a.nombre[0]}</div>
                                     )}
                                 </div>
-                                <div className="flex-1">
-                                    <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
-                                    <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {candidatosAGrado.length > itemsPerPage && (
-                        <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-slate-800/50">
-                            <button onClick={() => setCurrentPageGrado(p => Math.max(1, p - 1))} disabled={currentPageGrado === 1} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">◀</button>
-                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Página {currentPageGrado} de {Math.ceil(candidatosAGrado.length / itemsPerPage)}</span>
-                            <button onClick={() => setCurrentPageGrado(p => Math.min(Math.ceil(candidatosAGrado.length / itemsPerPage), p + 1))} disabled={currentPageGrado === Math.ceil(candidatosAGrado.length / itemsPerPage)} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">▶</button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Panel 2: Cambios de Faja (Permanencia completa) */}
-                <div className="bg-slate-900/40 border border-blue-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
-                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-blue-500/10">
-                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <span className="bg-blue-900/30 p-2.5 rounded-xl border border-blue-500/20 shadow-inner">🎓</span> Graduación de Cinturón
-                        </h3>
-                        <span className="text-[10px] font-black bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-full border border-blue-500/30 uppercase tracking-widest animate-pulse">Elegible para Cinturón</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {candidatosAFaja.length === 0 ? (
-                            <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-30">
-                                <span className="text-7xl mb-4">🥋</span>
-                                <p className="font-bold text-lg uppercase tracking-widest">Sin cambios de faja pendientes</p>
-                            </div>
-                        ) : candidatosAFaja.slice((currentPageFaja - 1) * itemsPerPage, currentPageFaja * itemsPerPage).map(a => (
-                            <div key={a._id} className="group bg-blue-900/10 hover:bg-blue-900/20 p-5 rounded-3xl border border-blue-500/10 hover:border-blue-500/40 transition-all cursor-pointer flex items-center gap-5 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
-                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-blue-900 group-hover:border-blue-500/50 relative shrink-0 transition-all shadow-xl">
-                                    {a.fotoUrl ? (
-                                        <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-xl">{a.nombre[0]}</div>
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
-                                    <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {candidatosAFaja.length > itemsPerPage && (
-                        <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-blue-500/10">
-                            <button onClick={() => setCurrentPageFaja(p => Math.max(1, p - 1))} disabled={currentPageFaja === 1} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">◀</button>
-                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Página {currentPageFaja} de {Math.ceil(candidatosAFaja.length / itemsPerPage)}</span>
-                            <button onClick={() => setCurrentPageFaja(p => Math.min(Math.ceil(candidatosAFaja.length / itemsPerPage), p + 1))} disabled={currentPageFaja === Math.ceil(candidatosAFaja.length / itemsPerPage)} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">▶</button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Actividad Reciente */}
-                {isAdminOrEncargado && (
-                    <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col min-h-[480px]">
-                        <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
-                            <h3 className="text-xl font-black text-white flex items-center gap-3">
-                                <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">⚡</span> Caja Reciente
-                            </h3>
-                            <button onClick={() => navigate('/finanzas')} className="text-[10px] font-black text-slate-500 hover:text-red-400 uppercase tracking-widest transition-all">Ver Historial →</button>
-                        </div>
-
-                        <div className="space-y-4 flex-1">
-                            {ultimasTransacciones.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full opacity-30">
-                                    <span className="text-7xl mb-4">💳</span>
-                                    <p className="font-bold text-lg uppercase tracking-widest">Sin movimientos</p>
-                                </div>
-                            ) : ultimasTransacciones.map(t => (
-                                <div key={t._id} className="flex items-center gap-5 bg-slate-900/40 p-5 rounded-3xl border border-slate-800/50 shadow-lg">
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 shadow-inner border-2 ${t.tipo === 'INGRESO' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                                        {t.tipo === 'INGRESO' ? '↑' : '↓'}
+                                <div className="flex-1 min-w-0 pr-2">
+                                    <p className="font-black text-white text-sm truncate leading-tight mb-1">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
+                                        <span className="text-[10px] font-black text-slate-500 uppercase">Grado {a.grado}</span>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-black text-white text-base truncate mb-0.5">{t.descripcion}</p>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t.categoria}</span>
-                                            <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase">{format(new Date(t.fecha), "d MMM", { locale: es })}</span>
+                                    
+                                    {/* Mini Barras de Progreso */}
+                                    <div className="space-y-1.5 opacity-80">
+                                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+                                            <div className="h-full bg-emerald-500 transition-all shadow-[0_0_8px_rgba(16,185,129,0.4)]" style={{ width: `${a.pctClases}%` }}></div>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-tighter">
+                                            <span className="text-emerald-400/80">Asistencia</span>
+                                            <span className="text-white">{a.pctClases}%</span>
                                         </div>
                                     </div>
+                                </div>
+                                <div className="shrink-0 text-emerald-400 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                    <span className="text-xl">➔</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Panel 2: Cambios de Faja */}
+                <div className="bg-slate-900/40 border border-blue-500/20 rounded-[2.5rem] p-6 shadow-2xl flex flex-col">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-blue-500/10">
+                        <h3 className="text-lg font-black text-white flex items-center gap-3">
+                            <span className="bg-blue-900/30 p-2 rounded-xl border border-blue-500/20 shadow-inner">🎓</span> Cinturones
+                        </h3>
+                        <span className="text-[9px] font-black bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30 uppercase tracking-widest animate-pulse">Listos</span>
+                    </div>
+                    
+                    <div className="space-y-3 flex-1">
+                        {candidatosAFaja.length === 0 ? (
+                            <div className="py-12 flex flex-col items-center justify-center opacity-30">
+                                <span className="text-5xl mb-3">🥋</span>
+                                <p className="font-bold text-xs uppercase tracking-widest text-center">Sin fajas<br/>pendientes</p>
+                            </div>
+                        ) : candidatosAFaja.slice((currentPageFaja - 1) * itemsPerPage, currentPageFaja * itemsPerPage).map(a => (
+                            <div key={a._id} className="group bg-blue-900/10 hover:bg-blue-900/20 p-4 rounded-2xl border border-blue-500/10 hover:border-blue-500/40 transition-all cursor-pointer flex items-center gap-4 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
+                                <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-blue-900 group-hover:border-blue-500/50 relative shrink-0 transition-all shadow-xl">
+                                    {a.fotoUrl ? (
+                                        <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-lg">{a.nombre[0]}</div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0 pr-2">
+                                    <p className="font-black text-white text-sm truncate leading-tight mb-1">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
+                                        <span className="text-[10px] font-black text-blue-400/80 uppercase">Listo para Faja</span>
+                                    </div>
+                                    
+                                    {/* Mini Barras de Progreso (Faja requiere clases y tiempo) */}
+                                    <div className="space-y-1.5 opacity-80">
+                                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-blue-500/10">
+                                            <div className="h-full bg-blue-500 transition-all shadow-[0_0_8px_rgba(59,130,246,0.4)]" style={{ width: `${(a.pctClases + a.pctTiempo)/2}%` }}></div>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-tighter">
+                                            <span className="text-blue-400/80">Progreso Total</span>
+                                            <span className="text-white">100%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="shrink-0 text-blue-400 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                    <span className="text-xl">➔</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Panel 3: Pendientes de Pago */}
+                {isAdminOrEncargado && (
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] p-6 shadow-2xl flex flex-col">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-amber-500/10">
+                            <h3 className="text-lg font-black text-white flex items-center gap-3">
+                                <span className="bg-amber-900/30 p-2 rounded-xl border border-amber-500/20 shadow-inner">💰</span> Cobranzas
+                            </h3>
+                            <button onClick={() => navigate('/finanzas')} className="text-[9px] font-black text-amber-500 hover:text-amber-400 uppercase tracking-widest transition-all">Ir a Caja →</button>
+                        </div>
+                        
+                        <div className="space-y-3 flex-1">
+                            {pendientesPago.length === 0 ? (
+                                <div className="py-12 flex flex-col items-center justify-center opacity-30">
+                                    <span className="text-5xl mb-3">💎</span>
+                                    <p className="font-bold text-xs uppercase tracking-widest text-center">Al día con<br/>los pagos</p>
+                                </div>
+                            ) : pendientesPago.map(a => (
+                                <div key={a._id} className="group bg-amber-900/10 hover:bg-amber-900/20 p-4 rounded-2xl border border-amber-500/10 hover:border-amber-500/40 transition-all cursor-pointer flex items-center gap-4 shadow-lg" onClick={() => navigate('/finanzas')}>
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-amber-500/30 group-hover:border-amber-500/60 relative shrink-0 transition-all">
+                                        {a.fotoUrl ? (
+                                            <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-sm">{a.nombre[0]}</div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-black text-white text-xs truncate leading-none mb-1">{a.nombre} {a.apellido}</p>
+                                        <span className="text-[9px] font-bold text-amber-500 uppercase tracking-tighter">Pendiente Membresía</span>
+                                    </div>
                                     <div className="text-right">
-                                        <p className={`font-black text-xl tracking-tight ${t.tipo === 'INGRESO' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                            {t.tipo === 'INGRESO' ? '+' : '-'}${t.monto.toLocaleString()}
-                                        </p>
+                                        <span className="text-lg">💵</span>
                                     </div>
                                 </div>
                             ))}
@@ -243,6 +259,45 @@ export default function DashboardPage() {
                 )}
             </div>
 
+            {/* Fila Inferior: Actividad Reciente */}
+            {isAdminOrEncargado && (
+                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
+                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
+                        <h3 className="text-xl font-black text-white flex items-center gap-3">
+                            <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">⚡</span> Movimientos Recientes
+                        </h3>
+                        <button onClick={() => navigate('/finanzas')} className="text-[10px] font-black text-slate-500 hover:text-red-400 uppercase tracking-widest transition-all">Ver Historial Completo →</button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {ultimasTransacciones.length === 0 ? (
+                            <div className="col-span-full py-16 flex flex-col items-center justify-center opacity-30">
+                                <span className="text-7xl mb-4">💳</span>
+                                <p className="font-bold text-lg uppercase tracking-widest">Sin movimientos registrados</p>
+                            </div>
+                        ) : ultimasTransacciones.map(t => (
+                            <div key={t._id} className="flex items-center gap-4 bg-slate-900/40 p-5 rounded-3xl border border-slate-800/50 shadow-lg hover:border-slate-600 transition-all">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner border-2 ${t.tipo === 'INGRESO' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                                    {t.tipo === 'INGRESO' ? '↑' : '↓'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-black text-white text-sm truncate mb-0.5">{t.descripcion}</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.categoria}</span>
+                                        <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
+                                        <span className="text-[9px] font-bold text-slate-600 uppercase">{format(new Date(t.fecha), "d MMM", { locale: es })}</span>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className={`font-black text-lg tracking-tight ${t.tipo === 'INGRESO' ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {t.tipo === 'INGRESO' ? '+' : '-'}${t.monto.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
