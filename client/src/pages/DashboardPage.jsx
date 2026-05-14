@@ -13,8 +13,8 @@ export default function DashboardPage() {
     const [currentPageGrado, setCurrentPageGrado] = useState(1);
     const [currentPageFaja, setCurrentPageFaja] = useState(1);
     const [currentPageCobranzas, setCurrentPageCobranzas] = useState(1);
-    const itemsPerPage = 8;
-    const itemsPerPageCobranzas = 12;
+    const itemsPerPage = 6;
+    const itemsPerPageCobranzas = 20;
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -148,18 +148,9 @@ export default function DashboardPage() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
-                                    <div className="flex items-center gap-2 mb-3">
+                                    <div className="flex items-center gap-2">
                                         <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
-                                        <span className="text-[10px] font-black text-slate-500 uppercase">Grado {a.grado}</span>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
-                                            <div className="h-full bg-emerald-500 transition-all" style={{ width: `${a.pctClases}%` }}></div>
-                                        </div>
-                                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                                            <span className="text-emerald-400">Asistencia</span>
-                                            <span className="text-white">{a.pctClases}%</span>
-                                        </div>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Grado Actual: {a.grado}</span>
                                     </div>
                                 </div>
                             </div>
@@ -201,18 +192,9 @@ export default function DashboardPage() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
-                                    <div className="flex items-center gap-2 mb-3">
+                                    <div className="flex items-center gap-2">
                                         <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
-                                        <span className="text-[10px] font-black text-blue-400 uppercase">Listo para Faja</span>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-blue-500/10">
-                                            <div className="h-full bg-blue-500 transition-all" style={{ width: '100%' }}></div>
-                                        </div>
-                                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                                            <span className="text-blue-400">Permanencia Cumplida</span>
-                                            <span className="text-white">100%</span>
-                                        </div>
+                                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Elegible para Faja</span>
                                     </div>
                                 </div>
                             </div>

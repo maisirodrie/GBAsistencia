@@ -6,7 +6,6 @@ import AlumnosPage from "./pages/AlumnosPage";
 import AlumnoFormPage from "./pages/AlumnoFormPage";
 import DashboardPage from "./pages/DashboardPage";
 import FinanzasPage from "./pages/FinanzasPage";
-import ProductosPage from "./pages/ProductosPage";
 import CheckInPage from "./pages/CheckInPage";
 import PublicQRPage from "./pages/PublicQRPage";
 import LoginPage from "./pages/LoginPage";
@@ -44,7 +43,6 @@ function AppContent() {
                             <Route path="/nuevo" element={<AlumnoFormPage />} />
                             <Route path="/editar/:id" element={<AlumnoFormPage />} />
                             <Route path="/finanzas" element={<FinanzasPage />} />
-                            <Route path="/stock" element={<ProductosPage />} />
                             <Route path="/usuarios" element={<UsersPage />} />
                             <Route path="/perfil/cambiar-password" element={<ChangePasswordPage />} />
                         </Route>

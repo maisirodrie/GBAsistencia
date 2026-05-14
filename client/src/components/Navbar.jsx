@@ -13,15 +13,10 @@ export default function Navbar({ isCollapsed, onToggle }) {
         { to: "/alumnos", label: "Alumnos", icon: <Users size={20} />, active: isActive("/alumnos") },
     ];
 
-    const canSeeFinance = ['Admin', 'Encargado'].includes(user?.role);
-    const canSeeStock = ['Admin', 'Encargado'].includes(user?.role);
+    const canSeeEconomy = ['Admin', 'Encargado'].includes(user?.role);
 
-    if (canSeeFinance) {
-        navLinks.push({ to: "/finanzas", label: "Finanzas", icon: <DollarSign size={20} />, active: isActive("/finanzas") });
-    }
-
-    if (canSeeStock) {
-        navLinks.push({ to: "/stock", label: "Stock", icon: <Package size={20} />, active: isActive("/stock") });
+    if (canSeeEconomy) {
+        navLinks.push({ to: "/finanzas", label: "Gestión Económica", icon: <DollarSign size={20} />, active: isActive("/finanzas") });
     }
 
     if (user?.role === 'Admin') {

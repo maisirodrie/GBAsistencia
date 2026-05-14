@@ -34,8 +34,9 @@ export const getStats = async (req, res) => {
             .limit(5)
             .populate('alumnoId', 'nombre apellido');
 
-        // 5. Alumnos próximos a graduación
-        const alumnos = await Alumno.find({ trackProgreso: { $ne: false } });
+        // 5. Obtener todos los alumnos para pagos y filtrados para progreso
+        const alumnosTodos = await Alumno.find({});
+        const alumnosConProgreso = alumnosTodos.filter(a => a.trackProgreso !== false);
         
         // 6. Obtener transacciones de membresía de este mes para ver quién falta pagar
         const pagosMes = await Transaccion.find({
@@ -43,7 +44,7 @@ export const getStats = async (req, res) => {
             categoria: 'Membresía'
         });
         const idsPagados = pagosMes.map(p => p.alumnoId?.toString());
-        const pendientesPago = alumnos
+        const pendientesPago = alumnosTodos
             .filter(a => !idsPagados.includes(a._id.toString()))
             .map(a => ({
                 _id: a._id,
@@ -52,10 +53,9 @@ export const getStats = async (req, res) => {
                 faja: a.faja,
                 grado: a.grado,
                 fotoUrl: a.fotoUrl
-            }))
-            .slice(0, 10);
+            }));
 
-        const proximosAGraduar = alumnos
+        const proximosAGraduar = alumnosConProgreso
             .map(alumno => {
                 const tiempos = TIEMPOS_GRADUACION[alumno.faja] || TIEMPOS_GRADUACION['Branca'];
                 const mesesRequeridos = (alumno.grado >= 0 && alumno.grado < tiempos.length) ? tiempos[alumno.grado] : 1;
