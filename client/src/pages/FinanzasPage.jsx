@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
+import Swal from "sweetalert2";
 import { format } from "date-fns";
 import {
     getConfiguracion, updateConfiguracion,
     getResumen, crearTransaccion, eliminarTransaccion,
     pagarMembresia, getEstadoMembresias
 } from "../api/finanzas";
+import { showAlert, showToast } from "../utils/alerts";
 
 const MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const CATEGORIAS_INGRESO = ["Membresía","Artículo","Certificado/Graduación","Otros"];
@@ -32,6 +34,7 @@ export default function FinanzasPage() {
     const [form, setForm] = useState(initialForm);
     const [loading, setLoading] = useState(false);
     const [configEdit, setConfigEdit] = useState(null);
+    const [filtro, setFiltro] = useState("");
 
     const cargarResumen = useCallback(async () => {
         const { data } = await getResumen(mesActual);
@@ -58,45 +61,130 @@ export default function FinanzasPage() {
             setLoading(true);
             const { data } = await updateConfiguracion(configEdit);
             setConfig(data);
-            alert("✅ Configuración guardada.");
-        } catch(e) { alert(e.response?.data?.message || "Error"); }
+            showToast("Configuración guardada", "success");
+        } catch(e) { 
+            showAlert({ title: "Error", text: e.response?.data?.message || "No se pudo guardar la configuración", icon: "error" });
+        }
         finally { setLoading(false); }
     }
 
     async function handleCrearTransaccion() {
-        if (!form.monto || Number(form.monto) <= 0) return alert("Ingresá un monto válido.");
-        if (!form.categoria) return alert("Seleccioná una categoría.");
+        if (!form.monto || Number(form.monto) <= 0) return showAlert({ title: "Atención", text: "Ingresá un monto válido.", icon: "warning" });
+        if (!form.categoria) return showAlert({ title: "Atención", text: "Seleccioná una categoría.", icon: "warning" });
         try {
             setLoading(true);
             await crearTransaccion({ ...form, tipo: showModal === "ingreso" ? "INGRESO" : "EGRESO", monto: Number(form.monto) });
             setShowModal(null);
             setForm(initialForm);
             cargarResumen();
-        } catch(e) { alert(e.response?.data?.message || "Error"); }
+            showToast("Movimiento registrado");
+        } catch(e) { 
+            showAlert({ title: "Error", text: e.response?.data?.message || "Error al crear transacción", icon: "error" });
+        }
         finally { setLoading(false); }
     }
 
     async function handleEliminar(id) {
-        if (!window.confirm("¿Eliminar esta transacción?")) return;
-        await eliminarTransaccion(id);
-        cargarResumen();
+        const confirm = await showAlert({
+            title: "¿Eliminar transacción?",
+            text: "Esta acción no se puede deshacer.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar"
+        });
+        if (!confirm.isConfirmed) return;
+        
+        try {
+            await eliminarTransaccion(id);
+            cargarResumen();
+            showToast("Transacción eliminada", "info");
+        } catch (e) {
+            showAlert({ title: "Error", text: "No se pudo eliminar la transacción", icon: "error" });
+        }
     }
 
     async function handlePagarMembresia(alumnoId) {
-        const diaHoy = new Date().getDate();
-        const hayRecargo = diaHoy > config.diaCierreCobranza;
-        const montoFinal = hayRecargo
-            ? Math.round(config.precioMembresia * (1 + config.porcentajeRecargo / 100))
-            : config.precioMembresia;
-        const msg = hayRecargo
-            ? `¿Confirmar pago de membresía?\n\nBase: ${config.moneda}${fmt(config.precioMembresia)}\nRecargo (${config.porcentajeRecargo}%): +${config.moneda}${fmt(montoFinal - config.precioMembresia)}\n\nTotal: ${config.moneda}${fmt(montoFinal)}`
-            : `¿Confirmar pago de membresía?\nMonto: ${config.moneda}${fmt(montoFinal)}`;
-        if (!window.confirm(msg)) return;
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { value: fechaPago } = await Swal.fire({
+            title: 'Cobrar Membresía',
+            html: `
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Fecha de Pago</label>
+                        <input id="fecha-pago" type="date" value="${today}" 
+                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-red-500 transition-all font-semibold [color-scheme:dark]"
+                        >
+                    </div>
+                    <div id="pago-detalle" class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 space-y-2">
+                        {/* El detalle se carga dinámicamente aquí */}
+                    </div>
+                </div>
+            `,
+            background: '#0f172a',
+            color: '#f8fafc',
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar Pago',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#334155',
+            customClass: {
+                popup: 'rounded-[2rem] border border-slate-800 shadow-2xl',
+                confirmButton: 'rounded-xl px-6 py-3 font-black uppercase tracking-widest text-xs',
+                cancelButton: 'rounded-xl px-6 py-3 font-black uppercase tracking-widest text-xs'
+            },
+            didOpen: () => {
+                const input = document.getElementById('fecha-pago');
+                const detalle = document.getElementById('pago-detalle');
+                
+                const actualizarDetalle = (fechaStr) => {
+                    const d = new Date(fechaStr + "T12:00:00"); // Evitar problemas de zona horaria
+                    const dia = d.getDate();
+                    const hayRecargo = dia > config.diaCierreCobranza;
+                    const montoFinal = hayRecargo
+                        ? Math.round(config.precioMembresia * (1 + config.porcentajeRecargo / 100))
+                        : config.precioMembresia;
+
+                    detalle.innerHTML = `
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Base:</span>
+                            <span class="font-bold text-white">${config.moneda}${fmt(config.precioMembresia)}</span>
+                        </div>
+                        ${hayRecargo ? `
+                        <div class="flex justify-between text-sm">
+                            <span class="text-orange-400">Recargo (${config.porcentajeRecargo}%):</span>
+                            <span class="font-bold text-orange-400">+${config.moneda}${fmt(montoFinal - config.precioMembresia)}</span>
+                        </div>
+                        ` : ''}
+                        <div class="pt-2 border-t border-slate-700 flex justify-between items-end">
+                            <span class="text-xs font-black text-slate-400 uppercase">Total:</span>
+                            <span class="text-2xl font-black text-white">${config.moneda}${fmt(montoFinal)}</span>
+                        </div>
+                        <p class="text-[9px] font-bold text-slate-500 mt-2 uppercase text-center">
+                            ${hayRecargo ? '⚠️ Se aplica mora por pago fuera de término' : '✅ Pago en término'}
+                        </p>
+                    `;
+                };
+
+                input.addEventListener('change', (e) => actualizarDetalle(e.target.value));
+                actualizarDetalle(today);
+            },
+            preConfirm: () => {
+                return document.getElementById('fecha-pago').value;
+            }
+        });
+
+        if (!fechaPago) return;
+
         try {
-            await pagarMembresia({ alumnoId, periodo: mesActual });
+            // El backend ya calcula el recargo según la fecha que le enviemos
+            await pagarMembresia({ alumnoId, periodo: mesActual, fechaPago });
+            showToast("Pago registrado con éxito");
             cargarMembresias();
             cargarResumen();
-        } catch(e) { alert(e.response?.data?.message || "Error"); }
+        } catch(e) { 
+            showAlert({ title: "Error", text: e.response?.data?.message || "No se pudo registrar el pago", icon: "error" });
+        }
     }
 
     const [anio, mes] = mesActual.split("-");
@@ -226,8 +314,35 @@ export default function FinanzasPage() {
                     </div>
                 </div>
 
+                {/* Buscador de Alumnos */}
+                <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                        <span className="text-xl">🔍</span>
+                    </div>
+                    <input 
+                        type="text"
+                        placeholder="Buscar alumno por nombre o apellido..."
+                        value={filtro}
+                        onChange={(e) => setFiltro(e.target.value)}
+                        className="w-full bg-slate-900/50 border border-slate-700/50 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium placeholder:text-slate-600"
+                    />
+                    {filtro && (
+                        <button 
+                            onClick={() => setFiltro("")}
+                            className="absolute inset-y-0 right-4 flex items-center text-slate-500 hover:text-white"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {estadoMem.map(({ alumno, pago }) => (
+                    {estadoMem
+                        .filter(({ alumno }) => {
+                            const term = filtro.toLowerCase();
+                            return (alumno.nombre?.toLowerCase().includes(term) || alumno.apellido?.toLowerCase().includes(term));
+                        })
+                        .map(({ alumno, pago }) => (
                         <div key={alumno._id} className={`rounded-2xl p-4 border shadow-lg flex flex-col gap-3 ${pago ? "bg-green-900/20 border-green-700/40" : "bg-slate-800/30 border-slate-700/50"}`}>
                             <div className="flex items-center gap-3">
                                 <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-lg flex-shrink-0 border border-slate-600/50 overflow-hidden">
@@ -260,6 +375,12 @@ export default function FinanzasPage() {
                             )}
                         </div>
                     ))}
+                    {estadoMem.length > 0 && estadoMem.filter(({ alumno }) => (alumno.nombre?.toLowerCase().includes(filtro.toLowerCase()) || alumno.apellido?.toLowerCase().includes(filtro.toLowerCase()))).length === 0 && (
+                        <div className="col-span-full py-12 text-center text-slate-500">
+                            <p className="text-3xl mb-2">🔍</p>
+                            <p className="font-bold text-lg">No se encontraron alumnos con "{filtro}"</p>
+                        </div>
+                    )}
                 </div>
             </>}
 
