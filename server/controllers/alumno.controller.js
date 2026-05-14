@@ -169,23 +169,66 @@ export const deleteAlumno = async (req, res) => {
 
 export const updateAlumno = async (req, res) => {
     try {
-        const alumnoViejo = await Alumno.findById(req.params.id);
-        if (!alumnoViejo) return res.status(404).json({ message: 'Alumno no encontrado' });
+        const alumno = await Alumno.findById(req.params.id);
+        if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
 
+        // Guardar estado previo si hay cambio de faja o grado para el historial
+        const gradoNuevo = req.body.grado !== undefined ? parseInt(req.body.grado) : alumno.grado;
+        const fajaNueva = req.body.faja || alumno.faja;
+
+        if (fajaNueva !== alumno.faja || gradoNuevo !== alumno.grado) {
+            alumno.historicoGraduaciones.push({
+                faja: alumno.faja,
+                grado: alumno.grado,
+                ultimaGraduacion: alumno.ultimaGraduacion,
+                fechaClasePromocion: new Date()
+            });
+        }
+
+        // Aplicar cambios del body al documento
+        // Ajustes de fecha
         if (req.body.ultimaGraduacion === "") {
-            req.body.ultimaGraduacion = null;
+            alumno.ultimaGraduacion = null;
         } else if (req.body.ultimaGraduacion) {
-            req.body.ultimaGraduacion = new Date(req.body.ultimaGraduacion);
+            alumno.ultimaGraduacion = new Date(req.body.ultimaGraduacion);
         }
 
-        if (req.body.clasesParaGraduacion === null || isNaN(req.body.clasesParaGraduacion)) {
-            delete req.body.clasesParaGraduacion;
+        if (req.body.nombre) alumno.nombre = req.body.nombre;
+        if (req.body.apellido !== undefined) alumno.apellido = req.body.apellido;
+        if (req.body.celular !== undefined) alumno.celular = req.body.celular;
+        if (req.body.categoria) alumno.categoria = req.body.categoria;
+        if (req.body.trackProgreso !== undefined) alumno.trackProgreso = req.body.trackProgreso;
+        if (req.body.clasesParaGraduacion !== undefined && !isNaN(req.body.clasesParaGraduacion)) {
+            alumno.clasesParaGraduacion = req.body.clasesParaGraduacion;
         }
 
-        const alumnoUpdated = await Alumno.findByIdAndUpdate(req.params.id, req.body, {
-            new: true
-        });
+        alumno.faja = fajaNueva;
+        alumno.grado = gradoNuevo;
+
+        const alumnoUpdated = await alumno.save();
         res.json(alumnoUpdated);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const revertPromotion = async (req, res) => {
+    try {
+        const alumno = await Alumno.findById(req.params.id);
+        if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
+
+        if (!alumno.historicoGraduaciones || alumno.historicoGraduaciones.length === 0) {
+            return res.status(400).json({ message: 'No hay historial para revertir' });
+        }
+
+        const lastHistory = alumno.historicoGraduaciones.pop();
+        
+        alumno.faja = lastHistory.faja;
+        alumno.grado = lastHistory.grado;
+        alumno.ultimaGraduacion = lastHistory.ultimaGraduacion;
+        
+        await alumno.save();
+        res.json(alumno);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -205,50 +248,8 @@ export const addAsistencia = async (req, res) => {
 
         alumno.asistencias.push(fecha);
         
-        // Solo calcular graduación si el seguimiento está habilitado (por defecto true)
-        if (alumno.trackProgreso !== false) {
-            // Auto-graduación check
-            const tiemposFaja = TIEMPOS_GRADUACION[alumno.faja] || TIEMPOS_GRADUACION['Branca'];
-            const mesesRequeridos = (alumno.grado >= 0 && alumno.grado <= 4) ? tiemposFaja[alumno.grado] : 1;
-            const requeridasReales = mesesRequeridos * CLASES_POR_MES; // 2 clases por semana = 8 por mes
-
-            
-            const hoy = new Date();
-            // Si no hay última graduación, usamos la fecha de creación del alumno como punto de partida
-            const fechaUg = alumno.ultimaGraduacion ? new Date(alumno.ultimaGraduacion) : new Date(alumno.createdAt);
-            const diffTiempo = hoy - fechaUg;
-            const diasTranscurridos = diffTiempo / (1000 * 60 * 60 * 24);
-            const diasRequeridos = mesesRequeridos * 30;
-
-            const toLocalStr = (dObj) => {
-                const d = new Date(dObj);
-                const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-                return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
-            };
-
-            const strUg = toLocalStr(fechaUg);
-            const validas = alumno.asistencias.filter(iso => toLocalStr(iso) >= strUg).length;
-
-            if (validas >= requeridasReales && diasTranscurridos >= diasRequeridos) {
-                // Guardar estado previo antes de promover
-                alumno.historicoGraduaciones.push({
-                    faja: alumno.faja,
-                    grado: alumno.grado,
-                    ultimaGraduacion: alumno.ultimaGraduacion,
-                    fechaClasePromocion: new Date(fecha)
-                });
-
-                if (alumno.grado < 4) {
-                    alumno.grado += 1;
-                } else {
-                    alumno.grado = 0;
-                }
-                // Actualizamos la fecha de graduación para que el contador de tiempo y clases se reinicie para la siguiente raya
-                alumno.ultimaGraduacion = new Date(fecha);
-            }
-        }
-
-
+        // Auto-graduación eliminada (ahora es manual por el profesor)
+        
         await alumno.save();
         res.json(alumno);
     } catch (error) {
@@ -276,45 +277,7 @@ export const checkIn = async (req, res) => {
 
         let mensajeGrad = "";
 
-        if (alumno.trackProgreso !== false) {
-            const tiemposFaja = TIEMPOS_GRADUACION[alumno.faja] || TIEMPOS_GRADUACION['Branca'];
-            const mesesRequeridos = (alumno.grado >= 0 && alumno.grado <= 4) ? tiemposFaja[alumno.grado] : 1;
-            const requeridasReales = mesesRequeridos * 8;
-            
-            const hoy = new Date();
-            const fechaUg = alumno.ultimaGraduacion ? new Date(alumno.ultimaGraduacion) : new Date(alumno.createdAt);
-            const diffTiempo = hoy - fechaUg;
-            const diasTranscurridos = diffTiempo / (1000 * 60 * 60 * 24);
-            const diasRequeridos = mesesRequeridos * 30;
-            
-            const toLocalStr = (dObj) => {
-                const d = new Date(dObj);
-                const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-                return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
-            };
-
-            const strUg = toLocalStr(fechaUg);
-            const validas = alumno.asistencias.filter(iso => toLocalStr(iso) >= strUg).length;
-
-            if (validas >= requeridasReales && diasTranscurridos >= diasRequeridos) {
-                alumno.historicoGraduaciones.push({
-                    faja: alumno.faja,
-                    grado: alumno.grado,
-                    ultimaGraduacion: alumno.ultimaGraduacion,
-                    fechaClasePromocion: new Date()
-                });
-
-                if (alumno.grado < 4) {
-                    alumno.grado += 1;
-                    mensajeGrad = `¡Felicitaciones! Alcanzaste el Grado ${alumno.grado}.`;
-                } else {
-                    alumno.grado = 0;
-                    mensajeGrad = `¡Increíble! Completaste todos los grados de tu faja.`;
-                }
-                alumno.ultimaGraduacion = new Date();
-            }
-        }
-
+        // Auto-graduación eliminada (ahora es manual por el profesor)
 
         await alumno.save();
         res.json({ 

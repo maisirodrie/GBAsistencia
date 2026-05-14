@@ -9,6 +9,7 @@ export const addAsistencia   = (id, fecha)  => api.post(`/alumnos/${id}/asistenc
 export const removeAsistencia = (id, fecha) => api.delete(`/alumnos/${id}/asistencia`, { data: { fecha } });
 export const uploadFoto      = (id, formData) => api.post(`/alumnos/${id}/foto`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const checkIn         = (id)         => api.post(`/alumnos/${id}/checkin`);
+export const revertPromotion = (id)         => api.post(`/alumnos/${id}/revert-promotion`);
 
 export const descargarPDF = async (id, nombreAlumno = 'alumno') => {
     const response = await api.get(`/alumnos/${id}/pdf`, { responseType: 'blob' });

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { TIEMPOS_GRADUACION, CLASES_POR_MES } from "../constants/graduation";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAlumno, createAlumno, updateAlumno, deleteAlumno, addAsistencia, removeAsistencia, descargarPDF, uploadFoto } from "../api/alumnos";
+import { getAlumno, createAlumno, updateAlumno, deleteAlumno, addAsistencia, removeAsistencia, descargarPDF, uploadFoto, revertPromotion } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
 import CartaoFrequencia from "../components/CartaoFrequencia";
@@ -10,6 +10,7 @@ import ProgresoChart from "../components/ProgresoChart";
 import QRModal from "../components/QRModal";
 import PhotoCropModal from "../components/PhotoCropModal";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { FAJAS_POR_CATEGORIA } from "../utils/fajas";
 import Swal from "sweetalert2";
 
@@ -24,7 +25,7 @@ function toLocal(iso) {
 }
 
 export default function AlumnoFormPage() {
-    const { register, handleSubmit, setValue, watch } = useForm();
+    const { register, handleSubmit, setValue, watch, getValues, reset } = useForm();
     const navigate = useNavigate();
     const { id } = useParams();
     const [asistencias, setAsistencias] = useState([]);
@@ -228,6 +229,32 @@ export default function AlumnoFormPage() {
             }
         }
     }
+
+    async function handleRevertPromotion() {
+        const confirm = await showAlert({
+            title: "¿Deshacer graduación?",
+            text: "Se restaurará el cinturón, grado y fecha de graduación anterior. Esta acción borrará el último registro del historial.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, deshacer"
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                const { data } = await revertPromotion(id);
+                syncAlumnoData(data);
+                // Actualizar los campos del formulario para reflejar la reversión
+                setValue("faja", data.faja);
+                setValue("grado", data.grado);
+                setValue("ultimaGraduacion", data.ultimaGraduacion ? new Date(data.ultimaGraduacion).toISOString().split('T')[0] : "");
+                showToast("Graduación revertida correctamente", "info");
+            } catch (e) {
+                showAlert({ title: "Error", text: e.response?.data?.message ?? "Error", icon: "error" });
+            }
+        }
+    }
+
+
 
     /* Agrupar asistencias por año/mes */
     const agrupadas = asistencias.reduce((acc, iso) => {
@@ -465,16 +492,30 @@ export default function AlumnoFormPage() {
                             </div>
                         </div>
 
-
                         {/* Progreso Visual */}
                         {id && watch("trackProgreso") !== false && alumnoData && (() => {
                             const currentFaja = watch("faja") || alumnoData.faja;
                             const currentGrado = parseInt(watch("grado")) || 0;
+                            const currentUg = watch("ultimaGraduacion");
                             
+                            // Calcular asistencias desde la fecha mostrada en el formulario
+                            const countDesdeUg = currentUg 
+                                ? asistencias.filter(iso => {
+                                    const dAsist = new Date(iso);
+                                    const dUg = new Date(currentUg);
+                                    // Ajuste de zona horaria para comparar solo fechas
+                                    dAsist.setHours(0,0,0,0);
+                                    dUg.setHours(0,0,0,0);
+                                    return dAsist >= dUg;
+                                }).length
+                                : asistencias.length;
+
                             const tiempos = TIEMPOS_GRADUACION[currentFaja] || TIEMPOS_GRADUACION['Branca'];
                             const mesesReq = (currentGrado >= 0 && currentGrado < tiempos.length) ? tiempos[currentGrado] : 1;
-                            const reqTécnica = mesesReq * CLASES_POR_MES;
+                            const reqTécnica = watch("clasesParaGraduacion") || (mesesReq * CLASES_POR_MES);
                             const reqPermanencia = mesesReq * 30;
+
+                            const listo = (countDesdeUg >= reqTécnica && countDesdeUg >= reqPermanencia);
 
                             return (
                                 <div className="pt-8 animate-in zoom-in-95 duration-500">
@@ -486,8 +527,8 @@ export default function AlumnoFormPage() {
                                             </div>
                                             <div className="text-right">
                                                 <div className="flex flex-col items-end">
-                                                    <span className="text-sm font-bold text-slate-400">Barra para grado: <span className="text-white text-xl">{Math.min(alumnoData.asistenciasDesdeUltimaGrad, reqTécnica)}</span> / {reqTécnica}</span>
-                                                    <span className="text-sm font-bold text-slate-400">Barra de asistencia: <span className="text-white text-xl">{Math.min(alumnoData.asistenciasDesdeUltimaGrad, reqPermanencia)}</span> / {reqPermanencia}</span>
+                                                    <span className="text-sm font-bold text-slate-400">Barra para grado: <span className="text-white text-xl">{Math.min(countDesdeUg, reqTécnica)}</span> / {reqTécnica}</span>
+                                                    <span className="text-sm font-bold text-slate-400">Barra de asistencia: <span className="text-white text-xl">{Math.min(countDesdeUg, reqPermanencia)}</span> / {reqPermanencia}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -496,168 +537,234 @@ export default function AlumnoFormPage() {
                                         <div className="space-y-1 mb-3">
                                             <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
                                                 <span>Progreso Técnico (Grado)</span>
-                                                <span>{Math.round(Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqTécnica, 1) * 100)}%</span>
+                                                <span>{Math.round(Math.min(countDesdeUg / reqTécnica, 1) * 100)}%</span>
                                             </div>
                                             <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
                                                 <div
                                                     className="h-full bg-blue-500 rounded-full transition-all duration-700 ease-out"
-                                                    style={{ width: `${Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqTécnica, 1) * 100}%` }}
+                                                    style={{ width: `${Math.min(countDesdeUg / reqTécnica, 1) * 100}%` }}
                                                 />
                                             </div>
                                         </div>
-
+ 
                                         {/* Barra de Tiempo */}
                                         <div className="space-y-1">
                                             <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
                                                 <span>Asistencia Total (Permanencia)</span>
-                                                <span>{Math.round(Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqPermanencia, 1) * 100)}%</span>
+                                                <span>{Math.round(Math.min(countDesdeUg / reqPermanencia, 1) * 100)}%</span>
                                             </div>
                                             <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
                                                 <div
                                                     className="h-full bg-purple-500 rounded-full transition-all duration-700 ease-out"
-                                                    style={{ width: `${Math.min(alumnoData.asistenciasDesdeUltimaGrad / reqPermanencia, 1) * 100}%` }}
+                                                    style={{ width: `${Math.min(countDesdeUg / reqPermanencia, 1) * 100}%` }}
                                                 />
-                                            </div>
                                         </div>
+                                    </div>
 
-                                        {(alumnoData.asistenciasDesdeUltimaGrad >= reqTécnica && alumnoData.asistenciasDesdeUltimaGrad >= reqPermanencia) ? (
-                                            <div className="mt-6 flex flex-col gap-3">
-                                                <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-xl text-center animate-pulse">
-                                                    <p className="text-green-400 font-black text-xs uppercase tracking-widest">🏆 ¡Elegible para Graduación! 🏆</p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        const confirm = await showAlert({
-                                                            title: '¿Confirmar Promoción?',
-                                                            text: `Se subirá un grado a ${alumnoData.nombre} y se reiniciará su progreso.`,
-                                                            icon: 'question',
-                                                            showCancelButton: true,
-                                                            confirmButtonText: 'Sí, Promover',
-                                                            cancelButtonText: 'Cancelar'
-                                                        });
-                                                        
-                                                        if (confirm.isConfirmed) {
-                                                            let nuevoGrado = currentGrado + 1;
-                                                            let nuevaFaja = currentFaja;
+                                    {/* Botón de Promoción Manual (Siempre disponible para el profesor) */}
+                                        <div className="mt-6 pt-6 border-t border-slate-700/50">
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    const currentGrado = Number(watch("grado"));
+                                                    const currentFaja = watch("faja");
+                                                    const categoria = watch("categoria");
+                                                    const fajasOrden = FAJAS_POR_CATEGORIA[categoria] || FAJAS_POR_CATEGORIA["Adulto"];
+                                                    const currentIndex = fajasOrden.indexOf(currentFaja);
 
-                                                            // Lógica de cambio de faja al superar el grado 4
-                                                            if (currentGrado >= 4) {
-                                                                const fajasOrden = ['Branca', 'Azul', 'Roxa', 'Marrom', 'Preta', 'Coral', 'Vermelha e Branca', 'Vermelha'];
-                                                                const currentIndex = fajasOrden.indexOf(currentFaja);
-                                                                if (currentIndex !== -1 && currentIndex < fajasOrden.length - 1) {
-                                                                    nuevaFaja = fajasOrden[currentIndex + 1];
-                                                                    nuevoGrado = 0;
-                                                                    showToast(`¡Promovido a cinturón ${nuevaFaja}!`, "success");
-                                                                }
+                                                    let nuevaFaja = currentFaja;
+                                                    let nuevoGrado = currentGrado + 1;
+
+                                                    const confirm = await showAlert({
+                                                        title: "¿Confirmar Promoción?",
+                                                        text: currentGrado >= 4 
+                                                            ? `El alumno pasará de ${currentFaja} a ${fajasOrden[currentIndex + 1] || 'Siguiente Faja'}.`
+                                                            : `Se agregará el grado ${nuevoGrado} a la faja ${currentFaja}.`,
+                                                        icon: "question",
+                                                        showCancelButton: true,
+                                                        confirmButtonText: "Sí, promover"
+                                                    });
+
+                                                    if (confirm.isConfirmed) {
+                                                        if (currentGrado >= 4) {
+                                                            if (currentIndex < fajasOrden.length - 1) {
+                                                                nuevaFaja = fajasOrden[currentIndex + 1];
+                                                                nuevoGrado = 0;
+                                                                showToast(`¡Promovido a cinturón ${nuevaFaja}!`, "success");
+                                                            } else {
+                                                                return showAlert({ title: "Atención", text: "El alumno ya está en la faja máxima de esta categoría.", icon: "info" });
                                                             }
-
-                                                            setValue("faja", nuevaFaja);
-                                                            setValue("grado", nuevoGrado);
-                                                            setValue("ultimaGraduacion", new Date().toISOString().split('T')[0]);
-                                                            showToast("Datos preparados. Haz click en 'Guardar Cambios' para finalizar.", "info");
                                                         }
-                                                    }}
-                                                    className="w-full bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-green-900/20 transition-all active:scale-95 border-b-4 border-green-800 active:border-b-0"
-                                                >
-                                                    🎓 Promover de Grado
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <p className="text-[10px] text-slate-500 mt-4 font-medium text-center italic leading-relaxed">
-                                                El alumno debe cumplir con ambos requisitos para avanzar al siguiente nivel.
-                                            </p>
-                                        )}
+
+                                                    const updatedValues = {
+                                                        ...getValues(),
+                                                        faja: nuevaFaja,
+                                                        grado: nuevoGrado,
+                                                        ultimaGraduacion: new Date().toISOString()
+                                                    };
+
+                                                    try {
+                                                        const { data } = await updateAlumno(id, updatedValues);
+                                                        syncAlumnoData(data);
+                                                        // Sincronizar el formulario también
+                                                        reset(data); 
+                                                        showToast("¡Promovido con éxito!", "success");
+                                                    } catch (e) {
+                                                        showAlert({ title: "Error", text: "No se pudo procesar la promoción.", icon: "error" });
+                                                    }
+                                                }
+                                            }}
+                                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all active:scale-95 border-b-4 border-blue-800 active:border-b-0 flex items-center justify-center gap-2"
+                                            >
+                                                <span>🎓</span> Promover Grado / Faja
+                                            </button>
+                                            
+                                            {!listo && (
+                                                <p className="text-[10px] text-slate-500 mt-3 font-bold text-center uppercase tracking-wider opacity-60">
+                                                    Promoción manual (el alumno aún no cumple los requisitos automáticos)
+                                                </p>
+                                            )}
+                                            {listo && (
+                                                <p className="text-[10px] text-green-400 mt-3 font-black text-center uppercase tracking-wider animate-pulse">
+                                                    ⭐ ¡Alumno elegible para promoción según el sistema!
+                                                </p>
+                                            )}
+
+                                            {/* Botón de Deshacer (Si hay historial) */}
+                                            {alumnoData?.historicoGraduaciones?.length > 0 && (
+                                                <div className="mt-4 pt-4 border-t border-slate-700/30">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleRevertPromotion}
+                                                        className="w-full text-[10px] font-black text-red-400 hover:text-red-300 uppercase tracking-widest transition-all bg-red-500/5 hover:bg-red-500/10 py-3 rounded-xl border border-red-500/20 flex items-center justify-center gap-2"
+                                                    >
+                                                        ↩ Deshacer Última Graduación
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
                         })()}
 
+
                     </div>
                 </div>
 
-                {/* PANEL DERECHO: TOMA DE ASISTENCIA */}
+                {/* PANEL DERECHO: TOMA DE ASISTENCIA Y GRADUACIONES */}
                 {id && (
                     <div className="lg:col-span-5 flex flex-col gap-6 lg:gap-8">
-                        
-                        {/* Widget de Acción Rápida */}
-                        <div className="bg-gradient-to-br from-blue-900/40 to-slate-900/60 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-blue-500/20 shadow-2xl relative overflow-hidden">
-                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
                             
-                            <h2 className="text-xl font-black text-white tracking-tight mb-6 flex items-center gap-2">
-                                <span className="bg-slate-700/50 text-slate-400 p-2 rounded-xl py-1.5 leading-none shadow-inner border border-slate-700/10">📅</span>
-                                Historial Manual
-                            </h2>
+                            {/* Historial de Graduaciones (Rayas/Fajas) */}
+                            <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-700/50 shadow-xl flex flex-col">
+                                <div className="flex items-center justify-between mb-5 border-b border-slate-700/50 pb-4">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">
+                                        Historial de Graduaciones
+                                    </h3>
+                                </div>
+                                
+                                <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {alumnoData?.historicoGraduaciones?.length > 0 ? (
+                                        [...alumnoData.historicoGraduaciones].reverse().map((h, i) => (
+                                            <div key={i} className="bg-slate-900/40 p-4 rounded-2xl border border-slate-700/30 flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-white font-black text-sm">{h.faja} <span className="text-slate-400 font-bold">- {h.grado === 0 ? 'Sin Grado' : `${h.grado}º Grado`}</span></p>
+                                                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
+                                                        Alcanzado el {format(new Date(h.fechaClasePromocion), "d 'de' MMMM, yyyy", { locale: es })}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md border border-slate-700">HISTORIAL</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-8 text-center opacity-30">
+                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Sin graduaciones registradas</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
-                            <div className="relative z-10">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2 pl-1">Agregar fecha específica</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="date"
-                                        className="flex-1 bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-semibold shadow-inner [color-scheme:dark]"
-                                        value={fechaManual}
-                                        onChange={e => setFechaManual(e.target.value)}
-                                    />
-                                    <button
-                                        onClick={marcarFecha}
-                                        className="bg-slate-700/80 hover:bg-slate-600 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all border border-slate-600 shadow-sm active:scale-95"
-                                    >
-                                        Agregar
-                                    </button>
+                            {/* Widget de Acción Rápida */}
+                            <div className="bg-gradient-to-br from-blue-900/40 to-slate-900/60 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-blue-500/20 shadow-2xl relative overflow-hidden">
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                                
+                                <h2 className="text-xl font-black text-white tracking-tight mb-6 flex items-center gap-2">
+                                    <span className="bg-slate-700/50 text-slate-400 p-2 rounded-xl py-1.5 leading-none shadow-inner border border-slate-700/10">📅</span>
+                                    Historial Manual
+                                </h2>
+
+                                <div className="relative z-10">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2 pl-1">Agregar fecha específica</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="date"
+                                            className="flex-1 bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-semibold shadow-inner [color-scheme:dark]"
+                                            value={fechaManual}
+                                            onChange={e => setFechaManual(e.target.value)}
+                                        />
+                                        <button
+                                            onClick={marcarFecha}
+                                            className="bg-slate-700/80 hover:bg-slate-600 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all border border-slate-600 shadow-sm active:scale-95"
+                                        >
+                                            Agregar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Historial Interactivo */}
+                            <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-700/50 shadow-xl flex-1 flex flex-col max-h-[420px]">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center justify-between pl-1 pr-1 border-b border-slate-700/50 pb-4">
+                                    Asistencias Totales
+                                    <span className="bg-slate-800 border border-slate-700 text-slate-300 py-1 px-3 rounded-full text-[10px] shadow-inner font-bold">{asistencias.length} TOTALES</span>
+                                </h3>
+                                
+                                <div className="space-y-6 overflow-y-auto pr-3 custom-scrollbar flex-1 pb-4">
+                                    {Object.keys(agrupadas).sort((a, b) => b - a).map(anio => (
+                                        <div key={anio}>
+                                            <div className="inline-block bg-slate-900/80 border border-slate-700 px-3 py-1 rounded-lg mb-3">
+                                                <p className="text-xs text-white font-black tracking-widest">{anio}</p>
+                                            </div>
+                                            <div className="space-y-5">
+                                                {Object.keys(agrupadas[anio]).sort((a, b) => b - a).map(mes => (
+                                                    <div key={mes} className="pl-2 border-l-2 border-slate-700/50 relative">
+                                                        <div className="absolute w-2 h-2 rounded-full bg-blue-500 -left-[5px] top-1"></div>
+                                                        <p className="text-[10px] text-blue-400 font-black uppercase mb-2 ml-2 tracking-widest">{MESES_ES[mes]}</p>
+                                                        <div className="flex flex-wrap gap-2 ml-2">
+                                                            {agrupadas[anio][mes].sort((a, b) => a.dia - b.dia).map(({ iso, dia }) => (
+                                                                <button
+                                                                    key={iso}
+                                                                    onClick={() => eliminarAsistencia(iso)}
+                                                                    title="Eliminar asistencia"
+                                                                    className="group relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-600 hover:border-red-500 text-sm font-bold text-slate-300 transition-all shadow-sm overflow-hidden"
+                                                                >
+                                                                    <span className="group-hover:-translate-y-8 transition-transform duration-300">
+                                                                        {String(dia).padStart(2, "0")}
+                                                                    </span>
+                                                                    <span className="absolute inset-0 flex items-center justify-center bg-red-500/20 text-red-500 translate-y-8 group-hover:translate-y-0 transition-transform duration-300">
+                                                                        ✕
+                                                                    </span>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {asistencias.length === 0 && (
+                                        <div className="h-full flex flex-col items-center justify-center pt-8 opacity-50">
+                                            <span className="text-4xl mb-2">👻</span>
+                                            <p className="text-white text-sm font-bold">Sin asistencias aún</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
-
-                        {/* Historial Interactivo */}
-                        <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-700/50 shadow-xl flex-1 flex flex-col max-h-[420px]">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center justify-between pl-1 pr-1 border-b border-slate-700/50 pb-4">
-                                Historial de Clases
-                                <span className="bg-slate-800 border border-slate-700 text-slate-300 py-1 px-3 rounded-full text-[10px] shadow-inner font-bold">{asistencias.length} TOTALES</span>
-                            </h3>
-                            
-                            <div className="space-y-6 overflow-y-auto pr-3 custom-scrollbar flex-1 pb-4">
-                                {Object.keys(agrupadas).sort((a, b) => b - a).map(anio => (
-                                    <div key={anio}>
-                                        <div className="inline-block bg-slate-900/80 border border-slate-700 px-3 py-1 rounded-lg mb-3">
-                                            <p className="text-xs text-white font-black tracking-widest">{anio}</p>
-                                        </div>
-                                        <div className="space-y-5">
-                                            {Object.keys(agrupadas[anio]).sort((a, b) => b - a).map(mes => (
-                                                <div key={mes} className="pl-2 border-l-2 border-slate-700/50 relative">
-                                                    <div className="absolute w-2 h-2 rounded-full bg-blue-500 -left-[5px] top-1"></div>
-                                                    <p className="text-[10px] text-blue-400 font-black uppercase mb-2 ml-2 tracking-widest">{MESES_ES[mes]}</p>
-                                                    <div className="flex flex-wrap gap-2 ml-2">
-                                                        {agrupadas[anio][mes].sort((a, b) => a.dia - b.dia).map(({ iso, dia }) => (
-                                                            <button
-                                                                key={iso}
-                                                                onClick={() => eliminarAsistencia(iso)}
-                                                                title="Eliminar asistencia"
-                                                                className="group relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-600 hover:border-red-500 text-sm font-bold text-slate-300 transition-all shadow-sm overflow-hidden"
-                                                            >
-                                                                <span className="group-hover:-translate-y-8 transition-transform duration-300">
-                                                                    {String(dia).padStart(2, "0")}
-                                                                </span>
-                                                                <span className="absolute inset-0 flex items-center justify-center bg-red-500/20 text-red-500 translate-y-8 group-hover:translate-y-0 transition-transform duration-300">
-                                                                    ✕
-                                                                </span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                                {asistencias.length === 0 && (
-                                    <div className="h-full flex flex-col items-center justify-center pt-8 opacity-50">
-                                        <span className="text-4xl mb-2">👻</span>
-                                        <p className="text-white text-sm font-bold">Sin asistencias aún</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                    )}
             </div>
 
             {/* ── GRÁFICO DE PROGRESO (ancho completo) ── */}

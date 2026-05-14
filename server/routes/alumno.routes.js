@@ -8,6 +8,7 @@ import {
     subirFotoAlumno,
     addAsistencia,
     removeAsistencia,
+    revertPromotion,
     checkIn
 } from '../controllers/alumno.controller.js';
 import { generarCartaoPDF } from '../controllers/pdf.controller.js';
@@ -64,6 +65,7 @@ router.put('/:id', isGestion, updateAlumno);
 router.delete('/:id', isAdmin, deleteAlumno);
 router.post('/:id/asistencia', addAsistencia);
 router.delete('/:id/asistencia', removeAsistencia);
+router.post('/:id/revert-promotion', isGestion, revertPromotion);
 router.post('/:id/foto', isGestion, upload.single('foto'), subirFotoAlumno);
 router.post('/:id/checkin', checkIn);
 
