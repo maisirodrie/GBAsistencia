@@ -12,7 +12,9 @@ export default function DashboardPage() {
     const [candidatosAFaja, setCandidatosAFaja] = useState([]);
     const [currentPageGrado, setCurrentPageGrado] = useState(1);
     const [currentPageFaja, setCurrentPageFaja] = useState(1);
+    const [currentPageCobranzas, setCurrentPageCobranzas] = useState(1);
     const itemsPerPage = 8;
+    const itemsPerPageCobranzas = 12;
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -242,7 +244,7 @@ export default function DashboardPage() {
                                     <span className="text-6xl mb-3">💎</span>
                                     <p className="font-bold text-base uppercase tracking-widest text-center">Al día con los pagos</p>
                                 </div>
-                            ) : pendientesPago.map(a => (
+                            ) : pendientesPago.slice((currentPageCobranzas - 1) * itemsPerPageCobranzas, currentPageCobranzas * itemsPerPageCobranzas).map(a => (
                                 <div key={a._id} className="group bg-amber-900/10 hover:bg-amber-900/20 p-5 rounded-3xl border border-amber-500/10 hover:border-amber-500/40 transition-all cursor-pointer flex items-center gap-4 shadow-lg" onClick={() => navigate('/finanzas')}>
                                     <div className="w-12 h-12 rounded-xl overflow-hidden border border-amber-500/30 group-hover:border-amber-500/60 relative shrink-0 transition-all">
                                         {a.fotoUrl ? (
@@ -261,6 +263,14 @@ export default function DashboardPage() {
                                 </div>
                             ))}
                         </div>
+
+                        {pendientesPago.length > itemsPerPageCobranzas && (
+                            <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-amber-500/10">
+                                <button onClick={(e) => { e.stopPropagation(); setCurrentPageCobranzas(p => Math.max(1, p - 1))}} disabled={currentPageCobranzas === 1} className="p-2 bg-slate-900 rounded-xl border border-amber-700/30 text-amber-500 disabled:opacity-30 hover:bg-amber-900/20 transition-all shadow-lg">◀</button>
+                                <span className="text-amber-500/50 font-bold text-[10px] tracking-widest uppercase">Página {currentPageCobranzas} de {Math.ceil(pendientesPago.length / itemsPerPageCobranzas)}</span>
+                                <button onClick={(e) => { e.stopPropagation(); setCurrentPageCobranzas(p => Math.min(Math.ceil(pendientesPago.length / itemsPerPageCobranzas), p + 1))}} disabled={currentPageCobranzas === Math.ceil(pendientesPago.length / itemsPerPageCobranzas)} className="p-2 bg-slate-900 rounded-xl border border-amber-700/30 text-amber-500 disabled:opacity-30 hover:bg-amber-900/20 transition-all shadow-lg">▶</button>
+                            </div>
+                        ) }
                     </div>
                 )}
             </div>
