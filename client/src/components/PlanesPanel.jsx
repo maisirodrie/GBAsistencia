@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { getPlanesAlumno, crearPlan, pagarCuota, cancelarPlan } from "../api/planes";
 import { getProductos } from "../api/productos";
+import { showAlert } from "../utils/alerts";
 
 function fmt(n) { return Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 0 }); }
 
@@ -52,7 +53,7 @@ export default function PlanesPanel({ alumnoId }) {
     }, []);
 
     async function handleCrear() {
-        if (!form.descripcion || !form.montoTotal) return alert("Descripción y monto son obligatorios.");
+        if (!form.descripcion || !form.montoTotal) return showAlert({ title: "Atención", text: "Descripción y monto son obligatorios.", icon: "warning" });
         setLoading(true);
         try {
             await crearPlan({
@@ -65,24 +66,31 @@ export default function PlanesPanel({ alumnoId }) {
             setModal(null);
             setForm({ descripcion: "", productoId: "", montoTotal: "", notas: "" });
             cargar();
-        } catch (e) { alert(e.response?.data?.message || "Error"); }
+        } catch (e) { showAlert({ title: "Error", text: e.response?.data?.message || "Error", icon: "error" }); }
         finally { setLoading(false); }
     }
 
     async function handlePagar() {
-        if (!pagoForm.monto || Number(pagoForm.monto) <= 0) return alert("Ingresá un monto válido.");
+        if (!pagoForm.monto || Number(pagoForm.monto) <= 0) return showAlert({ title: "Atención", text: "Ingresá un monto válido.", icon: "warning" });
         setLoading(true);
         try {
             await pagarCuota(selPlan._id, { monto: Number(pagoForm.monto), nota: pagoForm.nota });
             setModal(null);
             setPagoForm({ monto: "", nota: "" });
             cargar();
-        } catch (e) { alert(e.response?.data?.message || "Error"); }
+        } catch (e) { showAlert({ title: "Error", text: e.response?.data?.message || "Error", icon: "error" }); }
         finally { setLoading(false); }
     }
 
     async function handleCancelar(id) {
-        if (!window.confirm("¿Cancelar este plan de pago?")) return;
+        const confirm = await showAlert({
+            title: "¿Cancelar Plan?",
+            text: "¿Estás seguro de que quieres cancelar este plan de pago?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, cancelar"
+        });
+        if (!confirm.isConfirmed) return;
         await cancelarPlan(id);
         cargar();
     }
