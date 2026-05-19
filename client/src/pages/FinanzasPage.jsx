@@ -789,10 +789,13 @@ export default function FinanzasPage() {
                                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-3.5 text-white font-semibold outline-none focus:border-blue-500 transition-all [color-scheme:dark]" />
                         </div>
                     </div>
-                    <button onClick={handleCrearTransaccion} disabled={loading}
-                        className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 ${showModal === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-500 border-b-4 border-emerald-800' : 'bg-rose-600 hover:bg-rose-500 border-b-4 border-rose-800'}`}>
-                        {loading ? "Registrando..." : "Confirmar Movimiento"}
-                    </button>
+                    <div className="flex flex-col gap-2 pt-2">
+                        <button onClick={handleCrearTransaccion} disabled={loading}
+                            className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 ${showModal === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-500 border-b-4 border-emerald-800' : 'bg-rose-600 hover:bg-rose-500 border-b-4 border-rose-800'}`}>
+                            {loading ? "Registrando..." : "Confirmar Movimiento"}
+                        </button>
+                        <button onClick={() => setShowModal(null)} className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs">Cancelar</button>
+                    </div>
                 </div>
             </PortalModal>
 
@@ -821,7 +824,10 @@ export default function FinanzasPage() {
                             </select>
                         </div>
                     </div>
-                    <button onClick={handleCrearProducto} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95">GUARDAR ARTÍCULO</button>
+                    <div className="flex flex-col gap-2 pt-2">
+                        <button onClick={handleCrearProducto} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95">GUARDAR ARTÍCULO</button>
+                        <button onClick={() => setShowModal(null)} className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs">Cancelar</button>
+                    </div>
                 </div>
             </PortalModal>
 
@@ -830,7 +836,10 @@ export default function FinanzasPage() {
                     <h2 className="text-xl font-black text-white uppercase tracking-widest text-center">Ajustar Stock</h2>
                     <p className="text-center text-slate-400 text-sm font-bold uppercase">{selProducto?.nombre}</p>
                     <input type="number" value={stockEdit} onChange={e => setStockEdit(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-6 py-6 text-white font-black text-4xl text-center outline-none focus:border-blue-500" />
-                    <button onClick={handleAjusteStock} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all">ACTUALIZAR VALOR</button>
+                    <div className="flex flex-col gap-2 pt-2">
+                        <button onClick={handleAjusteStock} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl transition-all border-b-4 border-blue-800 active:border-b-0 uppercase tracking-widest text-xs">ACTUALIZAR VALOR</button>
+                        <button onClick={() => setShowModal(null)} className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-black py-4 rounded-xl transition-all active:scale-95 uppercase tracking-widest text-xs">Cancelar</button>
+                    </div>
                 </div>
             </PortalModal>
 
@@ -866,7 +875,7 @@ export default function FinanzasPage() {
                     </div>
                     <div className="flex flex-col gap-2 pt-2">
                         <button onClick={handleCrearVentaPlan} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs border-b-4 border-blue-800 active:border-b-0">Confirmar Venta</button>
-                        <button onClick={() => setShowModal(null)} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs border border-slate-700">Cancelar</button>
+                        <button onClick={() => setShowModal(null)} className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs">Cancelar</button>
                     </div>
                 </div>
             </PortalModal>
@@ -887,7 +896,7 @@ export default function FinanzasPage() {
                     </div>
                     <div className="flex flex-col gap-2 pt-2">
                         <button onClick={handlePagarCuota} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs border-b-4 border-emerald-800 active:border-b-0">Confirmar Pago</button>
-                        <button onClick={() => setShowModal(null)} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs border border-slate-700">Cancelar</button>
+                        <button onClick={() => setShowModal(null)} className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs">Cancelar</button>
                     </div>
                 </div>
             </PortalModal>
