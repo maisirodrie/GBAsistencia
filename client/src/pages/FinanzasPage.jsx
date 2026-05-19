@@ -836,7 +836,10 @@ export default function FinanzasPage() {
 
             <PortalModal show={showModal === "vender"} onClose={() => setShowModal(null)}>
                 <div className="bg-slate-900 border border-slate-700 rounded-[2.5rem] p-10 w-full max-w-md shadow-2xl space-y-6">
-                    <h2 className="text-xl font-black text-white uppercase tracking-widest">+ Nueva Venta</h2>
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                        <h2 className="text-xl font-black text-white uppercase tracking-widest">+ Nueva Venta</h2>
+                        <button onClick={() => setShowModal(null)} className="text-slate-500 hover:text-white text-2xl">✕</button>
+                    </div>
                     <div className="flex bg-slate-800 p-1.5 rounded-2xl border border-slate-700">
                         <button onClick={() => setVentaPlanForm({...ventaPlanForm, esPlan: false})} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all ${!ventaPlanForm.esPlan ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>PAGO TOTAL</button>
                         <button onClick={() => setVentaPlanForm({...ventaPlanForm, esPlan: true})} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all ${ventaPlanForm.esPlan ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}>A CUOTAS (PLAN)</button>
@@ -861,13 +864,19 @@ export default function FinanzasPage() {
                             <input type="number" value={ventaPlanForm.montoTotal} onChange={e => setVentaPlanForm({...ventaPlanForm, montoTotal: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-xl px-5 py-4 text-white font-black text-2xl outline-none focus:border-blue-500 text-center" />
                         </div>
                     </div>
-                    <button onClick={handleCrearVentaPlan} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs">Confirmar Venta</button>
+                    <div className="flex flex-col gap-2 pt-2">
+                        <button onClick={handleCrearVentaPlan} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs border-b-4 border-blue-800 active:border-b-0">Confirmar Venta</button>
+                        <button onClick={() => setShowModal(null)} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs border border-slate-700">Cancelar</button>
+                    </div>
                 </div>
             </PortalModal>
 
             <PortalModal show={showModal === "plan_pagar"} onClose={() => setShowModal(null)}>
                 <div className="bg-slate-900 border border-slate-700 rounded-[2.5rem] p-10 w-full max-w-sm shadow-2xl space-y-6">
-                    <h2 className="text-xl font-black text-emerald-400 uppercase tracking-widest text-center">Registrar Pago</h2>
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                        <h2 className="text-xl font-black text-emerald-400 uppercase tracking-widest">Registrar Pago</h2>
+                        <button onClick={() => setShowModal(null)} className="text-slate-500 hover:text-white text-2xl">✕</button>
+                    </div>
                     <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/50">
                         <p className="font-black text-white text-xs uppercase text-center">{selPlan?.descripcion}</p>
                         <p className="text-center text-orange-400 font-bold mt-1 text-sm">Saldo: ${fmt((selPlan?.montoTotal || 0) - (selPlan?.montoPagado || 0))}</p>
@@ -876,7 +885,10 @@ export default function FinanzasPage() {
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center block">Monto a abonar</label>
                         <input type="number" value={pagoForm.monto} onChange={e => setPagoForm({...pagoForm, monto: e.target.value})} className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-6 py-6 text-white font-black text-4xl text-center outline-none focus:border-emerald-500 shadow-inner" />
                     </div>
-                    <button onClick={handlePagarCuota} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs">Confirmar Pago</button>
+                    <div className="flex flex-col gap-2 pt-2">
+                        <button onClick={handlePagarCuota} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-widest text-xs border-b-4 border-emerald-800 active:border-b-0">Confirmar Pago</button>
+                        <button onClick={() => setShowModal(null)} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black py-4 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-xs border border-slate-700">Cancelar</button>
+                    </div>
                 </div>
             </PortalModal>
 
