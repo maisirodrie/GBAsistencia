@@ -101,6 +101,7 @@ export default function FinanzasPage() {
     const [productoForm, setProductoForm] = useState(emptyProducto);
     const [stockEdit, setStockEdit] = useState('');
     const [selAlumnoId, setSelAlumnoId] = useState('');
+    const [searchTermAlumno, setSearchTermAlumno] = useState('');
     const [planes, setPlanes] = useState([]);
     const [selPlan, setSelPlan] = useState(null);
     const [pagoForm, setPagoForm] = useState({ monto:'', nota:'' });
@@ -584,12 +585,19 @@ export default function FinanzasPage() {
 
                         <div className="flex flex-col sm:flex-row gap-4 items-end mb-8">
                             <div className="flex-1 space-y-2 w-full">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Seleccionar Alumno</label>
-                                <select value={selAlumnoId} onChange={e => setSelAlumnoId(e.target.value)}
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 text-white font-semibold outline-none focus:border-blue-500 transition-all shadow-inner">
-                                    <option value="">— Buscar alumno para vender —</option>
-                                    {alumnos.map(a => <option key={a._id} value={a._id}>{a.nombre} {a.apellido}</option>)}
-                                </select>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Buscar y Seleccionar Alumno</label>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                    <div className="relative flex-1">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
+                                        <input type="text" placeholder="Filtrar por nombre..." value={searchTermAlumno} onChange={e => setSearchTermAlumno(e.target.value)} 
+                                            className="w-full bg-slate-800 border border-slate-700 rounded-2xl pl-11 pr-4 py-4 text-white font-semibold outline-none focus:border-blue-500 transition-all shadow-inner" />
+                                    </div>
+                                    <select value={selAlumnoId} onChange={e => setSelAlumnoId(e.target.value)}
+                                        className="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 text-white font-semibold outline-none focus:border-blue-500 transition-all shadow-inner">
+                                        <option value="">— Elegir alumno —</option>
+                                        {alumnos.filter(a => `${a.nombre} ${a.apellido}`.toLowerCase().includes(searchTermAlumno.toLowerCase())).map(a => <option key={a._id} value={a._id}>{a.nombre} {a.apellido}</option>)}
+                                    </select>
+                                </div>
                             </div>
                             {selAlumnoId && (
                                 <button onClick={() => setShowModal("vender")} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all">+ Nueva Venta</button>

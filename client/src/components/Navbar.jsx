@@ -30,28 +30,46 @@ export default function Navbar({ isCollapsed, onToggle }) {
             {/* SIDEBAR (DESKTOP) */}
             <aside className={`hidden lg:flex flex-col ${isCollapsed ? "w-20" : "w-72"} bg-slate-900 border-r border-slate-800 h-screen sticky top-0 fixed left-0 z-50 transition-all duration-300`}>
                 {/* Logo & Toggle Section */}
-                <div className={`p-6 flex items-center ${isCollapsed ? "justify-center" : "justify-between"} mb-4`}>
-                    {!isCollapsed && (
-                        <Link to="/" className="flex flex-col items-center gap-1 group">
-                            <img 
-                                src="/gbnorte_v4.png" 
-                                alt="GB Norte Logo" 
-                                className="h-16 w-auto object-contain transition-transform group-hover:scale-105 duration-300" 
-                            />
-                            <div className="flex flex-col items-center">
-                                <span className="text-slate-100 font-black text-[10px] tracking-widest uppercase italic">GB</span>
-                                <span className="text-slate-500 font-bold text-[7px] tracking-[0.1em] uppercase leading-none mt-0.5 text-center">Asistente</span>
-                            </div>
-                        </Link>
+                <div className={`p-6 flex flex-col items-center justify-center relative mb-4 w-full`}>
+                    {!isCollapsed ? (
+                        <>
+                            <Link to="/" className="flex flex-col items-center gap-1 group w-full">
+                                <img 
+                                    src="/gbnorte_v4.png" 
+                                    alt="GB Norte Logo" 
+                                    className="h-20 lg:h-24 w-auto object-contain transition-transform group-hover:scale-105 duration-300 mx-auto" 
+                                />
+                                <div className="flex flex-col items-center">
+                                    <span className="text-slate-100 font-black text-xs tracking-widest uppercase italic">GB</span>
+                                    <span className="text-slate-500 font-bold text-[8px] tracking-[0.1em] uppercase leading-none mt-0.5 text-center">Asistente</span>
+                                </div>
+                            </Link>
+                            <button 
+                                onClick={onToggle}
+                                className="absolute right-4 top-6 p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
+                                title="Contraer menú"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center gap-4 w-full">
+                            <Link to="/" className="flex flex-col items-center group">
+                                <img 
+                                    src="/gbnorte_v4.png" 
+                                    alt="GB Norte Logo" 
+                                    className="h-8 w-auto object-contain transition-transform group-hover:scale-105 duration-300" 
+                                />
+                            </Link>
+                            <button 
+                                onClick={onToggle}
+                                className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
+                                title="Expandir menú"
+                            >
+                                <Menu size={20} />
+                            </button>
+                        </div>
                     )}
-                    
-                    <button 
-                        onClick={onToggle}
-                        className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-all active:scale-90"
-                        title={isCollapsed ? "Expandir menú" : "Contraer menú"}
-                    >
-                        {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
-                    </button>
                 </div>
 
                 {/* Navigation Links */}

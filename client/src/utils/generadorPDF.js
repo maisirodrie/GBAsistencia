@@ -1,5 +1,6 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { showAlert } from "./alerts";
 
 /**
  * Captura el elemento DOM del cartón de frecuencia y lo exporta como PDF.
@@ -8,7 +9,7 @@ import jsPDF from "jspdf";
  */
 export const generarPDFCartao = async (elemento, nombreAlumno = "alumno") => {
   if (!elemento) {
-    alert("No se encontró el cartón para imprimir.");
+    showAlert({ title: "Error", text: "No se encontró el cartón para imprimir.", icon: "error" });
     return;
   }
 

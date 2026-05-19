@@ -20,7 +20,12 @@ export default function AlumnosPage() {
         } catch (error) {
             console.error("Error al cargar alumnos:", error);
             const msg = error.response?.data?.message || "Error de conexión con el servidor.";
-            alert(`Error: ${msg}`);
+            
+            // Si la sesión expiró, el interceptor de axios ya muestra un SweetAlert y redirige.
+            // Evitamos mostrar otra alerta redundante si el status es 401.
+            if (error.response?.status !== 401) {
+                showAlert({ title: "Error", text: msg, icon: "error" });
+            }
         }
     }
 
