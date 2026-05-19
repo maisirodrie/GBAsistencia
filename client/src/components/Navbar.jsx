@@ -28,7 +28,7 @@ export default function Navbar({ isCollapsed, onToggle }) {
     return (
         <>
             {/* SIDEBAR (DESKTOP) */}
-            <aside className={`hidden lg:flex flex-col ${isCollapsed ? "w-20" : "w-72"} bg-slate-900 border-r border-slate-800 h-screen sticky top-0 fixed left-0 z-50 transition-all duration-300`}>
+            <aside className={`hidden lg:flex flex-col ${isCollapsed ? "w-20" : "w-72"} bg-slate-900 border-r border-slate-800 h-screen fixed left-0 top-0 z-50 transition-all duration-300`}>
                 {/* Logo & Toggle Section */}
                 <div className={`p-6 flex flex-col items-center justify-center relative mb-4 w-full`}>
                     {!isCollapsed ? (
@@ -99,7 +99,7 @@ export default function Navbar({ isCollapsed, onToggle }) {
                 <div className="p-4">
                     <Link
                         to="/nuevo"
-                        className={`w-full bg-gradient-to-br from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black py-4 rounded-2xl flex items-center justify-center ${isCollapsed ? "" : "gap-2"} shadow-xl active:scale-95 transition-all border border-red-500/20`}
+                        className={`w-full bg-gradient-to-br from-blue-600 to-blue-800 hover:from-blue-500 hover:to-blue-700 text-white font-black py-4 rounded-2xl flex items-center justify-center ${isCollapsed ? "" : "gap-2"} shadow-xl active:scale-95 transition-all border border-blue-500/20`}
                         title="Nuevo Alumno"
                     >
                         <UserPlus size={18} />
