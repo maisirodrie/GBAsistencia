@@ -348,8 +348,10 @@ export default function FinanzasPage() {
                             setMesActual(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`);
                         }} className="p-2 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all flex-shrink-0">◀</button>
                         
-                        <input type="month" value={mesActual} onChange={e => setMesActual(e.target.value)}
-                            className="bg-transparent border-none text-white font-black text-xs sm:text-sm uppercase px-0 sm:px-4 outline-none text-center flex-1 min-w-0 w-full tracking-tighter sm:tracking-normal [color-scheme:dark]" />
+                        <div className="flex-1 flex justify-center items-center overflow-hidden">
+                            <input type="month" value={mesActual} onChange={e => setMesActual(e.target.value)}
+                                className="bg-transparent border-none text-white font-black text-xs sm:text-sm uppercase px-0 outline-none text-center tracking-tighter sm:tracking-normal [color-scheme:dark] w-auto max-w-full" />
+                        </div>
                         
                         <button onClick={() => {
                             const [y, m] = mesActual.split("-").map(Number);
@@ -359,8 +361,14 @@ export default function FinanzasPage() {
                     </div>
 
                     <div className="flex gap-2 w-full lg:w-auto">
-                        <button onClick={() => { setForm(initialForm); setShowModal("ingreso"); }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 sm:px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border-b-4 border-emerald-800 active:border-b-0">+ Ingreso</button>
-                        <button onClick={() => { setForm(initialForm); setShowModal("egreso"); }} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-3 sm:px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border border-slate-700">- Egreso</button>
+                        <button onClick={() => { setForm(initialForm); setShowModal("ingreso"); }} className="flex-1 flex flex-col items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 sm:px-5 py-2.5 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border-b-4 border-emerald-800 active:border-b-0">
+                            <span className="text-lg leading-none">+</span>
+                            <span>Ingreso</span>
+                        </button>
+                        <button onClick={() => { setForm(initialForm); setShowModal("egreso"); }} className="flex-1 flex flex-col items-center justify-center gap-1 bg-rose-600 hover:bg-rose-500 text-white px-3 sm:px-5 py-2.5 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border-b-4 border-rose-800 active:border-b-0">
+                            <span className="text-lg leading-none">-</span>
+                            <span>Egreso</span>
+                        </button>
                     </div>
                 </div>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-[100px] rounded-full -mr-20 -mt-20"></div>
