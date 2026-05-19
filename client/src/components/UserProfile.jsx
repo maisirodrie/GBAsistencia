@@ -8,8 +8,8 @@ export default function UserProfile() {
 
     return (
         <div className="w-full max-w-[95%] lg:w-auto flex items-center justify-between lg:justify-end gap-3 bg-slate-800/40 backdrop-blur-md p-2 pl-4 pr-2 rounded-2xl border border-slate-700/50 hover:bg-slate-800/60 transition-all group lg:scale-100 scale-100 sm:scale-100 origin-left sm:origin-right shadow-lg">
-            <div className="flex flex-col items-start sm:items-end min-w-0 flex-1 overflow-visible">
-                <span className="block text-white font-black text-[12px] lg:text-[13px] tracking-tight uppercase italic leading-none max-w-none text-left sm:text-right break-words">
+            <div className="flex flex-col items-start sm:items-end min-w-0 flex-1">
+                <span className="block text-white font-black text-[12px] lg:text-[13px] tracking-tight uppercase italic leading-none text-left sm:text-right break-words whitespace-normal">
                     {user?.nombre} {user?.apellido}
                 </span>
                 <span className="block text-rose-500 font-black text-[7px] lg:text-[8px] uppercase tracking-[0.2em] leading-none mt-1.5 max-w-none text-left sm:text-right">

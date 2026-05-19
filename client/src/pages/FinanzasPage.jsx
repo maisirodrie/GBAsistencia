@@ -332,7 +332,7 @@ export default function FinanzasPage() {
         <div className="max-w-7xl mx-auto pb-20 space-y-6">
             
             {/* --- HEADER --- */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-slate-900/40 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 sm:gap-6 bg-slate-900/40 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-800 shadow-2xl relative overflow-hidden">
                 <div className="relative z-10">
                     <h1 className="text-3xl font-black tracking-tighter text-white flex items-center gap-3">
                         <span className="bg-slate-800 p-2.5 rounded-2xl border border-slate-700 shadow-inner">💰</span> Gestión Económica
@@ -340,27 +340,27 @@ export default function FinanzasPage() {
                     <p className="text-slate-400 text-sm mt-1 font-medium">Control unificado de caja, alumnos y stock</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 relative z-10 w-full lg:w-auto">
-                    <div className="flex items-center bg-slate-800/80 rounded-2xl border border-slate-700 p-1.5 shadow-inner">
+                <div className="flex flex-col sm:flex-row items-center gap-3 relative z-10 w-full lg:w-auto">
+                    <div className="flex justify-between items-center bg-slate-800/80 rounded-2xl border border-slate-700 p-1.5 shadow-inner w-full lg:w-auto">
                         <button onClick={() => {
                             const [y, m] = mesActual.split("-").map(Number);
                             const prev = new Date(y, m - 2, 1);
                             setMesActual(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`);
-                        }} className="p-2.5 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all">◀</button>
+                        }} className="p-2 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all flex-shrink-0">◀</button>
                         
                         <input type="month" value={mesActual} onChange={e => setMesActual(e.target.value)}
-                            className="bg-transparent border-none text-white font-black text-sm uppercase px-4 outline-none [color-scheme:dark]" />
+                            className="bg-transparent border-none text-white font-black text-xs sm:text-sm uppercase px-0 sm:px-4 outline-none text-center flex-1 min-w-0 w-full tracking-tighter sm:tracking-normal [color-scheme:dark]" />
                         
                         <button onClick={() => {
                             const [y, m] = mesActual.split("-").map(Number);
                             const next = new Date(y, m, 1);
                             setMesActual(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
-                        }} className="p-2.5 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all">▶</button>
+                        }} className="p-2 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-all flex-shrink-0">▶</button>
                     </div>
 
-                    <div className="flex gap-2 flex-1 lg:flex-none">
-                        <button onClick={() => { setForm(initialForm); setShowModal("ingreso"); }} className="flex-1 lg:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border-b-4 border-emerald-800 active:border-b-0">+ Ingreso</button>
-                        <button onClick={() => { setForm(initialForm); setShowModal("egreso"); }} className="flex-1 lg:flex-none bg-slate-800 hover:bg-slate-700 text-white px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border border-slate-700">- Egreso</button>
+                    <div className="flex gap-2 w-full lg:w-auto">
+                        <button onClick={() => { setForm(initialForm); setShowModal("ingreso"); }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-3 sm:px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border-b-4 border-emerald-800 active:border-b-0">+ Ingreso</button>
+                        <button onClick={() => { setForm(initialForm); setShowModal("egreso"); }} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-3 sm:px-5 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 border border-slate-700">- Egreso</button>
                     </div>
                 </div>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-[100px] rounded-full -mr-20 -mt-20"></div>

@@ -370,7 +370,7 @@ export default function AlumnoFormPage() {
                         {/* Categoría */}
                         <div className="space-y-2">
                             <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Categoría</label>
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 {['Adulto', 'Infantil'].map(cat => (
                                     <button
                                         key={cat}
@@ -520,15 +520,15 @@ export default function AlumnoFormPage() {
                             return (
                                 <div className="pt-8 animate-in zoom-in-95 duration-500">
                                     <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-700/50 shadow-inner">
-                                        <div className="flex justify-between items-end mb-4">
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4">
                                             <div>
                                                 <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-[0.2em] mb-1.5">PROGRESO REQUERIDO</p>
                                                 <p className="text-lg font-black text-white">Hacia {currentGrado < 4 ? `Grado ${currentGrado + 1}` : "Nueva Faja"}</p>
                                             </div>
-                                            <div className="text-right">
-                                                <div className="flex flex-col items-end">
-                                                    <span className="text-sm font-bold text-slate-400">Barra para grado: <span className="text-white text-xl">{Math.min(countDesdeUg, reqTécnica)}</span> / {reqTécnica}</span>
-                                                    <span className="text-sm font-bold text-slate-400">Barra de asistencia: <span className="text-white text-xl">{Math.min(countDesdeUg, reqPermanencia)}</span> / {reqPermanencia}</span>
+                                            <div className="text-left md:text-right w-full md:w-auto">
+                                                <div className="flex flex-row md:flex-col justify-between md:justify-start items-center md:items-end gap-2 md:gap-0 bg-slate-800/40 md:bg-transparent p-3 md:p-0 rounded-xl md:rounded-none">
+                                                    <span className="text-xs md:text-sm font-bold text-slate-400">Progreso: <span className="text-white text-base md:text-xl">{Math.min(countDesdeUg, reqTécnica)}</span> / {reqTécnica}</span>
+                                                    <span className="text-xs md:text-sm font-bold text-slate-400">Asistencia: <span className="text-white text-base md:text-xl">{Math.min(countDesdeUg, reqPermanencia)}</span> / {reqPermanencia}</span>
                                                 </div>
                                             </div>
                                         </div>

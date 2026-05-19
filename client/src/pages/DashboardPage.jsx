@@ -123,7 +123,7 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-10">
                 
                 {/* Panel 1: Próximos Grados */}
-                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
+                <div className="w-full bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
                     <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
                         <h3 className="text-xl font-black text-white flex items-center gap-3">
                             <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">🥋</span> Graduación de Progreso
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Panel 2: Cambios de Faja */}
-                <div className="bg-slate-900/40 border border-blue-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
+                <div className="w-full bg-slate-900/40 border border-blue-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
                     <div className="flex items-center justify-between mb-8 pb-5 border-b border-blue-500/10">
                         <h3 className="text-xl font-black text-white flex items-center gap-3">
                             <span className="bg-blue-900/30 p-2.5 rounded-xl border border-blue-500/20 shadow-inner">🎓</span> Graduación de Cinturón
@@ -212,7 +212,7 @@ export default function DashboardPage() {
 
                 {/* Panel 3: Pendientes de Pago (Este puede ser un grid o full width) */}
                 {isAdminOrEncargado && (
-                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
+                    <div className="w-full bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
                         <div className="flex items-center justify-between mb-8 pb-5 border-b border-amber-500/10">
                             <h3 className="text-xl font-black text-white flex items-center gap-3">
                                 <span className="bg-amber-900/30 p-2.5 rounded-xl border border-amber-500/20 shadow-inner">💰</span> Cobranzas Pendientes
@@ -259,7 +259,7 @@ export default function DashboardPage() {
 
             {/* Fila Inferior: Actividad Reciente */}
             {isAdminOrEncargado && (
-                <div className="bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
+                <div className="w-full bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
                     <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
                         <h3 className="text-xl font-black text-white flex items-center gap-3">
                             <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">⚡</span> Movimientos Recientes
