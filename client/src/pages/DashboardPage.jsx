@@ -93,7 +93,7 @@ export default function DashboardPage() {
                     <p className="text-slate-400 font-bold mt-2 text-lg uppercase tracking-[0.2em]">{format(new Date(), "EEEE d 'de' MMMM", { locale: es })}</p>
                 </div>
                 <div className="flex flex-wrap gap-4 relative z-10 w-full md:w-auto">
-                    <button onClick={() => navigate('/nuevo')} className="flex-1 md:flex-none bg-red-600 hover:bg-red-500 text-white px-6 py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-red-800 active:border-b-0 uppercase tracking-wider text-sm">
+                    <button onClick={() => navigate('/nuevo')} className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-500 text-white px-6 py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-blue-800 active:border-b-0 uppercase tracking-wider text-sm">
                         <span className="text-xl leading-none">+</span> Alumno
                     </button>
                     {isAdminOrEncargado && (

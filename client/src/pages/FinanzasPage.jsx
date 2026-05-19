@@ -227,6 +227,14 @@ export default function FinanzasPage() {
             `,
             background: '#0f172a', color: '#f8fafc',
             showCancelButton: true, confirmButtonText: 'Confirmar Pago',
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#ef4444',
+            customClass: {
+                popup: 'rounded-[2rem] border border-slate-800 shadow-2xl',
+                title: 'font-black tracking-tight',
+                confirmButton: 'rounded-xl px-6 py-3 font-black uppercase tracking-widest text-xs',
+                cancelButton: 'rounded-xl px-6 py-3 font-black uppercase tracking-widest text-xs'
+            },
             didOpen: () => {
                 const input = document.getElementById('swal-fecha');
                 const detalle = document.getElementById('pago-detalle');
