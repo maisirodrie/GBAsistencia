@@ -719,7 +719,7 @@ export default function AlumnoFormPage() {
                                     {/* Barra de Clases */}
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                                            <span>{(evaluacion.estado_secuencial === 1 || evaluacion.estado_secuencial === 2) ? "Progreso Técnico de Clases (Completado)" : "Progreso de Clases del Tramo"}</span>
+                                            <span>{(evaluacion.estado_secuencial === 1 || evaluacion.estado_secuencial === 2) ? "Presencia de Clases (Completado)" : "Presencia de Clases del Tramo"}</span>
                                             <span>{Math.round(pctClases)}%</span>
                                         </div>
                                         <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
@@ -733,7 +733,7 @@ export default function AlumnoFormPage() {
                                     {/* Barra de Tiempo (Permanencia) */}
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                                            <span>{(evaluacion.estado_secuencial === 1 || evaluacion.estado_secuencial === 2) ? "Permanencia de Faja (Asistencia)" : "Permanencia Calendario"}</span>
+                                            <span>{(evaluacion.estado_secuencial === 1 || evaluacion.estado_secuencial === 2) ? "Permanencia de Faixa (Asistencia)" : "Permanencia Calendario"}</span>
                                             <span>{Math.round(pctTiempo)}%</span>
                                         </div>
                                         <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
