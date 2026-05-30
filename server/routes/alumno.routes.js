@@ -56,13 +56,14 @@ import { hasRole, isAdmin } from '../middlewares/validateToken.js';
 
 const router = Router();
 const isGestion = hasRole(['Admin', 'Encargado', 'Profesor', 'Ayudante']);
+const isEncargadoOrAdmin = hasRole(['Admin', 'Encargado']);
 
 router.get('/', getAlumnos);
 router.post('/', isGestion, createAlumno);
 router.get('/:id', getAlumno);
 router.get('/:id/pdf', generarCartaoPDF);
 router.put('/:id', isGestion, updateAlumno);
-router.delete('/:id', isAdmin, deleteAlumno);
+router.delete('/:id', isEncargadoOrAdmin, deleteAlumno);
 router.post('/:id/asistencia', addAsistencia);
 router.delete('/:id/asistencia', removeAsistencia);
 router.post('/:id/revert-promotion', isGestion, revertPromotion);

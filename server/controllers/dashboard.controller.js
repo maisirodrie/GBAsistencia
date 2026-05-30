@@ -1,6 +1,6 @@
 import Alumno from '../models/Alumno.js';
 import Transaccion from '../models/Transaccion.js';
-import { TIEMPOS_GRADUACION, CLASES_POR_MES } from '../constants/graduation.js';
+import { getFechaInicioFaja, getFechaUltimoGrado, evaluarGraduacion } from '../constants/graduation.js';
 
 
 export const getStats = async (req, res) => {
@@ -55,21 +55,38 @@ export const getStats = async (req, res) => {
                 fotoUrl: a.fotoUrl
             }));
 
+        const toLocalStr = (dObj) => {
+            const d = new Date(dObj);
+            const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+            return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+        };
+
         const proximosAGraduar = alumnosConProgreso
             .map(alumno => {
-                const tiempos = TIEMPOS_GRADUACION[alumno.faja] || TIEMPOS_GRADUACION['Branca'];
-                const mesesRequeridos = (alumno.grado >= 0 && alumno.grado < tiempos.length) ? tiempos[alumno.grado] : 1;
-                const reqClases = mesesRequeridos * CLASES_POR_MES;
+                const fechaInicioFaja = getFechaInicioFaja(alumno);
+                const fechaUltimoGrado = getFechaUltimoGrado(alumno);
                 
-                const fechaUg = alumno.ultimaGraduacion ? new Date(alumno.ultimaGraduacion) : new Date(alumno.createdAt);
-                const validas = alumno.asistencias.filter(iso => new Date(iso) >= fechaUg).length;
-                
-                const hoy = new Date();
-                const diasTranscurridos = Math.max(0, Math.floor((hoy - fechaUg) / (1000 * 60 * 60 * 24)));
-                const diasRequeridos = mesesRequeridos * 30;
-                
-                const pctClases = Math.min(validas / reqClases, 1);
-                const pctTiempo = Math.min(diasTranscurridos / diasRequeridos, 1);
+                // Invocar el motor de graduación oficial Gracie Barra
+                const evaluacion = evaluarGraduacion({
+                    cinturon_actual: alumno.faja,
+                    grado_actual: alumno.grado,
+                    fecha_ultimo_grado: fechaUltimoGrado,
+                    fecha_inicio_faja: fechaInicioFaja,
+                    fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento,
+                    asistencias: alumno.asistencias,
+                    frecuencia_semanal: alumno.frecuenciaSemanal
+                });
+
+                const pctClases = evaluacion.contadores_visuales?.grado 
+                    ? evaluacion.contadores_visuales.grado.porcentaje / 100 
+                    : (evaluacion.clases_requeridas > 0 
+                        ? Math.min(evaluacion.clases_acumuladas / evaluacion.clases_requeridas, 1) 
+                        : 1);
+                const pctTiempo = evaluacion.contadores_visuales?.permanencia 
+                    ? evaluacion.contadores_visuales.permanencia.porcentaje / 100 
+                    : (evaluacion.dias_requeridos > 0 
+                        ? Math.min(evaluacion.dias_transcurridos / evaluacion.dias_requeridos, 1) 
+                        : 1);
                 
                 return {
                     _id: alumno._id,
@@ -79,18 +96,24 @@ export const getStats = async (req, res) => {
                     grado: alumno.grado,
                     pctClases: Math.round(pctClases * 100),
                     pctTiempo: Math.round(pctTiempo * 100),
-                    asistenciasDesdeUltimaGrad: validas,
-                    clasesRequeridas: reqClases,
-                    fotoUrl: alumno.fotoUrl
+                    asistenciasDesdeUltimaGrad: evaluacion.clases_acumuladas,
+                    clasesRequeridas: evaluacion.clases_requeridas,
+                    mesesRequeridos: Math.round(evaluacion.dias_requeridos / 30),
+                    fotoUrl: alumno.fotoUrl,
+                    elegible: evaluacion.elegible,
+                    tieneDeuda: evaluacion.tieneDeuda,
+                    deudaClases: evaluacion.deudaClases,
+                    msgDeuda: evaluacion.msgDeuda
                 };
             });
 
+        // Doble condicional: clases AND tiempo cumplidos (elegible === true)
         const candidatosAGrado = proximosAGraduar
-            .filter(a => a.pctClases >= 100 && a.grado < 4)
+            .filter(a => a.elegible && a.grado < 4)
             .sort((a, b) => b.pctClases - a.pctClases);
 
         const candidatosAFaja = proximosAGraduar
-            .filter(a => a.grado >= 4 && a.pctClases >= 100 && a.pctTiempo >= 100)
+            .filter(a => a.grado >= 4 && a.elegible)
             .sort((a, b) => b.pctTiempo - a.pctTiempo);
 
         const isAdminOrEncargado = ['Admin', 'Encargado'].includes(req.user.role);

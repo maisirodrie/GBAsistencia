@@ -48,6 +48,14 @@ const alumnoSchema = new mongoose.Schema({
         default: 30,
         min: 1
     },
+    frecuenciaSemanal: {
+        type: Number,
+        default: 3,
+        min: 1
+    },
+    fechaNacimiento: {
+        type: Date
+    },
     trackProgreso: {
         type: Boolean,
         default: true

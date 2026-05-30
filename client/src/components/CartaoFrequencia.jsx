@@ -123,14 +123,17 @@ export default function CartaoFrequencia({
                                 width: "8cm",
                                 height: "0.5cm",
                                 background: "white",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
                                 fontSize: "0.35cm",
                                 fontWeight: 900,
                                 color: "#000000",
                                 fontFamily: "'643', sans-serif",
                                 boxSizing: "border-box",
+                                lineHeight: "0.5cm",
+                                textAlign: "center",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                padding: "0 0.1cm",
                             }}>
                                 {alumnoNombre || ""}
                             </div>

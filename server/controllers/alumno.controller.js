@@ -1,92 +1,78 @@
 import Alumno from '../models/Alumno.js';
-import { TIEMPOS_GRADUACION, CLASES_POR_MES } from '../constants/graduation.js';
+import { getFechaInicioFaja, getFechaUltimoGrado, getRequisitosAcumulados, evaluarGraduacion } from '../constants/graduation.js';
+
 
 
 
 export const getAlumnos = async (req, res) => {
     try {
+        const alumnosData = await Alumno.find({});
         const hoy = new Date();
         const hoyInicio = new Date(hoy.setHours(0, 0, 0, 0));
         const hoyFin = new Date(hoy.setHours(23, 59, 59, 999));
 
-        const alumnosData = await Alumno.aggregate([
-            {
-                $project: {
-                    nombre: 1,
-                    apellido: 1,
-                    faja: 1,
-                    grado: 1,
-                    fotoUrl: 1,
-                    ultimaGraduacion: 1,
-                    createdAt: 1,
-                    clasesParaGraduacion: 1,
-                    trackProgreso: 1,
-                    totalAsistencias: { $size: "$asistencias" },
-                    yaAsistioHoy: {
-                        $gt: [
-                            {
-                                $size: {
-                                    $filter: {
-                                        input: "$asistencias",
-                                        as: "asist",
-                                        cond: {
-                                            $and: [
-                                                { $gte: ["$$asist", hoyInicio] },
-                                                { $lte: ["$$asist", hoyFin] }
-                                            ]
-                                        }
-                                    }
-                                }
-                            },
-                            0
-                        ]
-                    },
-                    asistenciasDesdeUltimaGrad: {
-                        $size: {
-                            $filter: {
-                                input: "$asistencias",
-                                as: "asist",
-                                cond: {
-                                    $let: {
-                                        vars: {
-                                            ug: { $ifNull: ["$ultimaGraduacion", "$createdAt"] }
-                                        },
-                                        in: { $gte: ["$$asist", "$$ug"] }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        ]);
+        const toLocalStr = (dObj) => {
+            const d = new Date(dObj);
+            const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+            return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+        };
 
-        // Enriquecemos con los datos de la tabla de graduación
         const alumnos = alumnosData.map(alumno => {
-            const tiempos = TIEMPOS_GRADUACION[alumno.faja] || TIEMPOS_GRADUACION['Branca'];
-            const mesesRequeridos = (alumno.grado >= 0 && alumno.grado < tiempos.length) ? tiempos[alumno.grado] : 1;
-            const clasesRequeridas = mesesRequeridos * CLASES_POR_MES;
+            const fechaInicioFaja = getFechaInicioFaja(alumno);
+            const fechaUltimoGrado = getFechaUltimoGrado(alumno);
 
-            
-            // Cálculo de tiempo restante
-            const fechaUg = alumno.ultimaGraduacion ? new Date(alumno.ultimaGraduacion) : new Date(alumno.createdAt);
-            const hoy = new Date();
-            const diasTranscurridos = Math.max(0, Math.floor((hoy - fechaUg) / (1000 * 60 * 60 * 24)));
-            const diasRequeridos = mesesRequeridos * 30;
+            // Invocar el motor de graduación oficial Gracie Barra
+            const evaluacion = evaluarGraduacion({
+                cinturon_actual: alumno.faja,
+                grado_actual: alumno.grado,
+                fecha_ultimo_grado: fechaUltimoGrado,
+                fecha_inicio_faja: fechaInicioFaja,
+                fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento, // Soportar ambas nomenclaturas
+                asistencias: alumno.asistencias,
+                frecuencia_semanal: alumno.frecuenciaSemanal
+            });
+
+            const yaAsistioHoy = alumno.asistencias.some(a => {
+                const ad = new Date(a);
+                return ad >= hoyInicio && ad <= hoyFin;
+            });
 
             return {
-                ...alumno,
-                clasesRequeridas,
-                mesesRequeridos,
-                diasTranscurridos,
-                diasRequeridos,
-                tiempoCumplido: diasTranscurridos >= diasRequeridos,
-                clasesCumplidas: alumno.asistenciasDesdeUltimaGrad >= clasesRequeridas
+                _id: alumno._id,
+                nombre: alumno.nombre,
+                apellido: alumno.apellido,
+                faja: alumno.faja,
+                grado: alumno.grado,
+                fotoUrl: alumno.fotoUrl,
+                ultimaGraduacion: alumno.ultimaGraduacion,
+                createdAt: alumno.createdAt,
+                clasesParaGraduacion: alumno.clasesParaGraduacion,
+                trackProgreso: alumno.trackProgreso,
+                totalAsistencias: alumno.asistencias.length,
+                yaAsistioHoy,
+                asistenciasDesdeUltimaGrad: evaluacion.clases_acumuladas,
+                clasesRequeridas: evaluacion.clases_requeridas,
+                mesesRequeridos: Math.round(evaluacion.dias_requeridos / 30),
+                diasTranscurridos: evaluacion.dias_transcurridos,
+                diasRequeridos: evaluacion.dias_requeridos,
+                diasRestantes: evaluacion.dias_restantes,
+                clasesRestantes: evaluacion.clases_restantes,
+                bloqueo_factor: evaluacion.bloqueo_factor,
+                fechaEstimadaPromocion: evaluacion.fecha_estimada_promocion,
+                alertasEdad: evaluacion.alertas_edad,
+                consistenciaCorrecta: evaluacion.consistenciaCorrecta,
+                edad: evaluacion.edad,
+                tiempoCumplido: evaluacion.dias_transcurridos >= evaluacion.dias_requeridos,
+                clasesCumplidas: evaluacion.clases_acumuladas >= evaluacion.clases_requeridas,
+                contadores_visuales: evaluacion.contadores_visuales,
+                tieneDeuda: evaluacion.tieneDeuda,
+                deudaClases: evaluacion.deudaClases,
+                msgDeuda: evaluacion.msgDeuda,
+                asistenciasTotalesFaja: evaluacion.asistenciasTotalesFaja
             };
         });
 
         res.json(alumnos);
-
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -94,7 +80,7 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, trackProgreso } = req.body;
+        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal } = req.body;
         const newAlumno = new Alumno({
             nombre,
             apellido,
@@ -103,6 +89,8 @@ export const createAlumno = async (req, res) => {
             faja,
             grado,
             clasesParaGraduacion: clasesParaGraduacion || 30,
+            frecuenciaSemanal: frecuenciaSemanal || 3,
+            fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
             trackProgreso: trackProgreso !== undefined ? trackProgreso : true,
             asistencias: [],
             ultimaGraduacion: (ultimaGraduacion && ultimaGraduacion.trim() !== "") ? new Date(ultimaGraduacion) : null
@@ -119,39 +107,46 @@ export const getAlumno = async (req, res) => {
         const alumno = await Alumno.findById(req.params.id);
         if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
         
-        // Enriquecemos con los datos de la tabla de graduación
-        const tiempos = TIEMPOS_GRADUACION[alumno.faja] || TIEMPOS_GRADUACION['Branca'];
-        const mesesRequeridos = (alumno.grado >= 0 && alumno.grado < tiempos.length) ? tiempos[alumno.grado] : 1;
-        const clasesRequeridas = mesesRequeridos * CLASES_POR_MES;
-        
-        // Cálculo de tiempo restante
-        const fechaUg = alumno.ultimaGraduacion ? new Date(alumno.ultimaGraduacion) : new Date(alumno.createdAt);
-        const hoy = new Date();
-        const diasTranscurridos = Math.max(0, Math.floor((hoy - fechaUg) / (1000 * 60 * 60 * 24)));
-        const diasRequeridos = mesesRequeridos * 30;
+        const fechaInicioFaja = getFechaInicioFaja(alumno);
+        const fechaUltimoGrado = getFechaUltimoGrado(alumno);
 
-        const toLocalStr = (dObj) => {
-            const d = new Date(dObj);
-            const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-            return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
-        };
-
-        const strUg = toLocalStr(fechaUg);
-        const asistenciasDesdeUltimaGrad = alumno.asistencias.filter(iso => toLocalStr(iso) >= strUg).length;
+        // Invocar el motor de graduación oficial Gracie Barra
+        const evaluacion = evaluarGraduacion({
+            cinturon_actual: alumno.faja,
+            grado_actual: alumno.grado,
+            fecha_ultimo_grado: fechaUltimoGrado,
+            fecha_inicio_faja: fechaInicioFaja,
+            fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento,
+            asistencias: alumno.asistencias,
+            frecuencia_semanal: alumno.frecuenciaSemanal
+        });
 
         const alumnoEnriquecido = {
             ...alumno.toObject(),
-            clasesRequeridas,
-            mesesRequeridos,
-            asistenciasPermanencia: asistenciasDesdeUltimaGrad,
-            metaPermanencia: diasRequeridos,
-            asistenciasDesdeUltimaGrad,
-            tiempoCumplido: asistenciasDesdeUltimaGrad >= diasRequeridos,
-            clasesCumplidas: asistenciasDesdeUltimaGrad >= clasesRequeridas
+            clasesRequeridas: evaluacion.clases_requeridas,
+            mesesRequeridos: Math.round(evaluacion.dias_requeridos / 30),
+            asistenciasDesdeUltimaGrad: evaluacion.clases_acumuladas,
+            asistenciasPermanencia: evaluacion.clases_acumuladas,
+            metaPermanencia: evaluacion.dias_requeridos,
+            diasTranscurridos: evaluacion.dias_transcurridos,
+            diasRequeridos: evaluacion.dias_requeridos,
+            diasRestantes: evaluacion.dias_restantes,
+            clasesRestantes: evaluacion.clases_restantes,
+            bloqueo_factor: evaluacion.bloqueo_factor,
+            fechaEstimadaPromocion: evaluacion.fecha_estimada_promocion,
+            alertasEdad: evaluacion.alertas_edad,
+            consistenciaCorrecta: evaluacion.consistenciaCorrecta,
+            edad: evaluacion.edad,
+            tiempoCumplido: evaluacion.dias_transcurridos >= evaluacion.dias_requeridos,
+            clasesCumplidas: evaluacion.clases_acumuladas >= evaluacion.clases_requeridas,
+            contadores_visuales: evaluacion.contadores_visuales,
+            tieneDeuda: evaluacion.tieneDeuda,
+            deudaClases: evaluacion.deudaClases,
+            msgDeuda: evaluacion.msgDeuda,
+            asistenciasTotalesFaja: evaluacion.asistenciasTotalesFaja
         };
 
         res.json(alumnoEnriquecido);
-
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -172,25 +167,31 @@ export const updateAlumno = async (req, res) => {
         const alumno = await Alumno.findById(req.params.id);
         if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
 
-        // Guardar estado previo si hay cambio de faja o grado para el historial
         const gradoNuevo = req.body.grado !== undefined ? parseInt(req.body.grado) : alumno.grado;
         const fajaNueva = req.body.faja || alumno.faja;
 
-        if (fajaNueva !== alumno.faja || gradoNuevo !== alumno.grado) {
+        if (req.body.registrarHistorial === true) {
             alumno.historicoGraduaciones.push({
-                faja: alumno.faja,
-                grado: alumno.grado,
-                ultimaGraduacion: alumno.ultimaGraduacion,
+                faja: fajaNueva, // Store the reached belt
+                grado: gradoNuevo, // Store the reached grade
+                fajaAnterior: alumno.faja, // Store previous belt for reverts
+                gradoAnterior: alumno.grado, // Store previous grade for reverts
+                ultimaGraduacion: alumno.ultimaGraduacion || alumno.createdAt,
                 fechaClasePromocion: new Date()
             });
+            alumno.ultimaGraduacion = new Date();
         }
 
-        // Aplicar cambios del body al documento
-        // Ajustes de fecha
-        if (req.body.ultimaGraduacion === "") {
-            alumno.ultimaGraduacion = null;
-        } else if (req.body.ultimaGraduacion) {
-            alumno.ultimaGraduacion = new Date(req.body.ultimaGraduacion);
+        if (req.body.historicoGraduaciones) {
+            alumno.historicoGraduaciones = req.body.historicoGraduaciones;
+        }
+
+        if (req.body.registrarHistorial !== true) {
+            if (req.body.ultimaGraduacion === "") {
+                alumno.ultimaGraduacion = null;
+            } else if (req.body.ultimaGraduacion) {
+                alumno.ultimaGraduacion = new Date(req.body.ultimaGraduacion);
+            }
         }
 
         if (req.body.nombre) alumno.nombre = req.body.nombre;
@@ -198,8 +199,15 @@ export const updateAlumno = async (req, res) => {
         if (req.body.celular !== undefined) alumno.celular = req.body.celular;
         if (req.body.categoria) alumno.categoria = req.body.categoria;
         if (req.body.trackProgreso !== undefined) alumno.trackProgreso = req.body.trackProgreso;
+        
         if (req.body.clasesParaGraduacion !== undefined && !isNaN(req.body.clasesParaGraduacion)) {
             alumno.clasesParaGraduacion = req.body.clasesParaGraduacion;
+        }
+        if (req.body.frecuenciaSemanal !== undefined && !isNaN(req.body.frecuenciaSemanal)) {
+            alumno.frecuenciaSemanal = req.body.frecuenciaSemanal;
+        }
+        if (req.body.fechaNacimiento !== undefined) {
+            alumno.fechaNacimiento = req.body.fechaNacimiento ? new Date(req.body.fechaNacimiento) : null;
         }
 
         alumno.faja = fajaNueva;
@@ -223,8 +231,8 @@ export const revertPromotion = async (req, res) => {
 
         const lastHistory = alumno.historicoGraduaciones.pop();
         
-        alumno.faja = lastHistory.faja;
-        alumno.grado = lastHistory.grado;
+        alumno.faja = lastHistory.fajaAnterior || lastHistory.faja;
+        alumno.grado = lastHistory.gradoAnterior !== undefined ? lastHistory.gradoAnterior : lastHistory.grado;
         alumno.ultimaGraduacion = lastHistory.ultimaGraduacion;
         
         await alumno.save();

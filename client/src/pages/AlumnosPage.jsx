@@ -5,8 +5,10 @@ import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
 import { getFajaStyle, grauLabel } from "../utils/fajas";
 import BeltBadge from "../components/BeltBadge";
+import { useAuth } from "../context/AuthContext";
 
 export default function AlumnosPage() {
+    const { user } = useAuth();
     const [alumnos, setAlumnos] = useState([]);
     const [filtro, setFiltro] = useState("");
     const navigate = useNavigate();
@@ -164,13 +166,15 @@ export default function AlumnosPage() {
                                     >
                                         <span className="text-xs">✏️</span>
                                     </button>
-                                    <button 
-                                        onClick={() => handleDelete(a)}
-                                        className="text-slate-400 hover:text-red-400 transition-all bg-slate-900/60 backdrop-blur-sm rounded-lg w-8 h-8 flex items-center justify-center hover:bg-red-900/40 shadow-md border border-slate-700/50 active:scale-90"
-                                        title="Borrar Alumno"
-                                    >
-                                        <span className="text-xs">🗑</span>
-                                    </button>
+                                    {['Admin', 'Encargado'].includes(user?.role) && (
+                                        <button 
+                                            onClick={() => handleDelete(a)}
+                                            className="text-slate-400 hover:text-red-400 transition-all bg-slate-900/60 backdrop-blur-sm rounded-lg w-8 h-8 flex items-center justify-center hover:bg-red-900/40 shadow-md border border-slate-700/50 active:scale-90"
+                                            title="Borrar Alumno"
+                                        >
+                                            <span className="text-xs">🗑</span>
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Header */}
