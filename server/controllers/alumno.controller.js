@@ -308,43 +308,6 @@ export const removeAsistencia = async (req, res) => {
         alumno.asistencias = alumno.asistencias.filter(a => new Date(a).setHours(0, 0, 0, 0) !== fechaParaRemover);
         alumno.markModified('asistencias');
         
-        // REVERTIR PROMOCIÓN SI LA CANTIDAD DE CLASES CAE POR DEBAJO DE LA META
-        if (alumno.historicoGraduaciones && alumno.historicoGraduaciones.length > 0) {
-            const ultimoHistorial = alumno.historicoGraduaciones[alumno.historicoGraduaciones.length - 1];
-            
-            // Re-evaluamos cuántas clases válidas quedan usando la fecha de graduación anterior
-            const toLocalStr = (dObj) => {
-                const d = new Date(dObj);
-                const ld = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-                return `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
-            };
-            
-            const strUgAnterior = ultimoHistorial.ultimaGraduacion ? toLocalStr(ultimoHistorial.ultimaGraduacion) : toLocalStr(alumno.createdAt);
-            
-            const validasRestantes = alumno.asistencias.filter(iso => toLocalStr(iso) >= strUgAnterior).length;
-
-            const tiemposFajaAnterior = TIEMPOS_GRADUACION[ultimoHistorial.faja] || TIEMPOS_GRADUACION['Branca'];
-            const mesesRequeridosAnterior = tiemposFajaAnterior[ultimoHistorial.grado] || 1;
-            const clasesParaPromoverAnterior = mesesRequeridosAnterior * CLASES_POR_MES;
-
-
-            // También validamos el tiempo
-            const hoy = new Date();
-            const fechaUgAnterior = ultimoHistorial.ultimaGraduacion ? new Date(ultimoHistorial.ultimaGraduacion) : new Date(alumno.createdAt);
-            const diasTranscurridos = (hoy - fechaUgAnterior) / (1000 * 60 * 60 * 24);
-            const diasRequeridos = mesesRequeridosAnterior * 30;
-
-            if (validasRestantes < clasesParaPromoverAnterior || diasTranscurridos < diasRequeridos) {
-                // Revertir a la faja y grado anteriores
-                alumno.faja = ultimoHistorial.faja;
-                alumno.grado = ultimoHistorial.grado;
-                alumno.ultimaGraduacion = ultimoHistorial.ultimaGraduacion || null;
-                // Sacar del historial
-                alumno.historicoGraduaciones.pop();
-            }
-
-        }
-
         await alumno.save();
         res.json(alumno);
     } catch (error) {
