@@ -381,20 +381,6 @@ export default function AlumnoFormPage() {
         return acc;
     }, {});
 
-    /* Asistencias válidas para la próxima graduación */
-    /* Asistencias desde inicio de faja (acumulativo por cinturón) */
-    const asistenciasValidas = (() => {
-        if (!alumnoData) return asistencias;
-        const fif = getFechaInicioFaja(alumnoData);
-        const fifL = new Date(fif.getTime() + fif.getTimezoneOffset() * 60000);
-        const strFif = `${fifL.getFullYear()}-${String(fifL.getMonth() + 1).padStart(2, '0')}-${String(fifL.getDate()).padStart(2, '0')}`;
-        return asistencias.filter(iso => {
-            const ld = toLocal(iso);
-            const strF = `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
-            return strF >= strFif;
-        });
-    })();
-
     if (cargando) return (
         <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-slate-500 font-bold bg-slate-800/50 px-6 py-3 rounded-full animate-pulse border border-slate-700">Cargando perfil…</div>
@@ -404,9 +390,37 @@ export default function AlumnoFormPage() {
     // Motor de Graduación Gracie Barra (Cálculo a nivel de componente para evitar problemas de ámbito)
     const currentFaja = watch("faja") || (alumnoData ? alumnoData.faja : "Branca");
     const currentGrado = parseInt(watch("grado")) || 0;
+    const formUltimaGrad = watch("ultimaGraduacion");
 
-    const fechaInicioFajaVal = alumnoData ? getFechaInicioFaja(alumnoData) : new Date();
-    const fechaUltimoGradoVal = alumnoData ? getFechaUltimoGrado(alumnoData) : new Date();
+    const fechaInicioFajaVal = (() => {
+        if (!alumnoData) return new Date();
+        if (currentFaja !== alumnoData.faja) {
+            const hasHistory = (alumnoData.historicoGraduaciones || []).some(h => h.faja === currentFaja);
+            if (hasHistory) {
+                return getFechaInicioFaja({ ...alumnoData, faja: currentFaja });
+            }
+            return formUltimaGrad ? new Date(formUltimaGrad + "T12:00:00") : new Date();
+        }
+        return getFechaInicioFaja(alumnoData);
+    })();
+
+    const fechaUltimoGradoVal = formUltimaGrad
+        ? new Date(formUltimaGrad + "T12:00:00")
+        : (alumnoData ? getFechaUltimoGrado(alumnoData) : new Date());
+
+    /* Asistencias válidas para la próxima graduación */
+    /* Asistencias desde inicio de faja (acumulativo por cinturón) */
+    const asistenciasValidas = (() => {
+        if (!alumnoData) return asistencias;
+        const fif = fechaInicioFajaVal;
+        const fifL = new Date(fif.getTime() + fif.getTimezoneOffset() * 60000);
+        const strFif = `${fifL.getFullYear()}-${String(fifL.getMonth() + 1).padStart(2, '0')}-${String(fifL.getDate()).padStart(2, '0')}`;
+        return asistencias.filter(iso => {
+            const ld = toLocal(iso);
+            const strF = `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+            return strF >= strFif;
+        });
+    })();
 
     const evaluacion = evaluarGraduacion({
         cinturon_actual: currentFaja,
