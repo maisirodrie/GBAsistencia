@@ -29,7 +29,8 @@ export const getAlumnos = async (req, res) => {
                 fecha_inicio_faja: fechaInicioFaja,
                 fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento, // Soportar ambas nomenclaturas
                 asistencias: alumno.asistencias,
-                frecuencia_semanal: alumno.frecuenciaSemanal
+                frecuencia_semanal: alumno.frecuenciaSemanal,
+                permanencia_manual: alumno.permanenciaManual
             });
 
             const yaAsistioHoy = alumno.asistencias.some(a => {
@@ -80,7 +81,7 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal } = req.body;
+        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual } = req.body;
         const newAlumno = new Alumno({
             nombre,
             apellido,
@@ -92,6 +93,7 @@ export const createAlumno = async (req, res) => {
             frecuenciaSemanal: frecuenciaSemanal || 3,
             fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
             trackProgreso: trackProgreso !== undefined ? trackProgreso : true,
+            permanenciaManual: (permanenciaManual === undefined || permanenciaManual === null || permanenciaManual === "" || isNaN(permanenciaManual)) ? null : parseInt(permanenciaManual),
             asistencias: [],
             ultimaGraduacion: (ultimaGraduacion && ultimaGraduacion.trim() !== "") ? new Date(ultimaGraduacion) : null
         });
@@ -118,7 +120,8 @@ export const getAlumno = async (req, res) => {
             fecha_inicio_faja: fechaInicioFaja,
             fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento,
             asistencias: alumno.asistencias,
-            frecuencia_semanal: alumno.frecuenciaSemanal
+            frecuencia_semanal: alumno.frecuenciaSemanal,
+            permanencia_manual: alumno.permanenciaManual
         });
 
         const alumnoEnriquecido = {
@@ -208,6 +211,11 @@ export const updateAlumno = async (req, res) => {
         }
         if (req.body.fechaNacimiento !== undefined) {
             alumno.fechaNacimiento = req.body.fechaNacimiento ? new Date(req.body.fechaNacimiento) : null;
+        }
+        if (req.body.permanenciaManual !== undefined) {
+            alumno.permanenciaManual = (req.body.permanenciaManual === null || req.body.permanenciaManual === "" || isNaN(req.body.permanenciaManual))
+                ? null
+                : parseInt(req.body.permanenciaManual);
         }
 
         alumno.faja = fajaNueva;

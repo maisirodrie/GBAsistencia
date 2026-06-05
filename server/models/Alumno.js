@@ -60,6 +60,10 @@ const alumnoSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    permanenciaManual: {
+        type: Number,
+        default: null
+    },
     historicoGraduaciones: [
         {
             faja: String,

@@ -149,7 +149,8 @@ export const evaluarGraduacion = ({
     fecha_inicio_faja,
     fecha_nacimiento,
     asistencias,
-    frecuencia_semanal
+    frecuencia_semanal,
+    permanencia_manual
 }) => {
     const hoy = new Date();
     const nac = fecha_nacimiento ? new Date(fecha_nacimiento) : new Date(hoy.getFullYear() - 20, 0, 1);
@@ -243,7 +244,9 @@ export const evaluarGraduacion = ({
         .filter(a => formatLocalDate(a) >= strInicioFaja)
         .sort((a, b) => new Date(a) - new Date(b));
 
-    const asistenciasTotalesFaja = asistenciasFaja.length;
+    const asistenciasTotalesFaja = (permanencia_manual !== undefined && permanencia_manual !== null && permanencia_manual !== "" && !isNaN(permanencia_manual))
+        ? parseInt(permanencia_manual)
+        : asistenciasFaja.length;
 
     // 3. Obtener requisitos del tramo actual y del tramo anterior
     const reqs = getRequisitosAcumulados(fajaKey, grado_actual);

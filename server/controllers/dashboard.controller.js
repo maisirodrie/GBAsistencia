@@ -74,7 +74,8 @@ export const getStats = async (req, res) => {
                     fecha_inicio_faja: fechaInicioFaja,
                     fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento,
                     asistencias: alumno.asistencias,
-                    frecuencia_semanal: alumno.frecuenciaSemanal
+                    frecuencia_semanal: alumno.frecuenciaSemanal,
+                    permanencia_manual: alumno.permanenciaManual
                 });
 
                 const pctClases = evaluacion.contadores_visuales?.grado 

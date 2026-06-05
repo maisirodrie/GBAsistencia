@@ -115,6 +115,8 @@ export default function AlumnoFormPage() {
             }
             setValue("trackProgreso", data.trackProgreso ?? true);
             setValue("fotoUrl", data.fotoUrl || "");
+            setValue("permanenciaManual", data.permanenciaManual ?? "");
+            setValue("frecuenciaSemanal", data.frecuenciaSemanal ?? 3);
             setCategoria(data.categoria || 'Adulto');
             if (data.ultimaGraduacion) {
                 const local = toLocal(data.ultimaGraduacion);
@@ -412,7 +414,8 @@ export default function AlumnoFormPage() {
         fecha_inicio_faja: fechaInicioFajaVal,
         fecha_nacimiento: watch("fechaNacimiento"),
         asistencias: asistencias,
-        frecuencia_semanal: watch("frecuenciaSemanal") || (alumnoData ? alumnoData.frecuenciaSemanal : 2)
+        frecuencia_semanal: watch("frecuenciaSemanal") || (alumnoData ? alumnoData.frecuenciaSemanal : 2),
+        permanencia_manual: watch("permanenciaManual")
     });
 
     const listo = evaluacion.elegible;
@@ -664,6 +667,29 @@ export default function AlumnoFormPage() {
                                         {id ? (evaluacion.tieneDeuda ? `${evaluacion.clases_requeridas} clases (Bloqueado por Deuda)` : `${evaluacion.clases_requeridas} clases`) : "Auto-calculado"}
                                     </span>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Fila Permanencia Manual & Frecuencia Semanal Configurada */}
+                        <div className="grid sm:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Permanencia de Faixa (Manual)</label>
+                                <input
+                                    type="number"
+                                    placeholder="Dejar vacío para auto-calcular"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    {...register("permanenciaManual")}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Frecuencia Semanal Configurada</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    placeholder="Ej: 3"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    {...register("frecuenciaSemanal")}
+                                />
                             </div>
                         </div>
 
