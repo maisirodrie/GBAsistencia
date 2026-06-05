@@ -270,6 +270,19 @@ export const evaluarGraduacion = ({
 
     const metaBaseObligatoria = getMetaBaseObligatoria(fajaKey, grado_actual);
 
+    // Sobrescrituras manuales para metas base (Estado 1 y Estado 2)
+    const baseObligatoriaFaja = grado_actual === 0
+        ? getMetaBaseObligatoria(fajaKey, 1)
+        : getMetaBaseObligatoria(fajaKey, grado_actual);
+
+    const targetMetaBase = (dias_para_graduacion !== undefined && dias_para_graduacion !== null && dias_para_graduacion !== "" && !isNaN(dias_para_graduacion))
+        ? parseInt(dias_para_graduacion)
+        : baseObligatoriaFaja;
+
+    const targetClasesGrado = (clases_para_graduacion !== undefined && clases_para_graduacion !== null && clases_para_graduacion !== "" && !isNaN(clases_para_graduacion))
+        ? parseInt(clases_para_graduacion)
+        : reqClasesAnterior;
+
     // 4. Evaluar la Máquina de Estados
     let estado_secuencial = 1;
     let tieneDeuda = false;
@@ -318,8 +331,8 @@ export const evaluarGraduacion = ({
             },
             permanencia: {
                 acumuladas: asistenciasTotalesFaja,
-                requeridas: getMetaBaseObligatoria(fajaKey, 1),
-                porcentaje: Math.min(100, Math.round((asistenciasTotalesFaja / getMetaBaseObligatoria(fajaKey, 1)) * 100))
+                requeridas: targetMetaBase,
+                porcentaje: Math.min(100, Math.round((asistenciasTotalesFaja / targetMetaBase) * 100))
             }
         };
 
@@ -329,10 +342,10 @@ export const evaluarGraduacion = ({
         fecha_estimada_promocion = fechaProyectada.toISOString().split('T')[0];
     }
     // ESTADO 2: PERMANENCIA EN GRADO Z (Deuda de permanencia de asistencia en la faja activa)
-    else if (asistenciasTotalesFaja < metaBaseObligatoria) {
+    else if (asistenciasTotalesFaja < targetMetaBase) {
         estado_secuencial = 2;
         tieneDeuda = true;
-        deudaClases = metaBaseObligatoria - asistenciasTotalesFaja;
+        deudaClases = targetMetaBase - asistenciasTotalesFaja;
         msgDeuda = `🥋 Faltan ${deudaClases} clases físicas para completar la base de la faja.`;
 
         clases_acumuladas = 0; // Forzado a cero
@@ -342,17 +355,17 @@ export const evaluarGraduacion = ({
 
         const clasesAcumuladasGrado = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
             ? parseInt(clases_tramo_manual)
-            : Math.min(reqClasesAnterior, asistenciasTotalesFaja);
+            : Math.min(targetClasesGrado, asistenciasTotalesFaja);
         contadores_visuales = {
             grado: {
                 acumuladas: clasesAcumuladasGrado,
-                requeridas: reqClasesAnterior,
-                porcentaje: Math.round((clasesAcumuladasGrado / reqClasesAnterior) * 100)
+                requeridas: targetClasesGrado,
+                porcentaje: Math.round((clasesAcumuladasGrado / targetClasesGrado) * 100)
             },
             permanencia: {
                 acumuladas: asistenciasTotalesFaja,
-                requeridas: metaBaseObligatoria,
-                porcentaje: Math.round((asistenciasTotalesFaja / metaBaseObligatoria) * 100)
+                requeridas: targetMetaBase,
+                porcentaje: Math.round((asistenciasTotalesFaja / targetMetaBase) * 100)
             }
         };
 
@@ -367,11 +380,11 @@ export const evaluarGraduacion = ({
         
         clases_acumuladas = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
             ? parseInt(clases_tramo_manual)
-            : (asistenciasTotalesFaja - metaBaseObligatoria);
+            : (asistenciasTotalesFaja - targetMetaBase);
         
         let fechaInicioTramo = fecha_ultimo_grado ? new Date(fecha_ultimo_grado) : new Date();
-        if (metaBaseObligatoria > 0 && asistenciasFaja.length >= metaBaseObligatoria) {
-            const classClearDebt = new Date(asistenciasFaja[metaBaseObligatoria - 1]);
+        if (targetMetaBase > 0 && asistenciasFaja.length >= targetMetaBase) {
+            const classClearDebt = new Date(asistenciasFaja[targetMetaBase - 1]);
             if (classClearDebt > fechaInicioTramo) {
                 fechaInicioTramo = classClearDebt;
             }
