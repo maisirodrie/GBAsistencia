@@ -150,7 +150,9 @@ export const evaluarGraduacion = ({
     fecha_nacimiento,
     asistencias,
     frecuencia_semanal,
-    permanencia_manual
+    permanencia_manual,
+    clases_para_graduacion,
+    dias_para_graduacion
 }) => {
     const hoy = new Date();
     const nac = fecha_nacimiento ? new Date(fecha_nacimiento) : new Date(hoy.getFullYear() - 20, 0, 1);
@@ -250,8 +252,12 @@ export const evaluarGraduacion = ({
 
     // 3. Obtener requisitos del tramo actual y del tramo anterior
     const reqs = getRequisitosAcumulados(fajaKey, grado_actual);
-    const reqDias = reqs.dias;
-    const reqClases = reqs.clases;
+    const reqDias = (dias_para_graduacion !== undefined && dias_para_graduacion !== null && dias_para_graduacion !== "" && !isNaN(dias_para_graduacion))
+        ? parseInt(dias_para_graduacion)
+        : reqs.dias;
+    const reqClases = (clases_para_graduacion !== undefined && clases_para_graduacion !== null && clases_para_graduacion !== "" && !isNaN(clases_para_graduacion))
+        ? parseInt(clases_para_graduacion)
+        : reqs.clases;
 
     let reqClasesAnterior = 0;
     if (grado_actual > 0) {

@@ -117,6 +117,8 @@ export default function AlumnoFormPage() {
             setValue("fotoUrl", data.fotoUrl || "");
             setValue("permanenciaManual", data.permanenciaManual ?? "");
             setValue("frecuenciaSemanal", data.frecuenciaSemanal ?? 3);
+            setValue("clasesParaGraduacion", data.clasesParaGraduacion ?? 30);
+            setValue("diasParaGraduacion", data.diasParaGraduacion ?? "");
             setCategoria(data.categoria || 'Adulto');
             if (data.ultimaGraduacion) {
                 const local = toLocal(data.ultimaGraduacion);
@@ -415,7 +417,9 @@ export default function AlumnoFormPage() {
         fecha_nacimiento: watch("fechaNacimiento"),
         asistencias: asistencias,
         frecuencia_semanal: watch("frecuenciaSemanal") || (alumnoData ? alumnoData.frecuenciaSemanal : 2),
-        permanencia_manual: watch("permanenciaManual")
+        permanencia_manual: watch("permanenciaManual"),
+        clases_para_graduacion: watch("clasesParaGraduacion"),
+        dias_para_graduacion: watch("diasParaGraduacion")
     });
 
     const listo = evaluacion.elegible;
@@ -670,25 +674,24 @@ export default function AlumnoFormPage() {
                             </div>
                         </div>
 
-                        {/* Fila Permanencia Manual & Frecuencia Semanal Configurada */}
+                        {/* Fila Requisitos de Graduación Manual (Sobrescribir Clases y Días) */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Permanencia de Faixa (Manual)</label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Clases Requeridas (Manual)</label>
                                 <input
                                     type="number"
-                                    placeholder="Dejar vacío para auto-calcular"
+                                    placeholder="Ej: 32 (Vacío usa regla oficial)"
                                     className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
-                                    {...register("permanenciaManual")}
+                                    {...register("clasesParaGraduacion")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Frecuencia Semanal Configurada</label>
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Días de Permanencia Requeridos (Manual)</label>
                                 <input
                                     type="number"
-                                    step="0.1"
-                                    placeholder="Ej: 3"
+                                    placeholder="Ej: 122 (Vacío usa regla oficial)"
                                     className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
-                                    {...register("frecuenciaSemanal")}
+                                    {...register("diasParaGraduacion")}
                                 />
                             </div>
                         </div>

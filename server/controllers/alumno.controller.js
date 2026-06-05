@@ -30,7 +30,9 @@ export const getAlumnos = async (req, res) => {
                 fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento, // Soportar ambas nomenclaturas
                 asistencias: alumno.asistencias,
                 frecuencia_semanal: alumno.frecuenciaSemanal,
-                permanencia_manual: alumno.permanenciaManual
+                permanencia_manual: alumno.permanenciaManual,
+                clases_para_graduacion: alumno.clasesParaGraduacion,
+                dias_para_graduacion: alumno.diasParaGraduacion
             });
 
             const yaAsistioHoy = alumno.asistencias.some(a => {
@@ -81,7 +83,7 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual } = req.body;
+        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, diasParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual } = req.body;
         const newAlumno = new Alumno({
             nombre,
             apellido,
@@ -89,7 +91,8 @@ export const createAlumno = async (req, res) => {
             categoria,
             faja,
             grado,
-            clasesParaGraduacion: clasesParaGraduacion || 30,
+            clasesParaGraduacion: (clasesParaGraduacion === undefined || clasesParaGraduacion === null || clasesParaGraduacion === "" || isNaN(clasesParaGraduacion)) ? 30 : parseInt(clasesParaGraduacion),
+            diasParaGraduacion: (diasParaGraduacion === undefined || diasParaGraduacion === null || diasParaGraduacion === "" || isNaN(diasParaGraduacion)) ? null : parseInt(diasParaGraduacion),
             frecuenciaSemanal: frecuenciaSemanal || 3,
             fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
             trackProgreso: trackProgreso !== undefined ? trackProgreso : true,
@@ -121,7 +124,9 @@ export const getAlumno = async (req, res) => {
             fecha_nacimiento: alumno.fechaNacimiento || alumno.fecha_nacimiento,
             asistencias: alumno.asistencias,
             frecuencia_semanal: alumno.frecuenciaSemanal,
-            permanencia_manual: alumno.permanenciaManual
+            permanencia_manual: alumno.permanenciaManual,
+            clases_para_graduacion: alumno.clasesParaGraduacion,
+            dias_para_graduacion: alumno.diasParaGraduacion
         });
 
         const alumnoEnriquecido = {
@@ -203,8 +208,15 @@ export const updateAlumno = async (req, res) => {
         if (req.body.categoria) alumno.categoria = req.body.categoria;
         if (req.body.trackProgreso !== undefined) alumno.trackProgreso = req.body.trackProgreso;
         
-        if (req.body.clasesParaGraduacion !== undefined && !isNaN(req.body.clasesParaGraduacion)) {
-            alumno.clasesParaGraduacion = req.body.clasesParaGraduacion;
+        if (req.body.clasesParaGraduacion !== undefined) {
+            alumno.clasesParaGraduacion = (req.body.clasesParaGraduacion === null || req.body.clasesParaGraduacion === "" || isNaN(req.body.clasesParaGraduacion))
+                ? 30
+                : parseInt(req.body.clasesParaGraduacion);
+        }
+        if (req.body.diasParaGraduacion !== undefined) {
+            alumno.diasParaGraduacion = (req.body.diasParaGraduacion === null || req.body.diasParaGraduacion === "" || isNaN(req.body.diasParaGraduacion))
+                ? null
+                : parseInt(req.body.diasParaGraduacion);
         }
         if (req.body.frecuenciaSemanal !== undefined && !isNaN(req.body.frecuenciaSemanal)) {
             alumno.frecuenciaSemanal = req.body.frecuenciaSemanal;

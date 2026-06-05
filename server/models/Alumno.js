@@ -48,6 +48,10 @@ const alumnoSchema = new mongoose.Schema({
         default: 30,
         min: 1
     },
+    diasParaGraduacion: {
+        type: Number,
+        default: null
+    },
     frecuenciaSemanal: {
         type: Number,
         default: 3,
