@@ -115,8 +115,6 @@ export default function AlumnoFormPage() {
             }
             setValue("trackProgreso", data.trackProgreso ?? true);
             setValue("fotoUrl", data.fotoUrl || "");
-            setValue("permanenciaManual", data.permanenciaManual ?? "");
-            setValue("clasesTramoManual", data.clasesTramoManual ?? "");
             setValue("frecuenciaSemanal", data.frecuenciaSemanal ?? 3);
             setValue("clasesParaGraduacion", data.clasesParaGraduacion ?? 30);
             setValue("diasParaGraduacion", data.diasParaGraduacion ?? "");
@@ -418,10 +416,8 @@ export default function AlumnoFormPage() {
         fecha_nacimiento: watch("fechaNacimiento"),
         asistencias: asistencias,
         frecuencia_semanal: watch("frecuenciaSemanal") || (alumnoData ? alumnoData.frecuenciaSemanal : 2),
-        permanencia_manual: watch("permanenciaManual"),
         clases_para_graduacion: watch("clasesParaGraduacion"),
-        dias_para_graduacion: watch("diasParaGraduacion"),
-        clases_tramo_manual: watch("clasesTramoManual")
+        dias_para_graduacion: watch("diasParaGraduacion")
     });
 
     const listo = evaluacion.elegible;
@@ -694,28 +690,6 @@ export default function AlumnoFormPage() {
                                     placeholder="Ej: 122 (Vacío usa regla oficial)"
                                     className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
                                     {...register("diasParaGraduacion")}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Fila Progresos Actuales Manuales (Sobrescribir Presencia y Permanencia) */}
-                        <div className="grid sm:grid-cols-2 gap-5">
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Presencia de Clases (Manual)</label>
-                                <input
-                                    type="number"
-                                    placeholder="Ej: 15 (Vacío usa asistencias reales)"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
-                                    {...register("clasesTramoManual")}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Permanencia de Faixa (Manual)</label>
-                                <input
-                                    type="number"
-                                    placeholder="Ej: 80 (Vacío usa asistencias reales)"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
-                                    {...register("permanenciaManual")}
                                 />
                             </div>
                         </div>

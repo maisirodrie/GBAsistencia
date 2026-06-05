@@ -97,8 +97,8 @@ export const createAlumno = async (req, res) => {
             frecuenciaSemanal: frecuenciaSemanal || 3,
             fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
             trackProgreso: trackProgreso !== undefined ? trackProgreso : true,
-            permanenciaManual: (permanenciaManual === undefined || permanenciaManual === null || permanenciaManual === "" || isNaN(permanenciaManual)) ? null : parseInt(permanenciaManual),
-            clasesTramoManual: (clasesTramoManual === undefined || clasesTramoManual === null || clasesTramoManual === "" || isNaN(clasesTramoManual)) ? null : parseInt(clasesTramoManual),
+            permanenciaManual: null,
+            clasesTramoManual: null,
             asistencias: [],
             ultimaGraduacion: (ultimaGraduacion && ultimaGraduacion.trim() !== "") ? new Date(ultimaGraduacion) : null
         });
@@ -227,16 +227,8 @@ export const updateAlumno = async (req, res) => {
         if (req.body.fechaNacimiento !== undefined) {
             alumno.fechaNacimiento = req.body.fechaNacimiento ? new Date(req.body.fechaNacimiento) : null;
         }
-        if (req.body.permanenciaManual !== undefined) {
-            alumno.permanenciaManual = (req.body.permanenciaManual === null || req.body.permanenciaManual === "" || isNaN(req.body.permanenciaManual))
-                ? null
-                : parseInt(req.body.permanenciaManual);
-        }
-        if (req.body.clasesTramoManual !== undefined) {
-            alumno.clasesTramoManual = (req.body.clasesTramoManual === null || req.body.clasesTramoManual === "" || isNaN(req.body.clasesTramoManual))
-                ? null
-                : parseInt(req.body.clasesTramoManual);
-        }
+        alumno.permanenciaManual = null;
+        alumno.clasesTramoManual = null;
 
         alumno.faja = fajaNueva;
         alumno.grado = gradoNuevo;
