@@ -152,7 +152,8 @@ export const evaluarGraduacion = ({
     frecuencia_semanal,
     permanencia_manual,
     clases_para_graduacion,
-    dias_para_graduacion
+    dias_para_graduacion,
+    clases_tramo_manual
 }) => {
     const hoy = new Date();
     const nac = fecha_nacimiento ? new Date(fecha_nacimiento) : new Date(hoy.getFullYear() - 20, 0, 1);
@@ -284,7 +285,9 @@ export const evaluarGraduacion = ({
     // ESTADO 1: HACIA GRADO 1 (El alumno está en Grado 0 y no ha completado el tramo inicial de asistencias)
     if (grado_actual === 0 && asistenciasTotalesFaja < reqClases) {
         estado_secuencial = 1;
-        clases_acumuladas = asistenciasTotalesFaja;
+        clases_acumuladas = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
+            ? parseInt(clases_tramo_manual)
+            : asistenciasTotalesFaja;
         
         const diffTime = Math.max(0, hoy.getTime() - fecha_ultimo_grado.getTime());
         dias_transcurridos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -337,7 +340,9 @@ export const evaluarGraduacion = ({
         bloqueo_factor = "Bloqueado por Permanencia de Asistencia";
         elegible = false;
 
-        const clasesAcumuladasGrado = Math.min(reqClasesAnterior, asistenciasTotalesFaja);
+        const clasesAcumuladasGrado = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
+            ? parseInt(clases_tramo_manual)
+            : Math.min(reqClasesAnterior, asistenciasTotalesFaja);
         contadores_visuales = {
             grado: {
                 acumuladas: clasesAcumuladasGrado,
@@ -360,7 +365,9 @@ export const evaluarGraduacion = ({
     else {
         estado_secuencial = 3;
         
-        clases_acumuladas = asistenciasTotalesFaja - metaBaseObligatoria;
+        clases_acumuladas = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
+            ? parseInt(clases_tramo_manual)
+            : (asistenciasTotalesFaja - metaBaseObligatoria);
         
         let fechaInicioTramo = fecha_ultimo_grado ? new Date(fecha_ultimo_grado) : new Date();
         if (metaBaseObligatoria > 0 && asistenciasFaja.length >= metaBaseObligatoria) {

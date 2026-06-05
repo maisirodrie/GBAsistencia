@@ -68,6 +68,10 @@ const alumnoSchema = new mongoose.Schema({
         type: Number,
         default: null
     },
+    clasesTramoManual: {
+        type: Number,
+        default: null
+    },
     historicoGraduaciones: [
         {
             faja: String,

@@ -77,7 +77,8 @@ export const getStats = async (req, res) => {
                     frecuencia_semanal: alumno.frecuenciaSemanal,
                     permanencia_manual: alumno.permanenciaManual,
                     clases_para_graduacion: alumno.clasesParaGraduacion,
-                    dias_para_graduacion: alumno.diasParaGraduacion
+                    dias_para_graduacion: alumno.diasParaGraduacion,
+                    clases_tramo_manual: alumno.clasesTramoManual
                 });
 
                 const pctClases = evaluacion.contadores_visuales?.grado 

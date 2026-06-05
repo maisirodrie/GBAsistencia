@@ -32,7 +32,8 @@ export const getAlumnos = async (req, res) => {
                 frecuencia_semanal: alumno.frecuenciaSemanal,
                 permanencia_manual: alumno.permanenciaManual,
                 clases_para_graduacion: alumno.clasesParaGraduacion,
-                dias_para_graduacion: alumno.diasParaGraduacion
+                dias_para_graduacion: alumno.diasParaGraduacion,
+                clases_tramo_manual: alumno.clasesTramoManual
             });
 
             const yaAsistioHoy = alumno.asistencias.some(a => {
@@ -83,7 +84,7 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, diasParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual } = req.body;
+        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, diasParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual, clasesTramoManual } = req.body;
         const newAlumno = new Alumno({
             nombre,
             apellido,
@@ -97,6 +98,7 @@ export const createAlumno = async (req, res) => {
             fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
             trackProgreso: trackProgreso !== undefined ? trackProgreso : true,
             permanenciaManual: (permanenciaManual === undefined || permanenciaManual === null || permanenciaManual === "" || isNaN(permanenciaManual)) ? null : parseInt(permanenciaManual),
+            clasesTramoManual: (clasesTramoManual === undefined || clasesTramoManual === null || clasesTramoManual === "" || isNaN(clasesTramoManual)) ? null : parseInt(clasesTramoManual),
             asistencias: [],
             ultimaGraduacion: (ultimaGraduacion && ultimaGraduacion.trim() !== "") ? new Date(ultimaGraduacion) : null
         });
@@ -126,7 +128,8 @@ export const getAlumno = async (req, res) => {
             frecuencia_semanal: alumno.frecuenciaSemanal,
             permanencia_manual: alumno.permanenciaManual,
             clases_para_graduacion: alumno.clasesParaGraduacion,
-            dias_para_graduacion: alumno.diasParaGraduacion
+            dias_para_graduacion: alumno.diasParaGraduacion,
+            clases_tramo_manual: alumno.clasesTramoManual
         });
 
         const alumnoEnriquecido = {
@@ -228,6 +231,11 @@ export const updateAlumno = async (req, res) => {
             alumno.permanenciaManual = (req.body.permanenciaManual === null || req.body.permanenciaManual === "" || isNaN(req.body.permanenciaManual))
                 ? null
                 : parseInt(req.body.permanenciaManual);
+        }
+        if (req.body.clasesTramoManual !== undefined) {
+            alumno.clasesTramoManual = (req.body.clasesTramoManual === null || req.body.clasesTramoManual === "" || isNaN(req.body.clasesTramoManual))
+                ? null
+                : parseInt(req.body.clasesTramoManual);
         }
 
         alumno.faja = fajaNueva;
