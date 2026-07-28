@@ -268,9 +268,16 @@ export const addAsistencia = async (req, res) => {
         const alumno = await Alumno.findById(req.params.id);
         if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
         
-        // Evitar duplicados en el mismo día
-        const fechaSinHora = new Date(fecha).setHours(0, 0, 0, 0);
-        const yaAsistio = alumno.asistencias.some(a => new Date(a).setHours(0, 0, 0, 0) === fechaSinHora);
+        // Evitar duplicados en el mismo día (comparando año, mes y día exactos en UTC)
+        const dateObj = new Date(fecha);
+        const yyyy = dateObj.getUTCFullYear();
+        const mm = dateObj.getUTCMonth();
+        const dd = dateObj.getUTCDate();
+        
+        const yaAsistio = alumno.asistencias.some(a => {
+            const d = new Date(a);
+            return d.getUTCFullYear() === yyyy && d.getUTCMonth() === mm && d.getUTCDate() === dd;
+        });
         
         if (yaAsistio) return res.status(400).json({ message: 'Asistencia ya registrada para hoy' });
 
@@ -290,10 +297,21 @@ export const checkIn = async (req, res) => {
         const alumno = await Alumno.findById(req.params.id);
         if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
         
-        const hoy = new Date();
-        const fechaSinHora = hoy.setHours(0, 0, 0, 0);
+        // Obtener la fecha actual ajustando al huso horario de Argentina (UTC-3)
+        const hoyLocal = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        const yyyy = hoyLocal.getUTCFullYear();
+        const mm = String(hoyLocal.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(hoyLocal.getUTCDate()).padStart(2, '0');
+        const fechaCheckIn = new Date(`${yyyy}-${mm}-${dd}T12:00:00.000Z`);
         
-        const yaAsistio = alumno.asistencias.some(a => new Date(a).setHours(0, 0, 0, 0) === fechaSinHora);
+        // Evitar duplicados comparando año, mes y día en UTC
+        const yaAsistio = alumno.asistencias.some(a => {
+            const d = new Date(a);
+            return d.getUTCFullYear() === yyyy &&
+                   (d.getUTCMonth() + 1) === parseInt(mm) &&
+                   d.getUTCDate() === parseInt(dd);
+        });
+
         if (yaAsistio) {
             return res.status(400).json({ 
                 message: `Hola ${alumno.nombre}, ya registraste tu asistencia hoy.`,
@@ -301,7 +319,7 @@ export const checkIn = async (req, res) => {
             });
         }
 
-        alumno.asistencias.push(new Date());
+        alumno.asistencias.push(fechaCheckIn);
 
         let mensajeGrad = "";
 

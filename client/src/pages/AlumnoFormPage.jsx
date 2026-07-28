@@ -178,7 +178,9 @@ export default function AlumnoFormPage() {
         if (!id) return showAlert({ title: "Atención", text: "Guarda el alumno primero.", icon: "info" });
         try {
             await updateAlumno(id, watch());
-            const { data } = await addAsistencia(id, new Date());
+            const hoyL = new Date();
+            const formatHoy = `${hoyL.getFullYear()}-${String(hoyL.getMonth() + 1).padStart(2, '0')}-${String(hoyL.getDate()).padStart(2, '0')}`;
+            const { data } = await addAsistencia(id, new Date(formatHoy + "T12:00:00"));
             syncAlumnoData(data);
             showToast("Asistencia (Hoy) registrada");
         } catch (e) {
@@ -498,9 +500,9 @@ export default function AlumnoFormPage() {
                     {/* Glow effect */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-slate-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
-                    <div className="flex items-center gap-5 border-b border-slate-700/40 pb-6 relative z-10">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b border-slate-700/40 pb-6 relative z-10">
                         <div 
-                            className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-3xl shadow-inner flex-shrink-0 border border-slate-600/50 cursor-pointer overflow-hidden group"
+                            className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-[2rem] bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-5xl shadow-2xl flex-shrink-0 border border-slate-600/50 cursor-pointer overflow-hidden group"
                             onClick={handlePhotoClick}
                         >
                             {watch("fotoUrl") ? (
@@ -516,17 +518,9 @@ export default function AlumnoFormPage() {
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onClick={e => e.stopPropagation()} onChange={handleFileChange} />
                             <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onClick={e => e.stopPropagation()} onChange={handleFileChange} />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-3">
+                        <div className="text-center sm:text-left flex-1 py-2 sm:py-6">
+                            <div className="flex flex-col sm:flex-row items-center gap-3">
                                 <h2 className="text-2xl font-black tracking-tight">Datos del Alumno</h2>
-                                {/* {id && (
-                                    <button 
-                                        onClick={() => setShowQR(true)}
-                                        className="bg-blue-600/20 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-600/30 transition-all flex items-center gap-1.5"
-                                    >
-                                        <span className="text-xs">📱</span> QR
-                                    </button>
-                                )} */}
                             </div>
                             <p className="text-sm text-slate-400 font-medium mt-0.5">Información principal y progreso</p>
                         </div>
