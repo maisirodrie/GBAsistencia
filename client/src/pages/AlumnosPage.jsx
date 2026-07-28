@@ -196,7 +196,7 @@ export default function AlumnosPage() {
                                 </div>
 
                                 {/* Botón de Asistencia y Acciones */}
-                                <div className="mt-auto pt-3 border-t border-slate-700/50 flex flex-col gap-3">
+                                <div className="mt-auto pt-3 flex flex-col gap-3">
                                     <button
                                         onClick={() => handleToggleAsistencia(a, yaAsistio)}
                                         className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-black text-lg shadow-md transition-all active:scale-95 border-b-4 ${
