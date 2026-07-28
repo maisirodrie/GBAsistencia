@@ -157,28 +157,8 @@ export default function AlumnosPage() {
                                     borderWidth: yaAsistio ? '2px' : '1px',
                                 }}
                             >
-                                {/* Editar/Borrar IconButtons en la esquina superior derecha */}
-                                <div className="absolute top-3 right-3 flex gap-1 z-10">
-                                    <button 
-                                        onClick={() => navigate(`/editar/${a._id}`)}
-                                        className="text-slate-400 hover:text-white transition-all bg-slate-900/60 backdrop-blur-sm rounded-xl w-9 h-9 flex items-center justify-center hover:bg-slate-700 shadow-md border border-slate-700/50 active:scale-90"
-                                        title="Editar Perfil"
-                                    >
-                                        <span className="text-xs">✏️</span>
-                                    </button>
-                                    {['Admin', 'Encargado'].includes(user?.role) && (
-                                        <button 
-                                            onClick={() => handleDelete(a)}
-                                            className="text-slate-400 hover:text-red-400 transition-all bg-slate-900/60 backdrop-blur-sm rounded-xl w-9 h-9 flex items-center justify-center hover:bg-red-900/40 shadow-md border border-slate-700/50 active:scale-90"
-                                            title="Borrar Alumno"
-                                        >
-                                            <span className="text-xs">🗑</span>
-                                        </button>
-                                    )}
-                                </div>
-
                                 {/* Contenedor de Foto + Nombre y Faja */}
-                                <div className="flex gap-4 items-center flex-1 min-w-0 pr-20">
+                                <div className="flex gap-4 items-center flex-1 min-w-0">
                                     {/* Foto de Perfil muy grande */}
                                     <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-3xl sm:text-4xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
                                         {a.fotoUrl ? (
@@ -215,8 +195,8 @@ export default function AlumnosPage() {
                                     </div>
                                 </div>
 
-                                {/* Botón Gigante */}
-                                <div className="mt-auto pt-3 border-t border-slate-700/50">
+                                {/* Botón de Asistencia y Acciones */}
+                                <div className="mt-auto pt-3 border-t border-slate-700/50 flex flex-col gap-3">
                                     <button
                                         onClick={() => handleToggleAsistencia(a, yaAsistio)}
                                         className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-black text-lg shadow-md transition-all active:scale-95 border-b-4 ${
@@ -237,6 +217,26 @@ export default function AlumnosPage() {
                                             </>
                                         )}
                                     </button>
+
+                                    {/* Botones de acción Editar y Borrar */}
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => navigate(`/editar/${a._id}`)}
+                                            className="flex-1 py-2.5 px-3 bg-slate-900/60 hover:bg-slate-700/50 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/50 flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                                            title="Editar Perfil"
+                                        >
+                                            <span>✏️</span> Editar Perfil
+                                        </button>
+                                        {['Admin', 'Encargado'].includes(user?.role) && (
+                                            <button 
+                                                onClick={() => handleDelete(a)}
+                                                className="py-2.5 px-3 bg-red-950/20 hover:bg-red-900/30 text-red-400 hover:text-red-300 font-bold text-xs uppercase tracking-wider rounded-xl border border-red-900/30 flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                                                title="Borrar Alumno"
+                                            >
+                                                <span>🗑️</span> Borrar
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         );
