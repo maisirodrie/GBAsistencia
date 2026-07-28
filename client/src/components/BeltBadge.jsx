@@ -18,7 +18,7 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
     const s = sizes[size] || sizes.md;
 
     return (
-        <div className="flex flex-col items-start gap-1 w-full sm:w-auto">
+        <div className="flex flex-col items-start min-w-0 flex-1 w-full gap-1">
             {/* ── Cinturón visual ── */}
             <div
                 className={`flex items-stretch ${s.height} ${s.w} rounded-full overflow-hidden shadow-md border`}
