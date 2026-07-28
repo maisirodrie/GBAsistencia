@@ -173,11 +173,11 @@ export default function AlumnosPage() {
                                     </div>
                                     
                                     {/* Nombre, Faja y Roles */}
-                                    <div className="flex flex-col items-start min-w-0">
+                                    <div className="flex flex-col items-start min-w-0 flex-1 w-full">
                                         <h3 className="font-black text-[15px] sm:text-lg text-white leading-tight break-words" title={`${a.nombre} ${a.apellido || ""}`}>
                                             {a.nombre} <span className="opacity-70">{a.apellido || ""}</span>
                                         </h3>
-                                        <div className="flex flex-col items-start gap-1 mt-1.5">
+                                        <div className="flex flex-col items-start gap-1 mt-1.5 w-full">
                                             <BeltBadge faja={a.faja} grado={a.grado} size="sm" />
                                             <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                                                 {a.categoria === 'Infantil' && (
