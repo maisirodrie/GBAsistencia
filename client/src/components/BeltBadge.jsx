@@ -39,11 +39,12 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
 
                 {/* Punta negra (o roja para faja negra) con rayas del grau */}
                 <div
-                    className="flex flex-row-reverse items-center justify-start gap-[2px] flex-shrink-0"
+                    className="flex flex-row-reverse items-center justify-start flex-shrink-0"
                     style={{ 
-                        minWidth: s.tipW, 
-                        paddingLeft: 4, 
-                        paddingRight: 4,
+                        minWidth: '30px', 
+                        paddingLeft: '4px', 
+                        paddingRight: '4px',
+                        gap: '4px',
                         backgroundColor: meta.tipColor || '#0a0a0a'
                     }}
                 >
@@ -80,7 +81,7 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
             {/* Nombre de la faja + grau (opcional) */}
             {showLabel && (
                 <span className={`${s.text} font-black text-slate-400 leading-none pl-0.5`}>
-                    {faja}{numGrau > 0 ? ` · ${numGrau}º` : ''}
+                    {faja}{numGrau > 0 ? ` - Grado ${numGrau}` : ''}
                 </span>
             )}
         </div>
