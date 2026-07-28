@@ -11,7 +11,7 @@ export default function BeltBadge({ faja, grado, showLabel = true, size = "md" }
 
     const sizes = {
         xs: { height: 'h-2.5',  tipW: 14, stripeH: 6,  stripeW: 1.5, gap: 1,   text: 'text-[8px]',  w: 'w-16' },
-        sm: { height: 'h-3',    tipW: 18, stripeH: 8,  stripeW: 2, gap: 1.5, text: 'text-[9px]',  w: 'w-20' },
+        sm: { height: 'h-3',    tipW: 18, stripeH: 8,  stripeW: 2, gap: 1.5, text: 'text-[9px]',  w: 'w-40' },
         md: { height: 'h-4',    tipW: 22, stripeH: 10, stripeW: 2, gap: 2,   text: 'text-[10px]', w: 'w-28' },
         lg: { height: 'h-5',    tipW: 28, stripeH: 13, stripeW: 3, gap: 2.5, text: 'text-xs',     w: 'w-36' },
     };
