@@ -827,7 +827,7 @@ export default function AlumnoFormPage() {
                                             <span className="text-green-400 text-xl leading-none">🏆</span>
                                             <div className="space-y-1">
                                                 <p className="text-xs font-black text-green-400 uppercase tracking-widest">¡Elegible para Graduación!</p>
-                                                <p className="text-xs font-bold text-slate-300 leading-relaxed">El alumno cumple con la doble condición AND requerida por la franquicia Gracie Barra.</p>
+                                                <p className="text-xs font-bold text-slate-300 leading-relaxed">El alumno cumple con la doble condición (Clases y Tiempo) requerida por la franquicia Gracie Barra.</p>
                                             </div>
                                         </div>
                                     )}
