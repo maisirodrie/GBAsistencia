@@ -199,7 +199,7 @@ export const evaluarGraduacion = ({
     }
 
     // 1. Calcular frecuencia semanal real basada en las asistencias de los últimos 30 días
-    let frecuenciaSemanalReal = frecuencia_semanal || 2; // valor de mitigación default / parametrizado
+    let frecuenciaSemanalReal = frecuencia_semanal || 2;
     if (asistencias && asistencias.length > 0) {
         const hoyMs = hoy.getTime();
         const hace30diasMs = hoyMs - (30 * 24 * 60 * 60 * 1000);
@@ -218,19 +218,19 @@ export const evaluarGraduacion = ({
 
         if (semanas > 0) {
             const calculada = asistenciasUltimoMes.length / semanas;
-            // Si la frecuencia calculada es inferior al mínimo requerido de 2 clases por semana,
-            // o a la frecuencia configurada por el alumno, tomamos el mayor para la proyección.
             frecuenciaSemanalReal = Math.max(frecuencia_semanal || 2.0, parseFloat(calculada.toFixed(2)));
         }
     }
 
-    // 2. Filtrar y ordenar asistencias del cinturón actual (desde fecha_inicio_faja)
-    let fechaInicioFaja = fecha_inicio_faja ? new Date(fecha_inicio_faja) : null;
-    if (!fechaInicioFaja && fecha_ultimo_grado) {
-        fechaInicioFaja = new Date(fecha_ultimo_grado);
-    }
-    if (!fechaInicioFaja) {
-        fechaInicioFaja = new Date(hoy.getFullYear() - 1, 0, 1);
+    // 2. Determinar la fecha de inicio del tramo actual
+    let startCompareDate = (grado_actual === 0) 
+        ? (fecha_inicio_faja ? new Date(fecha_inicio_faja) : null)
+        : (fecha_ultimo_grado ? new Date(fecha_ultimo_grado) : null);
+
+    if (!startCompareDate) {
+        if (fecha_ultimo_grado) startCompareDate = new Date(fecha_ultimo_grado);
+        else if (fecha_inicio_faja) startCompareDate = new Date(fecha_inicio_faja);
+        else startCompareDate = new Date(hoy.getFullYear() - 1, 0, 1);
     }
 
     const formatLocalDate = (dateVal) => {
@@ -242,16 +242,25 @@ export const evaluarGraduacion = ({
         return `${y}-${m}-${r}`;
     };
 
-    const strInicioFaja = formatLocalDate(fechaInicioFaja);
-    const asistenciasFaja = (asistencias || [])
-        .filter(a => formatLocalDate(a) >= strInicioFaja)
+    const strStartCompare = formatLocalDate(startCompareDate);
+
+    // Filtrar asistencias del tramo actual
+    const asistenciasTramo = (asistencias || [])
+        .filter(a => formatLocalDate(a) >= strStartCompare)
         .sort((a, b) => new Date(a) - new Date(b));
 
-    const asistenciasTotalesFaja = (permanencia_manual !== undefined && permanencia_manual !== null && permanencia_manual !== "" && !isNaN(permanencia_manual))
-        ? parseInt(permanencia_manual)
-        : asistenciasFaja.length;
+    // Clases acumuladas
+    const clases_acumuladas = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
+        ? parseInt(clases_tramo_manual)
+        : (permanencia_manual !== undefined && permanencia_manual !== null && permanencia_manual !== "" && !isNaN(permanencia_manual))
+            ? parseInt(permanencia_manual)
+            : asistenciasTramo.length;
 
-    // 3. Obtener requisitos del tramo actual y del tramo anterior
+    // Días transcurridos
+    const diffTime = Math.max(0, hoy.getTime() - startCompareDate.getTime());
+    const dias_transcurridos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // 3. Requisitos del tramo
     const reqs = getRequisitosAcumulados(fajaKey, grado_actual);
     const reqDias = (dias_para_graduacion !== undefined && dias_para_graduacion !== null && dias_para_graduacion !== "" && !isNaN(dias_para_graduacion))
         ? parseInt(dias_para_graduacion)
@@ -260,192 +269,59 @@ export const evaluarGraduacion = ({
         ? parseInt(clases_para_graduacion)
         : reqs.clases;
 
-    let reqClasesAnterior = 0;
-    if (grado_actual > 0) {
-        reqClasesAnterior = getRequisitosAcumulados(fajaKey, grado_actual - 1).clases;
+    const clases_restantes = Math.max(0, reqClases - clases_acumuladas);
+    const dias_restantes = Math.max(0, reqDias - dias_transcurridos);
+
+    const tiempoCumplido = dias_transcurridos >= reqDias;
+    const clasesCumplidas = clases_acumuladas >= reqClases;
+    const elegible = tiempoCumplido && clasesCumplidas;
+
+    let bloqueo_factor = "Ninguno";
+    if (elegible) {
+        bloqueo_factor = "Ninguno";
+    } else if (!tiempoCumplido && clasesCumplidas) {
+        bloqueo_factor = "Bloqueado por Tiempo";
+    } else if (tiempoCumplido && !clasesCumplidas) {
+        bloqueo_factor = "Bloqueado por Asistencias";
     } else {
-        // Para grado 0, el tramo técnico anterior o inicial es el mismo tramo de grado 1
-        reqClasesAnterior = reqClases;
+        bloqueo_factor = "Bloqueado por Ambas";
     }
 
-    const metaBaseObligatoria = getMetaBaseObligatoria(fajaKey, grado_actual);
-
-    // Sobrescrituras manuales para metas base (Estado 1 y Estado 2)
-    const baseObligatoriaFaja = grado_actual === 0
-        ? getMetaBaseObligatoria(fajaKey, 1)
-        : getMetaBaseObligatoria(fajaKey, grado_actual);
-
-    const targetMetaBase = (dias_para_graduacion !== undefined && dias_para_graduacion !== null && dias_para_graduacion !== "" && !isNaN(dias_para_graduacion))
-        ? parseInt(dias_para_graduacion)
-        : baseObligatoriaFaja;
-
-    const targetClasesGrado = (clases_para_graduacion !== undefined && clases_para_graduacion !== null && clases_para_graduacion !== "" && !isNaN(clases_para_graduacion))
-        ? parseInt(clases_para_graduacion)
-        : reqClasesAnterior;
-
-    // 4. Evaluar la Máquina de Estados
-    let estado_secuencial = 1;
-    let tieneDeuda = false;
-    let deudaClases = 0;
-    let msgDeuda = "";
-    let clases_acumuladas = 0;
-    let dias_transcurridos = 0;
-    let bloqueo_factor = "Ninguno";
-    let elegible = false;
-    let contadores_visuales = {};
-    let fecha_estimada_promocion = null;
-
-    // ESTADO 1: HACIA GRADO 1 (El alumno está en Grado 0 y no ha completado el tramo inicial de asistencias)
-    if (grado_actual === 0 && asistenciasTotalesFaja < reqClases) {
-        estado_secuencial = 1;
-        clases_acumuladas = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
-            ? parseInt(clases_tramo_manual)
-            : asistenciasTotalesFaja;
-        
-        const diffTime = Math.max(0, hoy.getTime() - fecha_ultimo_grado.getTime());
-        dias_transcurridos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        const clases_restantes = Math.max(0, reqClases - clases_acumuladas);
-        const dias_restantes = Math.max(0, reqDias - dias_transcurridos);
-
-        const tiempoCumplido = dias_transcurridos >= reqDias;
-        const clasesCumplidas = clases_acumuladas >= reqClases;
-
-        elegible = tiempoCumplido && clasesCumplidas;
-
-        if (elegible) {
-            bloqueo_factor = "Ninguno";
-        } else if (!tiempoCumplido && clasesCumplidas) {
-            bloqueo_factor = "Bloqueado por Tiempo";
-        } else if (tiempoCumplido && !clasesCumplidas) {
-            bloqueo_factor = "Bloqueado por Asistencias";
-        } else {
-            bloqueo_factor = "Bloqueado por Ambas";
+    const contadores_visuales = {
+        grado: {
+            acumuladas: clases_acumuladas,
+            requeridas: reqClases,
+            porcentaje: Math.min(100, Math.round((clases_acumuladas / reqClases) * 100))
+        },
+        permanencia: {
+            acumuladas: dias_transcurridos,
+            requeridas: reqDias,
+            porcentaje: Math.min(100, Math.round((dias_transcurridos / reqDias) * 100))
         }
+    };
 
-        contadores_visuales = {
-            grado: {
-                acumuladas: clases_acumuladas,
-                requeridas: reqClases,
-                porcentaje: Math.min(100, Math.round((clases_acumuladas / reqClases) * 100))
-            },
-            permanencia: {
-                acumuladas: asistenciasTotalesFaja,
-                requeridas: targetMetaBase,
-                porcentaje: Math.min(100, Math.round((asistenciasTotalesFaja / targetMetaBase) * 100))
-            }
-        };
-
+    let fecha_estimada_promocion = null;
+    if (elegible) {
+        fecha_estimada_promocion = hoy.toISOString().split('T')[0];
+    } else {
         const diasPorClases = Math.ceil((clases_restantes / frecuenciaSemanalReal) * 7);
         const diasAdicionales = Math.max(dias_restantes, diasPorClases);
         const fechaProyectada = new Date(hoy.getTime() + (diasAdicionales * 24 * 60 * 60 * 1000));
         fecha_estimada_promocion = fechaProyectada.toISOString().split('T')[0];
     }
-    // ESTADO 2: PERMANENCIA EN GRADO Z (Deuda de permanencia de asistencia en la faja activa)
-    else if (asistenciasTotalesFaja < targetMetaBase) {
-        estado_secuencial = 2;
-        tieneDeuda = true;
-        deudaClases = targetMetaBase - asistenciasTotalesFaja;
-        msgDeuda = `🥋 Faltan ${deudaClases} clases físicas para completar la base de la faja.`;
-
-        clases_acumuladas = 0; // Forzado a cero
-        dias_transcurridos = 0; // Forzado a cero
-        bloqueo_factor = "Bloqueado por Permanencia de Asistencia";
-        elegible = false;
-
-        const clasesAcumuladasGrado = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
-            ? parseInt(clases_tramo_manual)
-            : Math.min(targetClasesGrado, asistenciasTotalesFaja);
-        contadores_visuales = {
-            grado: {
-                acumuladas: clasesAcumuladasGrado,
-                requeridas: targetClasesGrado,
-                porcentaje: Math.round((clasesAcumuladasGrado / targetClasesGrado) * 100)
-            },
-            permanencia: {
-                acumuladas: asistenciasTotalesFaja,
-                requeridas: targetMetaBase,
-                porcentaje: Math.round((asistenciasTotalesFaja / targetMetaBase) * 100)
-            }
-        };
-
-        // CORRECCIÓN: Cálculo de proyección basado únicamente en las clases de deuda sin sumar reqClases ni reqDias del tramo posterior
-        const diasAdicionales = Math.ceil((deudaClases / frecuenciaSemanalReal) * 7);
-        const fechaProyectada = new Date(hoy.getTime() + (diasAdicionales * 24 * 60 * 60 * 1000));
-        fecha_estimada_promocion = fechaProyectada.toISOString().split('T')[0];
-    }
-    // ESTADO 3: HACIA GRADO Z (Reseteo absoluto y tramo activo)
-    else {
-        estado_secuencial = 3;
-        
-        clases_acumuladas = (clases_tramo_manual !== undefined && clases_tramo_manual !== null && clases_tramo_manual !== "" && !isNaN(clases_tramo_manual))
-            ? parseInt(clases_tramo_manual)
-            : (asistenciasTotalesFaja - targetMetaBase);
-        
-        let fechaInicioTramo = fecha_ultimo_grado ? new Date(fecha_ultimo_grado) : new Date();
-        if (targetMetaBase > 0 && asistenciasFaja.length >= targetMetaBase) {
-            const classClearDebt = new Date(asistenciasFaja[targetMetaBase - 1]);
-            if (classClearDebt > fechaInicioTramo) {
-                fechaInicioTramo = classClearDebt;
-            }
-        }
-
-        const diffTime = Math.max(0, hoy.getTime() - fechaInicioTramo.getTime());
-        dias_transcurridos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        const clases_restantes = Math.max(0, reqClases - clases_acumuladas);
-        const dias_restantes = Math.max(0, reqDias - dias_transcurridos);
-
-        const tiempoCumplido = dias_transcurridos >= reqDias;
-        const clasesCumplidas = clases_acumuladas >= reqClases;
-
-        elegible = tiempoCumplido && clasesCumplidas;
-
-        if (elegible) {
-            bloqueo_factor = "Ninguno";
-        } else if (!tiempoCumplido && clasesCumplidas) {
-            bloqueo_factor = "Bloqueado por Tiempo";
-        } else if (tiempoCumplido && !clasesCumplidas) {
-            bloqueo_factor = "Bloqueado por Asistencias";
-        } else {
-            bloqueo_factor = "Bloqueado por Ambas";
-        }
-
-        contadores_visuales = {
-            grado: {
-                acumuladas: clases_acumuladas,
-                requeridas: reqClases,
-                porcentaje: Math.min(100, Math.round((clases_acumuladas / reqClases) * 100))
-            },
-            permanencia: {
-                acumuladas: dias_transcurridos,
-                requeridas: reqDias,
-                porcentaje: Math.min(100, Math.round((dias_transcurridos / reqDias) * 100))
-            }
-        };
-
-        if (elegible) {
-            fecha_estimada_promocion = new Date(hoy).toISOString().split('T')[0];
-        } else {
-            const diasPorClases = Math.ceil((clases_restantes / frecuenciaSemanalReal) * 7);
-            const diasAdicionales = Math.max(dias_restantes, diasPorClases);
-            const fechaProyectada = new Date(hoy.getTime() + (diasAdicionales * 24 * 60 * 60 * 1000));
-            fecha_estimada_promocion = fechaProyectada.toISOString().split('T')[0];
-        }
-    }
 
     return {
         elegible,
-        estado_secuencial,
-        tieneDeuda,
-        deudaClases,
-        msgDeuda,
+        estado_secuencial: 3,
+        tieneDeuda: false,
+        deudaClases: 0,
+        msgDeuda: "",
         dias_transcurridos,
         dias_requeridos: reqDias,
-        dias_restantes: tieneDeuda ? 0 : Math.max(0, reqDias - dias_transcurridos),
+        dias_restantes,
         clases_acumuladas,
         clases_requeridas: reqClases,
-        clases_restantes: tieneDeuda ? 0 : Math.max(0, reqClases - clases_acumuladas),
+        clases_restantes,
         bloqueo_factor,
         fecha_estimada_promocion,
         alertas_edad,
@@ -453,8 +329,8 @@ export const evaluarGraduacion = ({
         edad,
         frecuencia_semanal_real: frecuenciaSemanalReal,
         contadores_visuales,
-        asistenciasTotalesFaja,
-        msgAlertaDeuda: tieneDeuda ? `🥋 Faltan ${deudaClases} clases físicas para completar la base de la faja.` : ""
+        asistenciasTotalesFaja: (asistencias || []).length,
+        msgAlertaDeuda: ""
     };
 };
 

@@ -296,6 +296,12 @@ export default function AlumnoFormPage() {
     }
 
     async function agregarHistorial() {
+        const localToday = new Date();
+        const yyyy = localToday.getFullYear();
+        const mm = String(localToday.getMonth() + 1).padStart(2, '0');
+        const dd = String(localToday.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+
         const { value: formValues } = await Swal.fire({
             title: 'Agregar Graduación Histórica',
             html: `
@@ -322,7 +328,7 @@ export default function AlumnoFormPage() {
                     </div>
                     <div>
                         <label style="display: block; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px;">Fecha de Promoción</label>
-                        <input id="swal-fecha" type="date" class="swal2-input" style="margin: 0; width: 100%; box-sizing: border-box; background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 8px; color-scheme: dark;" value="2025-05-20">
+                        <input id="swal-fecha" type="date" class="swal2-input" style="margin: 0; width: 100%; box-sizing: border-box; background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 8px; color-scheme: dark;" value="${todayStr}">
                     </div>
                 </div>
             `,
@@ -754,7 +760,7 @@ export default function AlumnoFormPage() {
                                     {/* Barra de Clases */}
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                                            <span>{(evaluacion.estado_secuencial === 1 || evaluacion.estado_secuencial === 2) ? "Presencia de Clases (Completado)" : "Presencia de Clases del Tramo"}</span>
+                                            <span>Presencia de Clases</span>
                                             <span>{Math.round(pctClases)}%</span>
                                         </div>
                                         <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
@@ -768,7 +774,7 @@ export default function AlumnoFormPage() {
                                     {/* Barra de Tiempo (Permanencia) */}
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                                            <span>{(evaluacion.estado_secuencial === 1 || evaluacion.estado_secuencial === 2) ? "Permanencia de Faixa (Asistencia)" : "Permanencia Calendario"}</span>
+                                            <span>Permanencia de Faixa</span>
                                             <span>{Math.round(pctTiempo)}%</span>
                                         </div>
                                         <div className="h-2 bg-slate-950 rounded-full overflow-hidden border border-black/30 shadow-inner">
