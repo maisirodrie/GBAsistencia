@@ -815,7 +815,11 @@ export default function AlumnoFormPage() {
                                                 {evaluacion.fecha_estimada_promocion && (
                                                     <div className="mt-3 px-3 py-2 bg-emerald-950/30 border border-emerald-800/40 rounded-xl text-emerald-400 text-xs font-bold flex items-center gap-2">
                                                         <span>📅 Proyección de promoción:</span>
-                                                        <span className="font-extrabold text-sm">{evaluacion.fecha_estimada_promocion}</span>
+                                                        <span className="font-extrabold text-sm">
+                                                            {evaluacion.fecha_estimada_promocion.includes('-') 
+                                                                ? evaluacion.fecha_estimada_promocion.split('-').reverse().join('/') 
+                                                                : evaluacion.fecha_estimada_promocion}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
