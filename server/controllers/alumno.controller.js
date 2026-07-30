@@ -268,12 +268,15 @@ export const addAsistencia = async (req, res) => {
         const alumno = await Alumno.findById(req.params.id);
         if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
         
-        // Evitar duplicados en el mismo día (comparando año, mes y día exactos en UTC)
-        const dateObj = new Date(fecha);
-        const yyyy = dateObj.getUTCFullYear();
-        const mm = dateObj.getUTCMonth();
-        const dd = dateObj.getUTCDate();
+        // Ajustar al huso horario de Argentina (UTC-3)
+        const clientDate = new Date(fecha || Date.now());
+        const dateArg = new Date(clientDate.getTime() - 3 * 60 * 60 * 1000);
+        const yyyy = dateArg.getUTCFullYear();
+        const mm = dateArg.getUTCMonth();
+        const dd = dateArg.getUTCDate();
+        const fechaNormalizada = new Date(`${yyyy}-${String(mm + 1).padStart(2, '0')}-${String(dd).padStart(2, '0')}T12:00:00.000Z`);
         
+        // Evitar duplicados en el mismo día (comparando año, mes y día exactos en UTC)
         const yaAsistio = alumno.asistencias.some(a => {
             const d = new Date(a);
             return d.getUTCFullYear() === yyyy && d.getUTCMonth() === mm && d.getUTCDate() === dd;
@@ -281,7 +284,7 @@ export const addAsistencia = async (req, res) => {
         
         if (yaAsistio) return res.status(400).json({ message: 'Asistencia ya registrada para hoy' });
 
-        alumno.asistencias.push(fecha);
+        alumno.asistencias.push(fechaNormalizada);
         
         // Auto-graduación eliminada (ahora es manual por el profesor)
         
@@ -342,8 +345,19 @@ export const removeAsistencia = async (req, res) => {
         const alumno = await Alumno.findById(req.params.id);
         if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
         
-        const fechaParaRemover = new Date(fecha).setHours(0, 0, 0, 0);
-        alumno.asistencias = alumno.asistencias.filter(a => new Date(a).setHours(0, 0, 0, 0) !== fechaParaRemover);
+        // Ajustar al huso horario de Argentina (UTC-3)
+        const clientDate = new Date(fecha || Date.now());
+        const dateArg = new Date(clientDate.getTime() - 3 * 60 * 60 * 1000);
+        const yyyy = dateArg.getUTCFullYear();
+        const mm = dateArg.getUTCMonth();
+        const dd = dateArg.getUTCDate();
+        
+        // Filtrar quitando el día coincidente en UTC
+        alumno.asistencias = alumno.asistencias.filter(a => {
+            const d = new Date(a);
+            return !(d.getUTCFullYear() === yyyy && d.getUTCMonth() === mm && d.getUTCDate() === dd);
+        });
+        
         alumno.markModified('asistencias');
         
         await alumno.save();
