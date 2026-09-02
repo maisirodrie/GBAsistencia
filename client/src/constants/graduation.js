@@ -227,15 +227,16 @@ export const evaluarGraduacion = ({
         ? (fecha_inicio_faja ? new Date(fecha_inicio_faja) : null)
         : (fecha_ultimo_grado ? new Date(fecha_ultimo_grado) : null);
 
-    if (!startCompareDate) {
-        if (fecha_ultimo_grado) startCompareDate = new Date(fecha_ultimo_grado);
-        else if (fecha_inicio_faja) startCompareDate = new Date(fecha_inicio_faja);
+    if (!startCompareDate || isNaN(startCompareDate.getTime())) {
+        if (fecha_ultimo_grado && !isNaN(new Date(fecha_ultimo_grado).getTime())) startCompareDate = new Date(fecha_ultimo_grado);
+        else if (fecha_inicio_faja && !isNaN(new Date(fecha_inicio_faja).getTime())) startCompareDate = new Date(fecha_inicio_faja);
         else startCompareDate = new Date(hoy.getFullYear() - 1, 0, 1);
     }
 
     const formatLocalDate = (dateVal) => {
         if (!dateVal) return "";
         const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return "";
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         const r = String(d.getDate()).padStart(2, '0');
@@ -258,7 +259,7 @@ export const evaluarGraduacion = ({
 
     // Días transcurridos
     const diffTime = Math.max(0, hoy.getTime() - startCompareDate.getTime());
-    const dias_transcurridos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const dias_transcurridos = isNaN(diffTime) ? 0 : Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     // 3. Requisitos del tramo
     const reqs = getRequisitosAcumulados(fajaKey, grado_actual);
@@ -304,10 +305,15 @@ export const evaluarGraduacion = ({
     if (elegible) {
         fecha_estimada_promocion = hoy.toISOString().split('T')[0];
     } else {
-        const diasPorClases = Math.ceil((clases_restantes / frecuenciaSemanalReal) * 7);
-        const diasAdicionales = Math.max(dias_restantes, diasPorClases);
+        const freq = (frecuenciaSemanalReal && !isNaN(frecuenciaSemanalReal) && frecuenciaSemanalReal > 0) ? frecuenciaSemanalReal : 2;
+        const validClasesRest = !isNaN(clases_restantes) ? Math.max(0, clases_restantes) : 0;
+        const validDiasRest = !isNaN(dias_restantes) ? Math.max(0, dias_restantes) : 0;
+        const diasPorClases = Math.ceil((validClasesRest / freq) * 7);
+        const diasAdicionales = Math.max(validDiasRest, diasPorClases);
         const fechaProyectada = new Date(hoy.getTime() + (diasAdicionales * 24 * 60 * 60 * 1000));
-        fecha_estimada_promocion = fechaProyectada.toISOString().split('T')[0];
+        fecha_estimada_promocion = !isNaN(fechaProyectada.getTime()) 
+            ? fechaProyectada.toISOString().split('T')[0] 
+            : hoy.toISOString().split('T')[0];
     }
 
     return {

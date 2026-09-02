@@ -191,9 +191,7 @@ export const updateAlumno = async (req, res) => {
                 fechaClasePromocion: new Date()
             });
             alumno.ultimaGraduacion = new Date();
-        }
-
-        if (req.body.historicoGraduaciones) {
+        } else if (req.body.historicoGraduaciones) {
             alumno.historicoGraduaciones = req.body.historicoGraduaciones;
         }
 

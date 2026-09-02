@@ -76,6 +76,8 @@ const alumnoSchema = new mongoose.Schema({
         {
             faja: String,
             grado: Number,
+            fajaAnterior: String,
+            gradoAnterior: Number,
             ultimaGraduacion: Date,
             fechaClasePromocion: Date
         }

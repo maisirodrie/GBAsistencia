@@ -25,6 +25,18 @@ function toLocal(iso) {
     return new Date(d.getTime() + d.getTimezoneOffset() * 60000);
 }
 
+function safeParseDateInput(val) {
+    if (!val) return null;
+    if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+    if (typeof val === 'string') {
+        const clean = val.includes('T') ? val.split('T')[0] : val;
+        const d = new Date(clean + "T12:00:00");
+        return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+}
+
 export default function AlumnoFormPage() {
     const { register, handleSubmit, setValue, watch, getValues, reset } = useForm();
     const { user } = useAuth();
@@ -48,35 +60,27 @@ export default function AlumnoFormPage() {
         
         const result = await Swal.fire({
             title: 'Actualizar Foto',
-            text: '¿Cómo deseas subir la foto?',
+            text: '¿Cómo quieres subir la foto?',
             icon: 'question',
             showCancelButton: true,
-            showDenyButton: true,
             confirmButtonText: '📷 Tomar Foto',
-            denyButtonText: '🖼️ Galería',
-            cancelButtonText: 'Cancelar',
+            cancelButtonText: '📁 Subir Archivo',
+            showCloseButton: true,
             background: '#0f172a',
             color: '#f8fafc',
-            confirmButtonColor: '#e11d48',
-            denyButtonColor: '#2563eb',
-            cancelButtonColor: '#334155',
-            customClass: {
-                popup: 'rounded-[2rem] border border-slate-800',
-                confirmButton: 'rounded-xl px-4 py-3 font-black uppercase text-xs',
-                denyButton: 'rounded-xl px-4 py-3 font-black uppercase text-xs',
-                cancelButton: 'rounded-xl px-4 py-3 font-black uppercase text-xs'
-            }
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#475569',
         });
 
         if (result.isConfirmed) {
             cameraInputRef.current?.click();
-        } else if (result.isDenied) {
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
             fileInputRef.current?.click();
         }
     };
 
     const handleFileChange = (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
         if (!file || !id) return;
         const reader = new FileReader();
         reader.addEventListener("load", () => setImageToCrop(reader.result));
@@ -134,19 +138,19 @@ export default function AlumnoFormPage() {
         if (id) {
             try {
                 await updateAlumno(id, { ...data, categoria });
-                showToast("Alumno actualizado correctamente");
-                setGuardado(true);
-                setTimeout(() => setGuardado(false), 2500);
+                showToast("Alumno actualizado correctamente", "success");
+                navigate("/alumnos");
             } catch (error) {
                 showAlert({
                     title: "Error",
-                    text: "No se pudo actualizar el alumno.",
+                    text: error.response?.data?.[0] || error.response?.data?.message || "No se pudo actualizar el alumno.",
                     icon: "error"
                 });
             }
         } else {
             try {
-                const { data: nuevo } = await createAlumno({ ...data, categoria });
+                const res = await createAlumno({ ...data, categoria });
+                const nuevo = res.data;
                 showToast("Alumno creado correctamente");
                 navigate(`/editar/${nuevo._id}`);
             } catch (error) {
@@ -163,7 +167,9 @@ export default function AlumnoFormPage() {
     const syncAlumnoData = (data) => {
         setAlumnoData(data);
         setAsistencias(data.asistencias);
+        if (data.faja) setValue("faja", data.faja);
         setValue("grado", String(data.grado ?? 0));
+        if (data.categoria) setCategoria(data.categoria);
         if (data.ultimaGraduacion) {
             const local = toLocal(data.ultimaGraduacion);
             setValue("ultimaGraduacion", format(local, "yyyy-MM-dd"));
@@ -302,18 +308,18 @@ export default function AlumnoFormPage() {
         const dd = String(localToday.getDate()).padStart(2, '0');
         const todayStr = `${yyyy}-${mm}-${dd}`;
 
+        const fajasDisponibles = FAJAS_POR_CATEGORIA[categoria] || FAJAS_POR_CATEGORIA["Adulto"];
+        const currentFajaVal = watch("faja") || (alumnoData ? alumnoData.faja : "Branca");
+        const optionsFajas = fajasDisponibles.map(f => `<option value="${f}" ${f === currentFajaVal ? 'selected' : ''}>${f}</option>`).join('');
+
         const { value: formValues } = await Swal.fire({
             title: 'Agregar Graduación Histórica',
             html: `
                 <div style="text-align: left; display: flex; flex-direction: column; gap: 15px;">
                     <div>
-                        <label style="display: block; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px;">Cinturón</label>
+                        <label style="display: block; font-size: 11px; font-weight: 900; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px;">Cinturón (${categoria})</label>
                         <select id="swal-faja" class="swal2-select" style="margin: 0; width: 100%; box-sizing: border-box; background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 8px; padding: 8px;">
-                            <option value="Branca">Blanco</option>
-                            <option value="Azul" selected>Azul</option>
-                            <option value="Roxa">Morado (Roxa)</option>
-                            <option value="Marrom">Marrón (Marrom)</option>
-                            <option value="Preta">Negro (Preta)</option>
+                            ${optionsFajas}
                         </select>
                     </div>
                     <div>
@@ -407,14 +413,13 @@ export default function AlumnoFormPage() {
             if (hasHistory) {
                 return getFechaInicioFaja({ ...alumnoData, faja: currentFaja });
             }
-            return formUltimaGrad ? new Date(formUltimaGrad + "T12:00:00") : new Date();
+            return safeParseDateInput(formUltimaGrad) || new Date();
         }
         return getFechaInicioFaja(alumnoData);
     })();
 
-    const fechaUltimoGradoVal = formUltimaGrad
-        ? new Date(formUltimaGrad + "T12:00:00")
-        : (alumnoData ? getFechaUltimoGrado(alumnoData) : new Date());
+    const fechaUltimoGradoVal = safeParseDateInput(formUltimaGrad)
+        || (alumnoData ? getFechaUltimoGrado(alumnoData) : new Date());
 
     /* Asistencias válidas para la próxima graduación */
     /* Asistencias desde inicio de faja (acumulativo por cinturón) */
@@ -873,8 +878,11 @@ export default function AlumnoFormPage() {
                                                             }
                                                         }
 
+                                                    const formVals = { ...getValues() };
+                                                    delete formVals.historicoGraduaciones;
+
                                                     const updatedValues = {
-                                                        ...getValues(),
+                                                        ...formVals,
                                                         categoria,
                                                         faja: nuevaFaja,
                                                         grado: nuevoGrado,
@@ -885,11 +893,14 @@ export default function AlumnoFormPage() {
                                                     try {
                                                         const { data } = await updateAlumno(id, updatedValues);
                                                         syncAlumnoData(data);
-                                                        // Sincronizar el formulario también
-                                                        reset(data); 
                                                         showToast("¡Promovido con éxito!", "success");
                                                     } catch (e) {
-                                                        showAlert({ title: "Error", text: "No se pudo procesar la promoción.", icon: "error" });
+                                                        console.error("Error en promoción:", e);
+                                                        showAlert({ 
+                                                            title: "Error", 
+                                                            text: e.response?.data?.message || e.message || "No se pudo procesar la promoción.", 
+                                                            icon: "error" 
+                                                        });
                                                     }
                                                 }
                                             }}
