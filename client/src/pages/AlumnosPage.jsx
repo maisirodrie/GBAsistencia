@@ -130,10 +130,10 @@ export default function AlumnosPage() {
                     <button
                         onClick={() => setShowQRCartel(true)}
                         className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-6 py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap uppercase tracking-wider"
-                        title="Ver e Imprimir Cartel QR para el Dojo"
+                        title="Ver e Imprimir Cartel QR para la Academia"
                     >
                         <span className="text-xl">📲</span>
-                        <span>Cartel QR Dojo</span>
+                        <span>Cartel QR Academia</span>
                     </button>
 
                     <button

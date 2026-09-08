@@ -99,7 +99,7 @@ export default function AutoCheckInPage() {
                         <div className="w-full text-center mb-6">
                             <div className="inline-flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 rounded-full px-4 py-1.5 text-xs font-bold text-slate-300 mb-3 shadow-inner">
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                                Dojo Activo • Hoy
+                                Academia Activa
                             </div>
                             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                                 ¡Bienvenido!
