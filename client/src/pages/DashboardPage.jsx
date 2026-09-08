@@ -56,7 +56,7 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center gap-3 bg-slate-900 border border-slate-800 px-8 py-6 rounded-3xl shadow-xl">
                 <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">
-                    Cargando Panel TailAdmin...
+                    Cargando Panel...
                 </span>
             </div>
         </div>
@@ -387,27 +387,50 @@ export default function DashboardPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/60 text-xs">
-                                {pendientesPago.slice((currentPageCobranzas - 1) * itemsPerPageCobranzas, currentPageCobranzas * itemsPerPageCobranzas).map((p, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                                        <td className="py-3 px-3 font-bold text-white whitespace-nowrap">
-                                            {p.alumnoNombre || p.alumno?.nombre || "Alumno"} {p.alumnoApellido || p.alumno?.apellido || ""}
-                                        </td>
-                                        <td className="py-3 px-3 text-slate-300 whitespace-nowrap">
-                                            {p.concepto || "Membresía"}
-                                        </td>
-                                        <td className="py-3 px-3 font-black text-amber-400 whitespace-nowrap">
-                                            ${Number(p.monto || 0).toLocaleString("es-AR")}
-                                        </td>
-                                        <td className="py-3 px-3 text-right whitespace-nowrap">
-                                            <button 
-                                                onClick={() => navigate('/finanzas')}
-                                                className="px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 font-black text-[10px] uppercase tracking-wider transition-all"
-                                            >
-                                                Cobrar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {pendientesPago.slice((currentPageCobranzas - 1) * itemsPerPageCobranzas, currentPageCobranzas * itemsPerPageCobranzas).map((p, idx) => {
+                                    const nombreCompleto = `${p.nombre || p.alumnoNombre || p.alumno?.nombre || "Alumno"} ${p.apellido || p.alumnoApellido || p.alumno?.apellido || ""}`.trim();
+                                    return (
+                                        <tr key={p._id || idx} className="hover:bg-slate-800/30 transition-colors">
+                                            <td className="py-3 px-3 whitespace-nowrap">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-800 relative shrink-0 bg-slate-800 flex items-center justify-center">
+                                                        {p.fotoUrl ? (
+                                                            <img src={p.fotoUrl.startsWith('http') ? p.fotoUrl : `${UPLOAD_URL}/${p.fotoUrl}`} className="w-full h-full object-cover" alt={nombreCompleto} />
+                                                        ) : (
+                                                            <span className="font-bold text-slate-500 uppercase text-xs">{nombreCompleto[0] || "A"}</span>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-white text-xs">{nombreCompleto}</p>
+                                                        {p.faja && (
+                                                            <div className="mt-0.5">
+                                                                <BeltBadge faja={p.faja} grado={p.grado || 0} size="xs" showLabel={false} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-3 text-slate-300 whitespace-nowrap">
+                                                <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-semibold border border-slate-700">
+                                                    {p.concepto || "Cuota del Mes"}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-3 font-bold text-amber-400 whitespace-nowrap">
+                                                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 text-[10px] font-black border border-amber-500/20">
+                                                    Pendiente
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-3 text-right whitespace-nowrap">
+                                                <button 
+                                                    onClick={() => navigate('/finanzas')}
+                                                    className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 font-bold text-[10px] uppercase tracking-wider transition-all"
+                                                >
+                                                    Cobrar en Finanzas
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

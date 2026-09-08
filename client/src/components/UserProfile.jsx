@@ -39,8 +39,8 @@ export default function UserProfile() {
 
                 {/* Nombre y rol del usuario */}
                 <div className="hidden sm:flex flex-col text-left min-w-0">
-                    <span className="text-xs font-bold text-white tracking-tight truncate max-w-[120px]">
-                        {primerNombre}
+                    <span className="text-xs font-bold text-white tracking-tight truncate max-w-[160px] lg:max-w-[220px]">
+                        {user?.nombre} {user?.apellido}
                     </span>
                     <span className="text-[10px] font-medium text-slate-400 capitalize truncate">
                         {user?.role?.toLowerCase() || "usuario"}
@@ -55,17 +55,17 @@ export default function UserProfile() {
 
             {/* Dropdown Menu TailAdmin */}
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2.5 w-60 rounded-2xl border border-slate-800 bg-slate-900/95 backdrop-blur-2xl p-3 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-                    {/* Encabezado con datos del usuario */}
-                    <div className="px-3 py-2 border-b border-slate-800/80">
-                        <p className="text-xs font-bold text-white truncate">
+                <div className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 rounded-2xl border border-slate-800 bg-slate-900/95 backdrop-blur-2xl p-4 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                    {/* Encabezado con datos del usuario sin recortar el nombre */}
+                    <div className="px-1 py-1 pb-3 border-b border-slate-800/80">
+                        <p className="text-sm font-bold text-white break-words leading-tight">
                             {user?.nombre} {user?.apellido}
                         </p>
-                        <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">
-                            {user?.username ? `@${user.username}` : (user?.email || "usuario@gbasistencia")}
+                        <p className="text-xs font-medium text-slate-400 truncate mt-1">
+                            {user?.email || (user?.username ? `@${user.username}` : "usuario@gbasistencia")}
                         </p>
-                        <div className="mt-1.5">
-                            <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold uppercase rounded-full border ${
+                        <div className="mt-2">
+                            <span className={`inline-block px-2.5 py-0.5 text-[10px] font-extrabold uppercase rounded-full border ${
                                 user?.role === 'Admin' 
                                     ? 'bg-red-500/10 text-red-400 border-red-500/20' 
                                     : user?.role === 'Encargado'

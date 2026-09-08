@@ -16,9 +16,11 @@ import { useSidebar } from "../context/SidebarContext";
 export default function Sidebar() {
     const location = useLocation();
     const { user, logout, isAuthenticated } = useAuth();
-    const { isExpanded, isMobileOpen, closeMobileSidebar, toggleSidebar } = useSidebar();
+    const { isExpanded, isMobileOpen, isHovered, setIsHovered, closeMobileSidebar } = useSidebar();
 
     if (!isAuthenticated) return null;
+
+    const isOpen = isExpanded || isHovered || isMobileOpen;
 
     const isActive = (path) => {
         if (path === "/") return location.pathname === "/";
@@ -62,14 +64,16 @@ export default function Sidebar() {
 
             {/* Contenedor Sidebar: Fijo y expandible en PC, Cajón en móvil */}
             <aside
+                onMouseEnter={() => !isExpanded && setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 className={`fixed left-0 top-0 z-50 flex h-screen flex-col overflow-y-hidden bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out lg:static ${
-                    isExpanded ? "lg:w-72" : "lg:w-20"
+                    isOpen ? "lg:w-72" : "lg:w-20"
                 } ${
                     isMobileOpen ? "w-72 translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"
                 }`}
             >
                 {/* Header del Sidebar */}
-                <div className={`flex items-center ${isExpanded ? "justify-between px-6" : "lg:justify-center lg:px-2 px-6"} py-5 border-b border-slate-800/80 flex-shrink-0`}>
+                <div className={`flex items-center ${isOpen ? "justify-between px-6" : "lg:justify-center lg:px-2 px-6"} py-5 border-b border-slate-800/80 flex-shrink-0`}>
                     <Link 
                         to="/" 
                         onClick={closeMobileSidebar}
@@ -80,7 +84,7 @@ export default function Sidebar() {
                             alt="Gracie Barra Norte" 
                             className="h-10 w-auto object-contain flex-shrink-0 transition-transform group-hover:scale-105" 
                         />
-                        {(isExpanded || isMobileOpen) && (
+                        {isOpen && (
                             <div className="flex flex-col min-w-0 transition-opacity duration-200">
                                 <span className="text-white font-black text-sm tracking-wider uppercase italic leading-none truncate">Gracie Barra</span>
                                 <span className="text-red-500 font-black text-[9px] tracking-[0.2em] uppercase leading-none mt-1 truncate">GB Asistente</span>
@@ -100,7 +104,7 @@ export default function Sidebar() {
 
                 {/* Lista de navegación */}
                 <div className="no-scrollbar flex flex-col overflow-y-auto flex-1 px-3 py-4 space-y-1.5">
-                    {(isExpanded || isMobileOpen) && (
+                    {isOpen && (
                         <div className="mb-2 px-3">
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
                                 Menú
@@ -114,9 +118,9 @@ export default function Sidebar() {
                                 key={link.to}
                                 to={link.to}
                                 onClick={closeMobileSidebar}
-                                title={!isExpanded && !isMobileOpen ? link.label : undefined}
+                                title={!isOpen ? link.label : undefined}
                                 className={`group relative flex items-center ${
-                                    isExpanded || isMobileOpen ? "gap-3.5 px-4 py-3" : "justify-center p-3"
+                                    isOpen ? "gap-3.5 px-4 py-3" : "justify-center p-3"
                                 } rounded-2xl font-bold text-sm transition-all duration-200 ${
                                     link.active
                                         ? "bg-red-600/15 text-red-400 border border-red-500/30 shadow-sm shadow-red-950/40 font-black"
@@ -126,7 +130,7 @@ export default function Sidebar() {
                                 <span className={`${link.active ? "text-red-500" : "text-slate-400 group-hover:text-slate-200"} flex-shrink-0 transition-colors`}>
                                     {link.icon}
                                 </span>
-                                {(isExpanded || isMobileOpen) && (
+                                {isOpen && (
                                     <>
                                         <span className="tracking-wide truncate">{link.label}</span>
                                         {link.active && (
@@ -143,41 +147,31 @@ export default function Sidebar() {
                         <Link
                             to="/nuevo"
                             onClick={closeMobileSidebar}
-                            title={!isExpanded && !isMobileOpen ? "Nuevo Alumno" : undefined}
+                            title={!isOpen ? "Nuevo Alumno" : undefined}
                             className={`w-full bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black ${
-                                isExpanded || isMobileOpen ? "py-3 px-4" : "p-3"
+                                isOpen ? "py-3 px-4" : "p-3"
                             } rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-950/50 active:scale-95 transition-all text-xs uppercase tracking-wider`}
                         >
                             <UserPlus size={16} className="flex-shrink-0" />
-                            {(isExpanded || isMobileOpen) && <span className="truncate">Nuevo Alumno</span>}
+                            {isOpen && <span className="truncate">Nuevo Alumno</span>}
                         </Link>
                     </div>
                 </div>
 
-                {/* Footer del Sidebar: Botón Colapsar en PC y Cerrar Sesión */}
-                <div className="p-3 border-t border-slate-800/80 bg-slate-950/40 flex-shrink-0 space-y-1">
-                    {/* Botón colapsar solo para PC */}
-                    <button
-                        onClick={toggleSidebar}
-                        title={isExpanded ? "Colapsar menú" : "Expandir menú"}
-                        className="hidden lg:flex w-full items-center justify-center gap-2 px-3 py-2 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
-                    >
-                        <ChevronLeft size={16} className={`transition-transform duration-300 ${!isExpanded ? "rotate-180" : ""}`} />
-                        {isExpanded && <span>Colapsar</span>}
-                    </button>
-
+                {/* Footer del Sidebar: Cerrar Sesión */}
+                <div className="p-3 border-t border-slate-800/80 bg-slate-950/40 flex-shrink-0">
                     <button
                         onClick={() => {
                             logout();
                             closeMobileSidebar();
                         }}
-                        title={!isExpanded && !isMobileOpen ? "Cerrar Sesión" : undefined}
+                        title={!isOpen ? "Cerrar Sesión" : undefined}
                         className={`w-full flex items-center ${
-                            isExpanded || isMobileOpen ? "gap-3 px-3 py-2.5" : "justify-center p-2.5"
+                            isOpen ? "gap-3 px-3 py-2.5" : "justify-center p-2.5"
                         } text-slate-400 hover:text-red-400 hover:bg-red-950/20 rounded-xl font-bold text-xs uppercase tracking-wider transition-all`}
                     >
                         <LogOut size={16} className="flex-shrink-0" />
-                        {(isExpanded || isMobileOpen) && <span className="truncate">Cerrar Sesión</span>}
+                        {isOpen && <span className="truncate">Cerrar Sesión</span>}
                     </button>
                 </div>
             </aside>

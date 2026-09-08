@@ -21,6 +21,9 @@ export const SidebarProvider = ({ children }) => {
         }
     });
 
+    // Hover state (expandido temporal al pasar el mouse cuando está colapsado)
+    const [isHovered, setIsHovered] = useState(false);
+
     // Mobile: isMobileOpen (cajón abierto o cerrado)
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -37,6 +40,7 @@ export const SidebarProvider = ({ children }) => {
         const handleResize = () => {
             if (window.innerWidth >= 1024) {
                 setIsMobileOpen(false);
+                setIsHovered(false);
             }
         };
         window.addEventListener("resize", handleResize);
@@ -59,6 +63,8 @@ export const SidebarProvider = ({ children }) => {
         <SidebarContext.Provider
             value={{
                 isExpanded,
+                isHovered,
+                setIsHovered,
                 isMobileOpen,
                 toggleSidebar,
                 closeMobileSidebar,
