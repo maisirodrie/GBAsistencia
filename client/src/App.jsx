@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
@@ -15,10 +14,10 @@ import ChangePasswordPage from "./pages/ChangePasswordPage";
 import UsersPage from "./pages/UsersPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
+import { SidebarProvider } from "./context/SidebarContext";
 
 function AppContent() {
     const location = useLocation();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
     
     const isPublic = location.pathname === "/checkin" || 
                      location.pathname === "/asistencia" ||
@@ -42,13 +41,13 @@ function AppContent() {
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#070b14] text-white font-sans">
-            {/* Sidebar (TailAdmin drawer mobile / static desktop) */}
-            <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+            {/* Sidebar (TailAdmin colapsable en PC y cajón deslizante en móvil) */}
+            <Sidebar />
 
             {/* Content Area */}
             <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-                {/* Header (TailAdmin sticky top header) */}
-                <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+                {/* Header (TailAdmin sticky top header con botón hamburguesa tanto en PC como en móvil) */}
+                <Header />
 
                 {/* Main Content */}
                 <main className="flex-1">
@@ -75,7 +74,9 @@ function App() {
     return (
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <AuthProvider>
-                <AppContent />
+                <SidebarProvider>
+                    <AppContent />
+                </SidebarProvider>
             </AuthProvider>
         </BrowserRouter>
     );
