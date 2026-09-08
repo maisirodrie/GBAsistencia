@@ -53,23 +53,32 @@ const storage = CLOUDINARY_CLOUD_NAME
 
 const upload = multer({ storage: storage });
 
-import { hasRole, isAdmin } from '../middlewares/validateToken.js';
+import { validateToken, hasRole, isAdmin } from '../middlewares/validateToken.js';
 
 const router = Router();
 const isGestion = hasRole(['Admin', 'Encargado', 'Profesor', 'Ayudante']);
 const isEncargadoOrAdmin = hasRole(['Admin', 'Encargado']);
 
-router.get('/', getAlumnos);
-router.post('/', isGestion, createAlumno);
+// ==========================================
+// RUTAS PÚBLICAS (Alumnos, Check-in por QR/DNI)
+// No requieren sesión de profesor / admin
+// ==========================================
 router.post('/checkin-dni', checkInByDni);
-router.get('/:id', getAlumno);
-router.get('/:id/pdf', generarCartaoPDF);
-router.put('/:id', isGestion, updateAlumno);
-router.delete('/:id', isEncargadoOrAdmin, deleteAlumno);
-router.post('/:id/asistencia', addAsistencia);
-router.delete('/:id/asistencia', removeAsistencia);
-router.post('/:id/revert-promotion', isGestion, revertPromotion);
-router.post('/:id/foto', isGestion, upload.single('foto'), subirFotoAlumno);
 router.post('/:id/checkin', checkIn);
+router.get('/:id', getAlumno);
+
+// ==========================================
+// RUTAS PRIVADAS (Gestión del Dojo)
+// Requieren inicio de sesión con token válido
+// ==========================================
+router.get('/', validateToken, getAlumnos);
+router.post('/', validateToken, isGestion, createAlumno);
+router.get('/:id/pdf', validateToken, generarCartaoPDF);
+router.put('/:id', validateToken, isGestion, updateAlumno);
+router.delete('/:id', validateToken, isEncargadoOrAdmin, deleteAlumno);
+router.post('/:id/asistencia', validateToken, addAsistencia);
+router.delete('/:id/asistencia', validateToken, removeAsistencia);
+router.post('/:id/revert-promotion', validateToken, isGestion, revertPromotion);
+router.post('/:id/foto', validateToken, isGestion, upload.single('foto'), subirFotoAlumno);
 
 export default router;

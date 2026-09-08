@@ -30,10 +30,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Ignorar peticiones a rutas de login o verificación para evitar bucles
-      const isAuthRoute = error.config.url.includes('/auth/login') || error.config.url.includes('/auth/verify');
+      // Ignorar peticiones a rutas de login, verificación o rutas públicas de check-in / autoasistencia
+      const isAuthOrPublicRoute = 
+        error.config?.url?.includes('/auth/login') || 
+        error.config?.url?.includes('/auth/verify') ||
+        error.config?.url?.includes('/checkin-dni') ||
+        error.config?.url?.includes('/checkin') ||
+        window.location.pathname === '/asistencia' ||
+        window.location.pathname === '/checkin' ||
+        window.location.pathname === '/cartel-qr' ||
+        window.location.pathname.startsWith('/mi-pase/');
       
-      if (!isAuthRoute && !window.hasShownSessionAlert) {
+      if (!isAuthOrPublicRoute && !window.hasShownSessionAlert) {
         window.hasShownSessionAlert = true; // Prevenir múltiples alertas
         Swal.fire({
           title: "Sesión Expirada",

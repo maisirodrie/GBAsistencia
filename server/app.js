@@ -48,7 +48,7 @@ app.get('/healthz', (req, res) => res.status(200).send('OK'));
 app.get('/', (req, res) => res.status(200).send(`¡Servidor de GB ASISTENTE funcionando! (v.1.1.3)`));
 
 app.use('/api/auth', authRoutes);
-app.use('/api/alumnos', validateToken, alumnoRoutes);
+app.use('/api/alumnos', alumnoRoutes);
 app.use('/api/finanzas', validateToken, finanzasRoutes);
 app.use('/api/productos', validateToken, productosRoutes);
 app.use('/api/planes', validateToken, planPagoRoutes);
