@@ -14,6 +14,7 @@ import { es } from "date-fns/locale";
 import { FAJAS_POR_CATEGORIA } from "../utils/fajas";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
+import { ArrowLeft, Printer, Trash2, Check, Award, Calendar, ChevronDown, RotateCcw } from "lucide-react";
 
 const MESES_ES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -465,63 +466,69 @@ export default function AlumnoFormPage() {
     const tiempoListo = pctTiempo >= 100;
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-in fade-in duration-500">
-            {/* Header / Top Bar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/40 p-3 sm:p-4 rounded-3xl border border-slate-800 backdrop-blur-md shadow-lg">
+        <div className="max-w-7xl mx-auto space-y-6 pb-16 animate-in fade-in duration-500">
+            {/* Header / Top Bar TailAdmin */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/40 p-4 sm:p-5 rounded-2xl border border-slate-800 backdrop-blur-md shadow-sm">
                 <button
-                    onClick={() => navigate("/")}
-                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-all text-sm font-bold bg-slate-800/50 hover:bg-slate-700/80 px-5 py-2.5 rounded-2xl"
+                    onClick={() => navigate("/alumnos")}
+                    className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider bg-slate-800/80 hover:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-700/60"
                 >
-                    <span aria-hidden="true" className="text-lg">&larr;</span> Volver al listado
+                    <ArrowLeft size={16} />
+                    <span>Volver al listado</span>
                 </button>
-                <div className="flex gap-3 w-full sm:w-auto">
+                <div className="flex gap-2.5 w-full sm:w-auto">
                     {id && (
                         <button
                             onClick={() => descargarPDF(id, `${watch("nombre") || ""} ${watch("apellido") || ""}`.trim())}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-2xl text-sm font-bold transition-all border border-slate-700 shadow-sm"
+                            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-700 shadow-sm"
                         >
-                            🖨️ <span className="hidden sm:inline">Imprimir Cartón</span>
+                            <Printer size={15} />
+                            <span className="hidden sm:inline">Imprimir Cartón</span>
                         </button>
                     )}
                     {id && ['Admin', 'Encargado'].includes(user?.role) && (
                         <button
                             onClick={onDelete}
-                            className="bg-slate-800/50 hover:bg-red-900/40 text-slate-400 hover:text-red-400 p-2.5 rounded-2xl border border-slate-700 transition-all active:scale-95"
+                            className="bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 p-2.5 rounded-xl border border-slate-700 transition-colors"
                             title="Borrar Alumno"
                         >
-                            🗑
+                            <Trash2 size={16} />
                         </button>
                     )}
                     <button
                         onClick={onSubmit}
-                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-lg ${
+                        className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg active:scale-95 ${
                             guardado 
-                            ? "bg-green-500 hover:bg-green-400 text-white shadow-green-500/20" 
-                            : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-red-600/20 border border-red-500/50"
+                            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20" 
+                            : "bg-red-600 hover:bg-red-500 text-white shadow-red-600/20"
                         }`}
                     >
-                        {guardado ? "✓ Guardado!" : (id ? "Guardar Cambios" : "Crear Alumno")}
+                        {guardado ? (
+                            <>
+                                <Check size={16} />
+                                <span>Guardado</span>
+                            </>
+                        ) : (
+                            <span>{id ? "Guardar Cambios" : "Crear Alumno"}</span>
+                        )}
                     </button>
                 </div>
             </div>
 
             {/* Dos grandes columnas */}
-            <div className="grid lg:grid-cols-12 gap-6 lg:gap-8">
+            <div className="grid lg:grid-cols-12 gap-6">
                 
                 {/* PANEL IZQUIERDO: PERFIL DEL ALUMNO */}
-                <div className="lg:col-span-7 bg-slate-800/30 backdrop-blur-2xl rounded-[2rem] p-6 text-white sm:p-8 border border-slate-700/50 shadow-2xl flex flex-col gap-6 relative overflow-hidden">
-                    {/* Glow effect */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-slate-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b border-slate-700/40 pb-6 relative z-10">
+                <div className="lg:col-span-7 bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-sm flex flex-col gap-6 relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 border-b border-slate-800/80 pb-6">
                         <div 
-                            className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-[2rem] bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-5xl shadow-2xl flex-shrink-0 border border-slate-600/50 cursor-pointer overflow-hidden group"
+                            className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-slate-800 flex items-center justify-center text-4xl shadow-sm flex-shrink-0 border border-slate-700 cursor-pointer overflow-hidden group"
                             onClick={handlePhotoClick}
                         >
                             {watch("fotoUrl") ? (
                                 <img src={watch("fotoUrl").startsWith('http') ? watch("fotoUrl") : `${UPLOAD_URL}/${watch("fotoUrl")}`} alt="Perfil" className="w-full h-full object-cover" />
                             ) : (
-                                <span>{watch("nombre")?.charAt(0)?.toUpperCase() || "👤"}</span>
+                                <span className="text-white font-bold">{watch("nombre")?.charAt(0)?.toUpperCase() || "👤"}</span>
                             )}
                             {id && (
                                 <div className="absolute inset-0 bg-black/60 hidden group-hover:flex items-center justify-center transition-all backdrop-blur-sm">
@@ -531,19 +538,17 @@ export default function AlumnoFormPage() {
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onClick={e => e.stopPropagation()} onChange={handleFileChange} />
                             <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onClick={e => e.stopPropagation()} onChange={handleFileChange} />
                         </div>
-                        <div className="text-center sm:text-left flex-1 py-2 sm:py-6">
-                            <div className="flex flex-col sm:flex-row items-center gap-3">
-                                <h2 className="text-2xl font-black tracking-tight">Datos del Alumno</h2>
-                            </div>
-                            <p className="text-sm text-slate-400 font-medium mt-0.5">Información principal y progreso</p>
+                        <div className="text-center sm:text-left flex-1 py-1 sm:py-3">
+                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Datos del Alumno</h2>
+                            <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">Información principal, graduación y progreso</p>
                         </div>
                     </div>
 
-                    <div className="space-y-6 relative z-10">
+                    <div className="space-y-5">
                         {/* Categoría */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Categoría</label>
-                            <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Categoría</label>
+                            <div className="flex gap-2">
                                 {['Adulto', 'Infantil'].map(cat => (
                                     <button
                                         key={cat}
@@ -552,30 +557,30 @@ export default function AlumnoFormPage() {
                                             setCategoria(cat);
                                             setValue('faja', FAJAS_POR_CATEGORIA[cat][0]);
                                         }}
-                                        className={`flex-1 py-3 rounded-2xl text-sm font-black transition-all border ${
+                                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${
                                             categoria === cat
                                                 ? cat === 'Infantil'
-                                                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/50'
-                                                    : 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-                                                : 'bg-slate-900/60 text-slate-500 border-slate-700/60 hover:border-slate-600'
+                                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                                                    : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                                                : 'bg-slate-950/40 text-slate-500 border-slate-800 hover:border-slate-700'
                                         }`}
                                     >
-                                        {cat === 'Infantil' ? '👦 Infantil (hasta 15)' : '🥋 Adulto (16+)'}
+                                        {cat === 'Infantil' ? '👦 Infantil (Kids)' : '🥋 Adulto (16+)'}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         {/* Seguimiento de Graduación Toggle */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Sistema de Graduación</label>
-                            <div className="flex items-center gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-700/40 hover:border-slate-600/60 transition-all cursor-pointer shadow-md" onClick={() => setValue("trackProgreso", watch("trackProgreso") === false ? true : false)}>
-                                <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${watch("trackProgreso") !== false ? 'bg-red-600' : 'bg-slate-700'}`}>
-                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${watch("trackProgreso") !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Sistema de Graduación</label>
+                            <div className="flex items-center gap-3.5 bg-slate-950/40 p-3.5 rounded-xl border border-slate-800 hover:border-slate-700 transition-all cursor-pointer" onClick={() => setValue("trackProgreso", watch("trackProgreso") === false ? true : false)}>
+                                <div className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${watch("trackProgreso") !== false ? 'bg-red-600' : 'bg-slate-700'}`}>
+                                    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${watch("trackProgreso") !== false ? 'translate-x-5' : 'translate-x-1'}`} />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-white tracking-wide">Seguimiento Automático</span>
-                                    <span className="text-[10px] text-slate-400 font-medium">Habilitar cálculo de grados y barra de progreso</span>
+                                    <span className="text-xs font-bold text-white tracking-wide">Seguimiento Oficial Automático</span>
+                                    <span className="text-[11px] text-slate-400 font-medium">Habilitar cálculo de grados y barra de progreso Gracie Barra</span>
                                 </div>
                                 <input type="checkbox" className="hidden" {...register("trackProgreso")} />
                             </div>
@@ -584,20 +589,20 @@ export default function AlumnoFormPage() {
                         {/* Nombre y Apellido */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Nombre</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Nombre</label>
                                 <input
                                     type="text"
                                     placeholder="Ej: Juan"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium"
                                     {...register("nombre", { required: true })}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Apellido</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Apellido</label>
                                 <input
                                     type="text"
                                     placeholder="Ej: Pérez"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium"
                                     {...register("apellido")}
                                 />
                             </div>
@@ -607,22 +612,22 @@ export default function AlumnoFormPage() {
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">DNI (Documento)</label>
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">DNI (Documento)</label>
                                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Para Check-in QR</span>
                                 </div>
                                 <input
                                     type="text"
                                     placeholder="Ej: 38123456"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-semibold shadow-inner"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
                                     {...register("dni")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Celular (WhatsApp)</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Celular (WhatsApp)</label>
                                 <input
                                     type="text"
                                     placeholder="Ej: +54 9 11 1234-5678"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium"
                                     {...register("celular")}
                                 />
                             </div>
@@ -631,18 +636,18 @@ export default function AlumnoFormPage() {
                         {/* Fecha de Nacimiento & Frecuencia Semanal */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Fecha de Nacimiento</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Fecha de Nacimiento</label>
                                 <input
                                     type="date"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner [color-scheme:dark]"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium [color-scheme:dark]"
                                     {...register("fechaNacimiento")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Frecuencia Semanal Real</label>
-                                <div className="w-full h-[54px] flex items-center justify-between px-5 bg-[#131926] border border-[#222f47] rounded-2xl text-slate-300 font-semibold shadow-inner">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Frecuencia Semanal Real</label>
+                                <div className="w-full h-[46px] flex items-center justify-between px-4 bg-slate-950/60 border border-slate-700/80 rounded-xl text-slate-300 text-sm font-medium">
                                     <span>🥋 Historial real:</span>
-                                    <span className="text-blue-400 font-black">{id ? `${evaluacion.frecuencia_semanal_real} clases/semana` : "Auto-calculada"}</span>
+                                    <span className="text-blue-400 font-bold">{id ? `${evaluacion.frecuencia_semanal_real} clases/semana` : "Auto-calculada"}</span>
                                 </div>
                             </div>
                         </div>
@@ -650,29 +655,29 @@ export default function AlumnoFormPage() {
                         {/* Fila Faja / Grado */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Cinturón (Faja)</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Cinturón (Faja)</label>
                                 <div className="relative">
                                     <select
-                                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
+                                        className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium appearance-none"
                                         {...register("faja")}
                                     >
                                         {FAJAS_POR_CATEGORIA[categoria].map(f => (
                                             <option key={f}>{f}</option>
                                         ))}
                                     </select>
-                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">▼</div>
+                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 text-xs">▼</div>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Grado (Rayas)</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Grado (Rayas)</label>
                                 <div className="relative">
                                     <select
-                                        className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold appearance-none shadow-inner"
+                                        className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium appearance-none"
                                         {...register("grado")}
                                     >
                                         {[0, 1, 2, 3, 4].map(g => <option key={g} value={g}>{g === 0 ? 'Sin Grado' : `${g}º Grado`}</option>)}
                                     </select>
-                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">▼</div>
+                                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 text-xs">▼</div>
                                 </div>
                             </div>
                         </div>
@@ -681,7 +686,7 @@ export default function AlumnoFormPage() {
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
                                 <div className="flex justify-between items-end pl-1 pr-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Última Grad.</label>
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Última Grad.</label>
                                     <button 
                                         type="button" 
                                         onClick={() => setValue("ultimaGraduacion", "")}
@@ -692,15 +697,15 @@ export default function AlumnoFormPage() {
                                 </div>
                                 <input
                                     type="date"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner [color-scheme:dark]"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium [color-scheme:dark]"
                                     {...register("ultimaGraduacion")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Clases Meta (Graduación)</label>
-                                <div className="w-full bg-slate-900/40 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-slate-300 font-semibold shadow-inner flex items-center justify-between">
-                                    <span>Requisito del tramo:</span>
-                                    <span className="text-blue-400 font-black">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Clases Meta (Graduación)</label>
+                                <div className="w-full h-[46px] bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-slate-300 text-sm font-medium flex items-center justify-between">
+                                    <span>Requisito:</span>
+                                    <span className="text-blue-400 font-bold">
                                         {id ? (evaluacion.tieneDeuda ? `${evaluacion.clases_requeridas} clases (Bloqueado por Deuda)` : `${evaluacion.clases_requeridas} clases`) : "Auto-calculado"}
                                     </span>
                                 </div>
@@ -710,20 +715,20 @@ export default function AlumnoFormPage() {
                         {/* Fila Requisitos de Graduación Manual (Sobrescribir Clases y Días) */}
                         <div className="grid sm:grid-cols-2 gap-5">
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Clases Requeridas (Manual)</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Clases Requeridas (Manual)</label>
                                 <input
                                     type="number"
                                     placeholder="Ej: 32 (Vacío usa regla oficial)"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium"
                                     {...register("clasesParaGraduacion")}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Días de Permanencia Requeridos (Manual)</label>
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">Días Requeridos (Manual)</label>
                                 <input
                                     type="number"
                                     placeholder="Ej: 122 (Vacío usa regla oficial)"
-                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium"
                                     {...register("diasParaGraduacion")}
                                 />
                             </div>
@@ -956,39 +961,39 @@ export default function AlumnoFormPage() {
 
                 {/* PANEL DERECHO: TOMA DE ASISTENCIA Y GRADUACIONES */}
                 {id && (
-                    <div className="lg:col-span-5 flex flex-col gap-6 lg:gap-8">
+                    <div className="lg:col-span-5 flex flex-col gap-6">
                             
                             {/* Historial de Graduaciones (Rayas/Fajas) */}
-                            <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-700/50 shadow-xl flex flex-col">
-                                <div className="flex items-center justify-between mb-5 border-b border-slate-700/50 pb-4">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">
+                            <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-800 shadow-sm flex flex-col">
+                                <div className="flex items-center justify-between mb-5 border-b border-slate-800/80 pb-4">
+                                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                         Historial de Graduaciones
                                     </h3>
                                     <button
                                         type="button"
                                         onClick={agregarHistorial}
-                                        className="text-[10px] font-black bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-xl border border-blue-500 shadow-sm active:scale-95 transition-all"
+                                        className="text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-xl border border-blue-500/50 shadow-sm active:scale-95 transition-all"
                                     >
                                         + Agregar Pasada
                                     </button>
                                 </div>
                                 
-                                <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
                                     {alumnoData?.historicoGraduaciones?.length > 0 ? (
                                         [...alumnoData.historicoGraduaciones].reverse().map((h, i) => (
-                                            <div key={i} className="bg-slate-900/40 p-4 rounded-2xl border border-slate-700/30 flex justify-between items-center">
+                                            <div key={i} className="bg-slate-950/40 p-3.5 rounded-xl border border-slate-800/80 flex justify-between items-center">
                                                 <div>
-                                                    <p className="text-white font-black text-sm">{h.faja} <span className="text-slate-400 font-bold">- {h.grado === 0 ? 'Sin Grado' : `${h.grado}º Grado`}</span></p>
-                                                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">
+                                                    <p className="text-white font-bold text-sm">{h.faja} <span className="text-slate-400 font-medium">- {h.grado === 0 ? 'Sin Grado' : `${h.grado}º Grado`}</span></p>
+                                                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
                                                         Alcanzado el {format(toLocal(h.fechaClasePromocion), "d 'de' MMMM, yyyy", { locale: es })}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-md border border-slate-700">HISTORIAL</span>
+                                                    <span className="text-[10px] font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded-md border border-slate-700/50">HISTORIAL</span>
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); eliminarHistorial(alumnoData.historicoGraduaciones.length - 1 - i); }}
-                                                        className="text-slate-600 hover:text-red-400 transition-colors p-1 rounded-lg hover:bg-red-500/10"
+                                                        className="text-slate-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-500/10"
                                                         title="Eliminar registro"
                                                     >
                                                         🗑️
@@ -997,34 +1002,32 @@ export default function AlumnoFormPage() {
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="py-8 text-center opacity-30">
-                                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Sin graduaciones registradas</p>
+                                        <div className="py-8 text-center opacity-40">
+                                            <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Sin graduaciones registradas</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Widget de Acción Rápida */}
-                            <div className="bg-gradient-to-br from-blue-900/40 to-slate-900/60 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-blue-500/20 shadow-2xl relative overflow-hidden">
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                                
-                                <h2 className="text-xl font-black text-white tracking-tight mb-6 flex items-center gap-2">
-                                    <span className="bg-slate-700/50 text-slate-400 p-2 rounded-xl py-1.5 leading-none shadow-inner border border-slate-700/10">📅</span>
-                                    Historial Manual
+                            {/* Widget de Asistencia Manual */}
+                            <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-800 shadow-sm">
+                                <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <span className="text-slate-400">📅</span>
+                                    Historial Manual de Asistencia
                                 </h2>
 
-                                <div className="relative z-10">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2 pl-1">Agregar fecha específica</label>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Agregar fecha específica</label>
                                     <div className="flex gap-2">
                                         <input
                                             type="date"
-                                            className="flex-1 bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-semibold shadow-inner [color-scheme:dark]"
+                                            className="flex-1 bg-slate-950/60 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-medium [color-scheme:dark]"
                                             value={fechaManual}
                                             onChange={e => setFechaManual(e.target.value)}
                                         />
                                         <button
                                             onClick={marcarFecha}
-                                            className="bg-slate-700/80 hover:bg-slate-600 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all border border-slate-600 shadow-sm active:scale-95"
+                                            className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all border border-slate-700 shadow-sm active:scale-95"
                                         >
                                             Agregar
                                         </button>
@@ -1033,30 +1036,30 @@ export default function AlumnoFormPage() {
                             </div>
 
                             {/* Historial Interactivo */}
-                            <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 border border-slate-700/50 shadow-xl flex-1 flex flex-col max-h-[420px]">
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-5 flex items-center justify-between pl-1 pr-1 border-b border-slate-700/50 pb-4">
-                                    Asistencias Totales
-                                    <span className="bg-slate-800 border border-slate-700 text-slate-300 py-1 px-3 rounded-full text-[10px] shadow-inner font-bold">{asistencias.length} TOTALES</span>
+                            <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-800 shadow-sm flex-1 flex flex-col max-h-[420px]">
+                                <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center justify-between border-b border-slate-800/80 pb-3">
+                                    <span>Asistencias Registradas</span>
+                                    <span className="bg-slate-800 border border-slate-700/80 text-slate-300 py-0.5 px-2.5 rounded-full text-[10px] font-bold">{asistencias.length} TOTALES</span>
                                 </h3>
                                 
-                                <div className="space-y-6 overflow-y-auto pr-3 custom-scrollbar flex-1 pb-4">
+                                <div className="space-y-5 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-2">
                                     {Object.keys(agrupadas).sort((a, b) => b - a).map(anio => (
                                         <div key={anio}>
-                                            <div className="inline-block bg-slate-900/80 border border-slate-700 px-3 py-1 rounded-lg mb-3">
-                                                <p className="text-xs text-white font-black tracking-widest">{anio}</p>
+                                            <div className="inline-block bg-slate-950/60 border border-slate-800 px-2.5 py-1 rounded-lg mb-2.5">
+                                                <p className="text-xs text-white font-bold tracking-wider">{anio}</p>
                                             </div>
-                                            <div className="space-y-5">
+                                            <div className="space-y-4">
                                                 {Object.keys(agrupadas[anio]).sort((a, b) => b - a).map(mes => (
-                                                    <div key={mes} className="pl-2 border-l-2 border-slate-700/50 relative">
+                                                    <div key={mes} className="pl-2 border-l-2 border-slate-800 relative">
                                                         <div className="absolute w-2 h-2 rounded-full bg-blue-500 -left-[5px] top-1"></div>
-                                                        <p className="text-[10px] text-blue-400 font-black uppercase mb-2 ml-2 tracking-widest">{MESES_ES[mes]}</p>
+                                                        <p className="text-[10px] text-blue-400 font-bold uppercase mb-2 ml-2 tracking-wider">{MESES_ES[mes]}</p>
                                                         <div className="flex flex-wrap gap-2 ml-2">
                                                             {agrupadas[anio][mes].sort((a, b) => a.dia - b.dia).map(({ iso, dia }) => (
                                                                 <button
                                                                     key={iso}
                                                                     onClick={() => eliminarAsistencia(iso)}
                                                                     title="Eliminar asistencia"
-                                                                    className="group relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-600 hover:border-red-500 text-sm font-bold text-slate-300 transition-all shadow-sm overflow-hidden"
+                                                                    className="group relative flex items-center justify-center w-9 h-9 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-red-500 text-xs font-bold text-slate-300 transition-all shadow-sm overflow-hidden"
                                                                 >
                                                                     <span className="group-hover:-translate-y-8 transition-transform duration-300">
                                                                         {String(dia).padStart(2, "0")}
@@ -1073,9 +1076,9 @@ export default function AlumnoFormPage() {
                                         </div>
                                     ))}
                                     {asistencias.length === 0 && (
-                                        <div className="h-full flex flex-col items-center justify-center pt-8 opacity-50">
-                                            <span className="text-4xl mb-2">👻</span>
-                                            <p className="text-white text-sm font-bold">Sin asistencias aún</p>
+                                        <div className="h-full flex flex-col items-center justify-center pt-8 opacity-40">
+                                            <span className="text-3xl mb-2">👻</span>
+                                            <p className="text-slate-400 text-xs font-medium">Sin asistencias aún</p>
                                         </div>
                                     )}
                                 </div>
@@ -1086,13 +1089,13 @@ export default function AlumnoFormPage() {
 
             {/* ── GRÁFICO DE PROGRESO (ancho completo) ── */}
             {id && asistencias.length > 0 && (
-                <div className="bg-slate-800/30 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 border border-slate-700/50 shadow-2xl animate-in fade-in duration-700">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/50 pb-4 mb-6">
-                        <h3 className="text-sm font-black text-white flex items-center gap-2">
-                            <span className="bg-blue-500/20 text-blue-400 p-2 rounded-xl leading-none border border-blue-500/20">📈</span>
+                <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-800 shadow-sm mt-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4 mb-6">
+                        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <span className="text-blue-400">📈</span>
                             Progreso de Entrenamiento
                         </h3>
-                        <span className="text-xs text-slate-400 bg-slate-900/60 px-3 py-1 rounded-full border border-slate-700/50 font-bold">{anioFicha}</span>
+                        <span className="text-xs text-slate-400 bg-slate-950/60 px-3 py-1 rounded-lg border border-slate-800 font-semibold">{anioFicha}</span>
                     </div>
                     <ProgresoChart
                         asistencias={asistencias}
@@ -1104,35 +1107,32 @@ export default function AlumnoFormPage() {
 
             {/* VISTA PREVIA DEL CARTÓN */}
             {id && (
-                <div className="bg-slate-800/30 backdrop-blur-2xl rounded-[2rem] p-6 sm:p-8 border border-slate-700/50 shadow-2xl mt-4 relative overflow-hidden">
-                    {/* Background decoration */}
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 opacity-30"></div>
-                    
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
-                            <span className="bg-slate-800 border border-slate-700 p-2.5 rounded-xl leading-none text-xl shadow-inner">🖨️</span>
+                <div className="bg-slate-900/50 rounded-2xl p-6 border border-slate-800 shadow-sm mt-6 relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-slate-800/80 pb-4">
+                        <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <span className="text-slate-400">🖨️</span>
                             Vista Previa de Ficha
                         </h2>
-                        <div className="flex items-center gap-3 bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-700/50 shadow-inner">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Año a visualizar:</label>
+                        <div className="flex items-center gap-3 bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-800">
+                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Año:</label>
                             <select 
                                 value={anioFicha}
                                 onChange={e => setAnioFicha(e.target.value)}
-                                className="bg-transparent border-none outline-none focus:ring-0 text-sm font-black text-white cursor-pointer"
+                                className="bg-transparent border-none outline-none focus:ring-0 text-xs font-bold text-white cursor-pointer"
                             >
                                 {Array.from(new Set([...Object.keys(agrupadas), new Date().getFullYear().toString()]))
                                     .sort((a, b) => b - a)
-                                    .map(y => <option key={y} value={y}>{y}</option>)}
+                                    .map(y => <option key={y} value={y} className="bg-slate-900 text-white">{y}</option>)}
                             </select>
                         </div>
                     </div>
                     
                     <div className="relative group">
                         {/* Indicadores de Scroll Movil */}
-                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0B1120] to-transparent z-10 pointer-events-none sm:hidden opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0B1120] to-transparent z-10 pointer-events-none sm:hidden opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none sm:hidden opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none sm:hidden opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         
-                        <div className="bg-[#0B1120] p-4 sm:p-6 rounded-2xl border border-slate-800 overflow-x-auto custom-scrollbar shadow-inner relative">
+                        <div className="bg-slate-950/80 p-4 sm:p-6 rounded-xl border border-slate-800/80 overflow-x-auto custom-scrollbar relative">
                             <div className="min-w-[740px] flex justify-center py-2 sm:py-4">
                                 <CartaoFrequencia
                                     asistencias={asistencias.filter(iso => toLocal(iso).getFullYear().toString() === anioFicha)}
@@ -1143,7 +1143,7 @@ export default function AlumnoFormPage() {
                                 />
                             </div>
                         </div>
-                        <p className="sm:hidden text-center text-[10px] text-slate-500 font-bold mt-3 uppercase tracking-widest animate-pulse">
+                        <p className="sm:hidden text-center text-[11px] text-slate-500 font-medium mt-3 uppercase tracking-wider animate-pulse">
                             ↔ Desliza para ver ficha completa ↔
                         </p>
                     </div>

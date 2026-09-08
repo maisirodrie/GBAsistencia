@@ -3,19 +3,28 @@ import { useNavigate } from "react-router-dom";
 import { getAlumnos, addAsistencia, removeAsistencia, deleteAlumno } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
-import { getFajaStyle, grauLabel } from "../utils/fajas";
 import BeltBadge from "../components/BeltBadge";
 import QRCartelModal from "../components/QRCartelModal";
 import { useAuth } from "../context/AuthContext";
+import { 
+    Search, QrCode, UserPlus, LayoutGrid, Table as TableIcon, 
+    Check, Plus, Pencil, Trash2, X, User as UserIcon, Award
+} from "lucide-react";
 
 export default function AlumnosPage() {
     const { user } = useAuth();
     const [alumnos, setAlumnos] = useState([]);
     const [filtro, setFiltro] = useState("");
     const [showQRCartel, setShowQRCartel] = useState(false);
+    const [viewMode, setViewMode] = useState(() => localStorage.getItem("alumnos_view_mode") || "grid");
     const navigate = useNavigate();
 
     useEffect(() => { cargar(); }, []);
+
+    const toggleViewMode = (mode) => {
+        setViewMode(mode);
+        localStorage.setItem("alumnos_view_mode", mode);
+    };
 
     async function cargar() {
         try {
@@ -24,9 +33,6 @@ export default function AlumnosPage() {
         } catch (error) {
             console.error("Error al cargar alumnos:", error);
             const msg = error.response?.data?.message || "Error de conexión con el servidor.";
-            
-            // Si la sesión expiró, el interceptor de axios ya muestra un SweetAlert y redirige.
-            // Evitamos mostrar otra alerta redundante si el status es 401.
             if (error.response?.status !== 401) {
                 showAlert({ title: "Error", text: msg, icon: "error" });
             }
@@ -34,7 +40,6 @@ export default function AlumnosPage() {
     }
 
     async function handleToggleAsistencia(alumno, yaAsistio) {
-        // Guardamos copia de seguridad por si falla
         const prevAlumnos = [...alumnos];
         try {
             let res;
@@ -56,7 +61,6 @@ export default function AlumnosPage() {
                 showToast(`¡Presente! ${alumno.nombre}`, 'success');
             }
             
-            // Reemplazar al alumno en el state
             setAlumnos(prev => prev.map(a => a._id === alumno._id ? res.data : a));
         } catch (e) {
             showAlert({
@@ -64,7 +68,7 @@ export default function AlumnosPage() {
                 text: e.response?.data?.message ?? "Error de red al actualizar asistencia.",
                 icon: 'error'
             });
-            setAlumnos(prevAlumnos); // Rollback
+            setAlumnos(prevAlumnos);
         }
     }
 
@@ -96,71 +100,231 @@ export default function AlumnosPage() {
     const lista = alumnos.filter(a => {
         const q = filtro.toLowerCase().trim();
         if (!q) return true;
-        return a.nombre.toLowerCase().includes(q) ||
+        return a.nombre?.toLowerCase().includes(q) ||
                (a.apellido && a.apellido.toLowerCase().includes(q)) ||
                (a.dni && a.dni.toString().includes(q));
     });
 
-    // Fecha local de hoy p/ validar UI
-    const hoyStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
-
     return (
-        <div className="max-w-5xl mx-auto pb-20">
+        <div className="max-w-7xl mx-auto pb-16 space-y-6 animate-in fade-in duration-500">
 
-            {/* Header + Buscador y Botones Responsivos */}
-            <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
-                <div className="flex-1 flex gap-3 items-center bg-slate-800/60 overflow-hidden shadow-lg border border-slate-700/60 rounded-2xl px-4 transition-all focus-within:border-red-500/50">
-                    <span className="text-slate-400">🔍</span>
+            {/* Header + Action Bar TailAdmin */}
+            <div className="flex flex-col gap-4 bg-slate-900/40 p-5 sm:p-6 rounded-2xl border border-slate-800 backdrop-blur-md shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+                            <span>🥋</span> Alumnos y Asistencia
+                        </h1>
+                        <p className="text-xs sm:text-sm font-medium text-slate-400 mt-0.5">
+                            Padrón general, control de asistencia diaria y seguimiento técnico
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {/* Selector de Vista: Cuadrícula vs Tabla */}
+                        <div className="flex bg-slate-950/60 p-1 rounded-xl border border-slate-800">
+                            <button
+                                onClick={() => toggleViewMode("grid")}
+                                className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-red-600 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
+                                title="Vista Cuadrícula"
+                            >
+                                <LayoutGrid size={16} />
+                            </button>
+                            <button
+                                onClick={() => toggleViewMode("table")}
+                                className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-red-600 text-white shadow-sm" : "text-slate-400 hover:text-white"}`}
+                                title="Vista Tabla"
+                            >
+                                <TableIcon size={16} />
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={() => setShowQRCartel(true)}
+                            className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95"
+                            title="Ver e Imprimir Cartel QR para la Academia"
+                        >
+                            <QrCode size={15} />
+                            <span className="hidden sm:inline">Cartel QR</span>
+                        </button>
+
+                        <button
+                            onClick={() => navigate('/nuevo')}
+                            className="inline-flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-red-600/20 active:scale-95"
+                        >
+                            <UserPlus size={15} />
+                            <span>Nuevo Alumno</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Buscador */}
+                <div className="relative w-full">
+                    <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input
                         type="text"
                         placeholder="Buscar por nombre, apellido o DNI..."
-                        className="flex-1 bg-transparent py-3.5 sm:py-4 text-base sm:text-lg outline-none text-white placeholder-slate-500"
+                        className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl pl-10 pr-10 py-3 text-white text-sm outline-none focus:border-red-500 transition-all font-medium placeholder:text-slate-500"
                         value={filtro}
                         onChange={e => setFiltro(e.target.value)}
                     />
                     {filtro && (
                         <button
                             onClick={() => setFiltro("")}
-                            className="text-slate-400 hover:text-white font-bold px-2"
-                        >✕</button>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3">
-                    <button
-                        onClick={() => setShowQRCartel(true)}
-                        className="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-white px-3 sm:px-5 py-3 sm:py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 uppercase tracking-wider text-xs sm:text-sm text-center"
-                        title="Ver e Imprimir Cartel QR para la Academia"
-                    >
-                        <span className="text-lg">📲</span>
-                        <span>Cartel QR</span>
-                    </button>
-
-                    <button
-                        onClick={() => navigate('/nuevo')}
-                        className="bg-red-600 hover:bg-red-500 text-white px-3 sm:px-6 py-3 sm:py-4 rounded-2xl font-black shadow-lg shadow-red-900/30 flex items-center justify-center gap-2 transition-all active:scale-95 uppercase tracking-wider text-xs sm:text-sm text-center"
-                    >
-                        <span className="text-xl leading-none">+</span>
-                        <span>Nuevo Alumno</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Lista */}
-            {lista.length === 0 ? (
-                <div className="text-center py-24 text-slate-500 border border-dashed border-slate-700 rounded-2xl flex flex-col items-center gap-4">
-                    <p>{filtro ? "Sin resultados" : "No hay alumnos en el sistema."}</p>
-                    {filtro && (
-                        <button 
-                            className="bg-slate-700 text-white px-4 py-2 rounded-lg"
-                            onClick={() => navigate('/nuevo')}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                         >
-                            Crear alumno
+                            <X size={16} />
                         </button>
                     )}
                 </div>
+            </div>
+
+            {/* Listado */}
+            {lista.length === 0 ? (
+                <div className="text-center py-20 text-slate-500 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
+                    <UserIcon size={48} className="mx-auto mb-3 opacity-30 text-slate-400" />
+                    <p className="font-bold text-sm">{filtro ? "No se encontraron alumnos con ese criterio." : "No hay alumnos en el sistema."}</p>
+                    {filtro && (
+                        <button 
+                            className="mt-3 text-xs font-bold text-red-400 hover:text-red-300 uppercase tracking-wider"
+                            onClick={() => setFiltro("")}
+                        >
+                            Limpiar búsqueda
+                        </button>
+                    )}
+                </div>
+            ) : viewMode === "table" ? (
+                /* --- VISTA TABLA TAILADMIN --- */
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-md shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/30">
+                        <h2 className="font-bold text-xs uppercase tracking-wider text-slate-400">Padrón de Alumnos ({lista.length})</h2>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[760px]">
+                            <thead>
+                                <tr className="border-b border-slate-800/80 bg-slate-950/50 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                    <th className="py-4 px-6">Alumno</th>
+                                    <th className="py-4 px-6">Graduación</th>
+                                    <th className="py-4 px-6">Categoría</th>
+                                    <th className="py-4 px-6">Condición</th>
+                                    <th className="py-4 px-6 text-center">Asistencia Hoy</th>
+                                    <th className="py-4 px-6 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/40 text-sm">
+                                {lista.map(a => {
+                                    const yaAsistio = a.yaAsistioHoy;
+                                    const listo = a.clasesCumplidas && a.tiempoCumplido;
+                                    return (
+                                        <tr key={a._id} className="hover:bg-slate-800/25 transition-colors">
+                                            {/* Alumno */}
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 border border-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-white text-sm">
+                                                        {a.fotoUrl ? (
+                                                            <img 
+                                                                src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} 
+                                                                alt="" 
+                                                                className="w-full h-full object-cover" 
+                                                            />
+                                                        ) : (
+                                                            <span>{a.nombre?.charAt(0)?.toUpperCase()}</span>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-white leading-tight">
+                                                            {a.nombre} {a.apellido || ""}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500 font-mono mt-0.5">
+                                                            {a.dni ? `DNI: ${a.dni}` : "Sin DNI"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* Graduación */}
+                                            <td className="py-4 px-6">
+                                                <BeltBadge faja={a.faja} grado={a.grado} size="xs" />
+                                            </td>
+
+                                            {/* Categoría */}
+                                            <td className="py-4 px-6">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border ${
+                                                    a.categoria === 'Infantil'
+                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/25'
+                                                        : 'bg-slate-800 text-slate-400 border-slate-700'
+                                                }`}>
+                                                    {a.categoria === 'Infantil' ? 'Kids' : 'Adulto'}
+                                                </span>
+                                            </td>
+
+                                            {/* Condición */}
+                                            <td className="py-4 px-6">
+                                                {listo ? (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 uppercase tracking-wider animate-pulse">
+                                                        <Award size={12} />
+                                                        Elegible
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-500 font-medium">Regular</span>
+                                                )}
+                                            </td>
+
+                                            {/* Asistencia Hoy Toggle */}
+                                            <td className="py-4 px-6 text-center">
+                                                <button
+                                                    onClick={() => handleToggleAsistencia(a, yaAsistio)}
+                                                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-sm ${
+                                                        yaAsistio
+                                                            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20"
+                                                            : "bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-300 border border-slate-700"
+                                                    }`}
+                                                >
+                                                    {yaAsistio ? (
+                                                        <>
+                                                            <Check size={14} />
+                                                            <span>Presente</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Plus size={14} />
+                                                            <span>Marcar</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </td>
+
+                                            {/* Acciones */}
+                                            <td className="py-4 px-6 text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button 
+                                                        onClick={() => navigate(`/editar/${a._id}`)}
+                                                        className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+                                                        title="Editar Perfil"
+                                                    >
+                                                        <Pencil size={15} />
+                                                    </button>
+                                                    {['Admin', 'Encargado'].includes(user?.role) && (
+                                                        <button 
+                                                            onClick={() => handleDelete(a)}
+                                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                            title="Borrar Alumno"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             ) : (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                /* --- VISTA CUADRÍCULA TAILADMIN --- */
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {lista.map(a => {
                         const yaAsistio = a.yaAsistioHoy;
                         const listo = a.clasesCumplidas && a.tiempoCumplido;
@@ -168,94 +332,95 @@ export default function AlumnosPage() {
                         return (
                             <div
                                 key={a._id}
-                                className="bg-slate-800 rounded-2xl p-5 border shadow-lg flex flex-col relative overflow-hidden transition-all duration-300"
-                                style={{
-                                    borderColor: yaAsistio ? '#16a34a' : 'rgb(51, 65, 85)',
-                                    borderWidth: yaAsistio ? '2px' : '1px',
-                                }}
+                                className={`rounded-2xl p-5 border shadow-sm flex flex-col justify-between transition-all duration-300 ${
+                                    yaAsistio 
+                                        ? "bg-slate-900/70 border-emerald-500/50 shadow-emerald-950/20" 
+                                        : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
+                                }`}
                             >
-                                {/* Contenedor de Foto + Nombre y Faja */}
-                                <div className="flex gap-4 items-center flex-1 min-w-0">
-                                    {/* Foto de Perfil muy grande */}
-                                    <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-3xl sm:text-4xl shadow-inner flex-shrink-0 border border-slate-600/50 overflow-hidden">
-                                        {a.fotoUrl ? (
-                                            <img 
-                                                src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} 
-                                                alt="Perfil" 
-                                                className="w-full h-full object-cover" 
-                                            />
-                                        ) : (
-                                            <span className="text-white drop-shadow-md font-black">{a.nombre?.charAt(0)?.toUpperCase() || "👤"}</span>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Nombre, Faja y Roles */}
-                                    <div className="flex flex-col items-start min-w-0 flex-1 w-full">
-                                        <h3 className="font-black text-[15px] sm:text-lg text-white leading-tight break-words" title={`${a.nombre} ${a.apellido || ""}`}>
-                                            {a.nombre} <span className="opacity-70">{a.apellido || ""}</span>
-                                        </h3>
-                                        <div className="flex flex-col items-start gap-1 mt-1.5 w-full">
-                                            <BeltBadge faja={a.faja} grado={a.grado} size="sm" />
-                                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                                                {a.categoria === 'Infantil' && (
-                                                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-[0.15em]">
-                                                        Kids
-                                                    </span>
-                                                )}
-                                                {listo && (
-                                                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-500 border border-green-500/30 uppercase tracking-[0.15em] animate-pulse">
-                                                        Elegible
-                                                    </span>
-                                                )}
-                                                {a.dni && (
-                                                    <span className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 tracking-wider">
-                                                        DNI: {a.dni}
-                                                    </span>
-                                                )}
+                                {/* Top: Foto + Datos */}
+                                <div>
+                                    <div className="flex gap-4 items-center">
+                                        {/* Foto de Perfil */}
+                                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-800 flex items-center justify-center text-2xl shadow-inner flex-shrink-0 border border-slate-700 overflow-hidden">
+                                            {a.fotoUrl ? (
+                                                <img 
+                                                    src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} 
+                                                    alt="" 
+                                                    className="w-full h-full object-cover" 
+                                                />
+                                            ) : (
+                                                <span className="text-white font-bold">{a.nombre?.charAt(0)?.toUpperCase() || "👤"}</span>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Nombre y Faja */}
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="font-bold text-base sm:text-lg text-white leading-snug break-words">
+                                                {a.nombre} <span className="opacity-70">{a.apellido || ""}</span>
+                                            </h3>
+                                            <div className="mt-1.5 flex flex-col items-start gap-1">
+                                                <BeltBadge faja={a.faja} grado={a.grado} size="xs" />
+                                                <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                                    {a.categoria === 'Infantil' && (
+                                                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/25 uppercase tracking-wider">
+                                                            Kids
+                                                        </span>
+                                                    )}
+                                                    {listo && (
+                                                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 uppercase tracking-wider animate-pulse flex items-center gap-1">
+                                                            <Award size={10} /> Elegible
+                                                        </span>
+                                                    )}
+                                                    {a.dni && (
+                                                        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-slate-950/60 text-slate-400 border border-slate-800 font-mono">
+                                                            DNI: {a.dni}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Botón de Asistencia y Acciones */}
-                                <div className="mt-auto pt-3 flex flex-col gap-3">
+                                {/* Bottom: Botón Asistencia + Botones Edición */}
+                                <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-col gap-2.5">
                                     <button
                                         onClick={() => handleToggleAsistencia(a, yaAsistio)}
-                                        className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 font-black text-lg shadow-md transition-all active:scale-95 border-b-4 ${
+                                        className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm uppercase tracking-wider shadow-md transition-all active:scale-98 ${
                                             yaAsistio 
-                                            ? "bg-green-600 hover:bg-green-500 border-green-800 text-white" 
-                                            : "bg-blue-600 hover:bg-blue-500 border-blue-800 text-white"
+                                                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/20" 
+                                                : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/20"
                                         }`}
                                     >
                                         {yaAsistio ? (
                                             <>
-                                                <span className="text-xl">✔</span>
-                                                Presente Hoy
+                                                <Check size={18} />
+                                                <span>Presente Hoy</span>
                                             </>
                                         ) : (
                                             <>
-                                                <span className="text-xl">+</span>
-                                                Marcar Asistencia
+                                                <Plus size={18} />
+                                                <span>Marcar Asistencia</span>
                                             </>
                                         )}
                                     </button>
 
-                                    {/* Botones de acción Editar y Borrar */}
                                     <div className="flex gap-2">
                                         <button 
                                             onClick={() => navigate(`/editar/${a._id}`)}
-                                            className="flex-1 py-2.5 px-3 bg-slate-900/60 hover:bg-slate-700/50 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/50 flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
-                                            title="Editar Perfil"
+                                            className="flex-1 py-2 px-3 bg-slate-800/70 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/60 flex items-center justify-center gap-1.5 transition-all active:scale-95"
                                         >
-                                            <span>✏️</span> Editar Perfil
+                                            <Pencil size={13} />
+                                            <span>Editar</span>
                                         </button>
                                         {['Admin', 'Encargado'].includes(user?.role) && (
                                             <button 
                                                 onClick={() => handleDelete(a)}
-                                                className="py-2.5 px-3 bg-red-950/20 hover:bg-red-900/30 text-red-400 hover:text-red-300 font-bold text-xs uppercase tracking-wider rounded-xl border border-red-900/30 flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-sm"
+                                                className="py-2 px-3 bg-slate-800/70 hover:bg-red-500/20 text-slate-400 hover:text-red-400 font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/60 flex items-center justify-center gap-1.5 transition-all active:scale-95"
                                                 title="Borrar Alumno"
                                             >
-                                                <span>🗑️</span> Borrar
+                                                <Trash2 size={13} />
                                             </button>
                                         )}
                                     </div>

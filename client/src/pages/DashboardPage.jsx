@@ -6,6 +6,19 @@ import { useAuth } from "../context/AuthContext";
 import BeltBadge from "../components/BeltBadge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { 
+    Users, 
+    CalendarCheck, 
+    Award, 
+    DollarSign, 
+    ChevronRight, 
+    ChevronLeft, 
+    UserPlus, 
+    ShoppingBag, 
+    AlertCircle,
+    TrendingUp,
+    CheckCircle2
+} from "lucide-react";
 
 export default function DashboardPage() {
     const [candidatosAGrado, setCandidatosAGrado] = useState([]);
@@ -14,7 +27,7 @@ export default function DashboardPage() {
     const [currentPageFaja, setCurrentPageFaja] = useState(1);
     const [currentPageCobranzas, setCurrentPageCobranzas] = useState(1);
     const itemsPerPage = 6;
-    const itemsPerPageCobranzas = 20;
+    const itemsPerPageCobranzas = 10;
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -40,259 +53,363 @@ export default function DashboardPage() {
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-slate-500 font-black animate-pulse bg-slate-800/50 px-8 py-4 rounded-3xl border border-slate-700">
-                CARGANDO PANEL ADMINISTRATIVO...
+            <div className="flex flex-col items-center gap-3 bg-slate-900 border border-slate-800 px-8 py-6 rounded-3xl shadow-xl">
+                <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">
+                    Cargando Panel TailAdmin...
+                </span>
             </div>
         </div>
     );
 
     if (!data) return (
         <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center p-10 bg-red-500/10 border border-red-500/20 rounded-[2.5rem] max-w-md">
-                <span className="text-5xl mb-4 block">⚠️</span>
-                <h2 className="text-xl font-black text-red-500 uppercase tracking-tighter mb-2">Sesión Inválida</h2>
-                <p className="text-slate-400 font-bold text-sm leading-relaxed mb-6">
-                    Debido a la actualización de seguridad, tu sesión actual ya no es válida. Debes volver a ingresar para continuar.
-                </p>
+            <div className="text-center p-8 bg-red-950/20 border border-red-500/30 rounded-3xl max-w-md">
+                <AlertCircle size={40} className="text-red-500 mx-auto mb-3" />
+                <h2 className="text-lg font-black text-white uppercase tracking-tight mb-2">Error al cargar datos</h2>
+                <p className="text-slate-400 text-xs mb-4">No pudimos conectar con el servidor. Reintentá nuevamente.</p>
                 <button 
-                    onClick={() => {
-                        // Limpieza profunda de cookies en todos los dominios posibles
-                        const clearCookie = (name) => {
-                            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;';
-                            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; domain=' + window.location.hostname + ';';
-                        };
-                        clearCookie('token');
-                        
-                        // Forzar limpieza de localStorage por si acaso
-                        localStorage.clear();
-                        sessionStorage.clear();
-                        
-                        // Redirección definitiva
-                        window.location.replace("/login");
-                    }} 
-                    className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-xl font-black transition-all active:scale-95 shadow-lg shadow-red-600/20 uppercase tracking-widest text-sm"
+                    onClick={() => window.location.reload()} 
+                    className="bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider"
                 >
-                    Volver a Ingresar
+                    Reintentar
                 </button>
             </div>
         </div>
     );
 
-    const { stats, ultimasTransacciones, proximosAGraduar, pendientesPago } = data;
+    const { stats, ultimasTransacciones, pendientesPago } = data;
+    const totalElegibles = (candidatosAGrado?.length || 0) + (candidatosAFaja?.length || 0);
 
     return (
-        <div className="max-w-7xl mx-auto space-y-10 pb-20 animate-in fade-in duration-700">
+        <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
             
-            {/* Header de Bienvenida */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-gradient-to-r from-slate-900 via-slate-900 to-red-950/20 p-8 rounded-[2.5rem] border border-slate-700 shadow-2xl backdrop-blur-md relative overflow-hidden">
-                <div className="absolute -right-20 -top-20 w-64 h-64 bg-red-600/5 rounded-full blur-[80px]"></div>
-                <div className="relative z-10 font-[Outfit]">
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                        ¡Bienvenido, <span className="bg-gradient-to-r from-red-400 to-rose-300 bg-clip-text text-transparent italic">{user?.nombre || "Mestre"}</span>!
+            {/* Header de Bienvenida estilo TailAdmin */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/60 backdrop-blur-xl p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="relative z-10">
+                    <span className="text-red-500 font-black text-[10px] uppercase tracking-[0.25em] block mb-1">
+                        Gracie Barra Norte • {format(new Date(), "EEEE d 'de' MMMM", { locale: es })}
+                    </span>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                        ¡Bienvenido, <span className="text-red-500 italic">{user?.nombre || "Profesor"}</span>!
                     </h1>
-                    <p className="text-slate-400 font-bold mt-2 text-lg uppercase tracking-[0.2em]">{format(new Date(), "EEEE d 'de' MMMM", { locale: es })}</p>
+                    <p className="text-slate-400 text-xs font-medium mt-1">
+                        Control general de alumnos, asistencias y promociones de la academia.
+                    </p>
                 </div>
-                <div className="flex flex-wrap gap-4 relative z-10 w-full md:w-auto">
-                    <button onClick={() => navigate('/nuevo')} className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-500 text-white px-6 py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 border-b-4 border-blue-800 active:border-b-0 uppercase tracking-wider text-sm">
-                        <span className="text-xl leading-none">+</span> Alumno
+
+                {/* Acciones Rápidas */}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto relative z-10">
+                    <button 
+                        onClick={() => navigate('/nuevo')} 
+                        className="flex-1 sm:flex-initial bg-red-600 hover:bg-red-500 text-white px-4 sm:px-5 py-3 rounded-xl font-black shadow-lg shadow-red-900/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                    >
+                        <UserPlus size={16} />
+                        <span>+ Alumno</span>
                     </button>
                     {isAdminOrEncargado && (
-                        <button onClick={() => navigate('/finanzas')} className="flex-1 md:flex-none bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95 border border-slate-700 flex items-center justify-center gap-2 uppercase tracking-wider text-sm">
-                            <span className="text-lg leading-none">💰</span> Nueva Venta
+                        <button 
+                            onClick={() => navigate('/finanzas')} 
+                            className="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-4 sm:px-5 py-3 rounded-xl font-bold shadow transition-all active:scale-95 border border-slate-700 flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                        >
+                            <ShoppingBag size={16} />
+                            <span>Caja / Venta</span>
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {[
-                    { label: "Alumnos Totales", value: stats.totalAlumnos, icon: "👤", color: "from-blue-600 to-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20 shadow-blue-500/10", show: true },
-                    { label: "Asistencias Hoy", value: stats.asistenciasHoy, icon: "🥋", color: "from-emerald-600 to-teal-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20 shadow-emerald-500/10", show: true },
-                    { label: "Ingresos del Mes", value: stats.ingresosMes ? `$${stats.ingresosMes.toLocaleString()}` : null, icon: "💵", color: "from-amber-600 to-orange-400", bg: "bg-amber-500/10", border: "border-amber-500/20 shadow-amber-500/10", show: stats.ingresosMes !== null }
-                ].filter(kpi => kpi.show).map((kpi, i) => (
-                    <div key={i} className={`group ${kpi.bg} p-8 rounded-[2.2rem] border ${kpi.border} shadow-2xl relative overflow-hidden transition-all hover:scale-[1.02] duration-300`}>
-                        <div className="absolute top-0 right-0 p-6 text-5xl opacity-40 group-hover:scale-125 transition-transform duration-500 pointer-events-none">{kpi.icon}</div>
-                        <p className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">{kpi.label}</p>
-                        <h2 className={`text-4xl sm:text-5xl font-black bg-gradient-to-r ${kpi.color} bg-clip-text text-transparent tracking-tighter`}>{kpi.value}</h2>
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+            {/* Cuadrícula de Métricas TailAdmin (EcommerceMetrics Style) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+                
+                {/* 1. Alumnos Totales */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 md:p-6 backdrop-blur-md hover:border-slate-700 transition-all">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-center w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
+                            <Users size={22} />
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            <TrendingUp size={12} /> Activos
+                        </span>
                     </div>
-                ))}
+                    <div className="mt-4">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            Alumnos Totales
+                        </span>
+                        <h4 className="mt-1 text-3xl sm:text-4xl font-black text-white tracking-tight">
+                            {stats.totalAlumnos || 0}
+                        </h4>
+                    </div>
+                </div>
+
+                {/* 2. Asistencias Hoy */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 md:p-6 backdrop-blur-md hover:border-slate-700 transition-all">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-center w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                            <CalendarCheck size={22} />
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <CheckCircle2 size={12} /> Hoy
+                        </span>
+                    </div>
+                    <div className="mt-4">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            Asistencias del Día
+                        </span>
+                        <h4 className="mt-1 text-3xl sm:text-4xl font-black text-white tracking-tight">
+                            {stats.asistenciasHoy || 0}
+                        </h4>
+                    </div>
+                </div>
+
+                {/* 3. Elegibles para Promoción */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 md:p-6 backdrop-blur-md hover:border-slate-700 transition-all">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-center w-12 h-12 bg-red-600/10 text-red-500 rounded-xl border border-red-600/20">
+                            <Award size={22} />
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                            Promociones
+                        </span>
+                    </div>
+                    <div className="mt-4">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            Elegibles a Grado / Faja
+                        </span>
+                        <h4 className="mt-1 text-3xl sm:text-4xl font-black text-white tracking-tight">
+                            {totalElegibles}
+                        </h4>
+                    </div>
+                </div>
+
+                {/* 4. Ingresos del Mes (Admin/Encargado) */}
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 md:p-6 backdrop-blur-md hover:border-slate-700 transition-all">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-center w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                            <DollarSign size={22} />
+                        </div>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            Caja Mes
+                        </span>
+                    </div>
+                    <div className="mt-4">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            Ingresos Mensuales
+                        </span>
+                        <h4 className="mt-1 text-2xl sm:text-3xl font-black text-white tracking-tight truncate">
+                            {isAdminOrEncargado && stats.ingresosMes !== null 
+                                ? `$${Number(stats.ingresosMes).toLocaleString("es-AR")}` 
+                                : "Protegido"}
+                        </h4>
+                    </div>
+                </div>
             </div>
 
-            <div className="flex flex-col gap-10">
+            {/* Paneles de Graduaciones TailAdmin */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
                 {/* Panel 1: Próximos Grados */}
-                <div className="w-full bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
-                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
-                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">🥋</span> Graduación de Progreso
-                        </h3>
-                        <span className="text-[10px] font-black bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/30 uppercase tracking-widest animate-pulse">Elegible para Grado</span>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6 backdrop-blur-md flex flex-col">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 rounded-xl bg-red-600/10 text-red-500 border border-red-600/20">
+                                <Award size={18} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-white uppercase tracking-tight">Graduación de Grado</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Alumnos listos para nuevo grado</p>
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 uppercase tracking-widest">
+                            {candidatosAGrado.length} listos
+                        </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2.5 flex-1">
                         {candidatosAGrado.length === 0 ? (
-                            <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-30">
-                                <span className="text-7xl mb-4">🏆</span>
-                                <p className="font-bold text-lg uppercase tracking-widest">Sin grados pendientes</p>
+                            <div className="py-12 flex flex-col items-center justify-center opacity-40">
+                                <Award size={36} className="text-slate-500 mb-2" />
+                                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Sin grados pendientes</p>
                             </div>
                         ) : candidatosAGrado.slice((currentPageGrado - 1) * itemsPerPage, currentPageGrado * itemsPerPage).map(a => (
-                            <div key={a._id} className="group bg-slate-900/60 hover:bg-slate-800/60 p-5 rounded-3xl border border-slate-800/80 hover:border-emerald-500/30 transition-all cursor-pointer flex items-center gap-5 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
-                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-slate-800 group-hover:border-emerald-500/50 relative shrink-0 transition-all shadow-xl">
-                                    {a.fotoUrl ? (
-                                        <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-xl">{a.nombre[0]}</div>
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
-                                    <div className="flex items-center gap-2">
-                                        <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Grado Actual: {a.grado}</span>
+                            <div 
+                                key={a._id} 
+                                onClick={() => navigate(`/editar/${a._id}`)}
+                                className="group bg-slate-950/40 hover:bg-slate-800/60 p-3.5 rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-sm"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-11 h-11 rounded-xl overflow-hidden border border-slate-800 relative shrink-0 bg-slate-800 flex items-center justify-center">
+                                        {a.fotoUrl ? (
+                                            <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" alt={a.nombre} />
+                                        ) : (
+                                            <span className="font-black text-slate-500 uppercase text-sm">{a.nombre[0]}</span>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-white text-sm truncate leading-tight">{a.nombre} {a.apellido}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">Grado actual: {a.grado}</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <ChevronRight size={16} className="text-slate-500 group-hover:text-red-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                             </div>
                         ))}
                     </div>
 
                     {candidatosAGrado.length > itemsPerPage && (
-                        <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-slate-800/50">
-                            <button onClick={(e) => { e.stopPropagation(); setCurrentPageGrado(p => Math.max(1, p - 1))}} disabled={currentPageGrado === 1} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">◀</button>
-                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Página {currentPageGrado} de {Math.ceil(candidatosAGrado.length / itemsPerPage)}</span>
-                            <button onClick={(e) => { e.stopPropagation(); setCurrentPageGrado(p => Math.min(Math.ceil(candidatosAGrado.length / itemsPerPage), p + 1))}} disabled={currentPageGrado === Math.ceil(candidatosAGrado.length / itemsPerPage)} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">▶</button>
+                        <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-800/60">
+                            <button 
+                                onClick={() => setCurrentPageGrado(p => Math.max(1, p - 1))} 
+                                disabled={currentPageGrado === 1} 
+                                className="px-3 py-1.5 bg-slate-800/80 rounded-lg border border-slate-700 text-slate-300 disabled:opacity-30 hover:bg-slate-700 text-xs font-bold transition-all"
+                            >
+                                Anterior
+                            </button>
+                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                                {currentPageGrado} / {Math.ceil(candidatosAGrado.length / itemsPerPage)}
+                            </span>
+                            <button 
+                                onClick={() => setCurrentPageGrado(p => Math.min(Math.ceil(candidatosAGrado.length / itemsPerPage), p + 1))} 
+                                disabled={currentPageGrado === Math.ceil(candidatosAGrado.length / itemsPerPage)} 
+                                className="px-3 py-1.5 bg-slate-800/80 rounded-lg border border-slate-700 text-slate-300 disabled:opacity-30 hover:bg-slate-700 text-xs font-bold transition-all"
+                            >
+                                Siguiente
+                            </button>
                         </div>
                     )}
                 </div>
 
                 {/* Panel 2: Cambios de Faja */}
-                <div className="w-full bg-slate-900/40 border border-blue-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
-                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-blue-500/10">
-                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <span className="bg-blue-900/30 p-2.5 rounded-xl border border-blue-500/20 shadow-inner">🎓</span> Graduación de Cinturón
-                        </h3>
-                        <span className="text-[10px] font-black bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-full border border-blue-500/30 uppercase tracking-widest animate-pulse">Elegible para Cinturón</span>
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6 backdrop-blur-md flex flex-col">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 rounded-xl bg-blue-600/10 text-blue-400 border border-blue-600/20">
+                                <Award size={18} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-white uppercase tracking-tight">Graduación de Cinturón</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Alumnos listos para cambio de faja</p>
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-black bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full border border-blue-500/20 uppercase tracking-widest">
+                            {candidatosAFaja.length} listos
+                        </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2.5 flex-1">
                         {candidatosAFaja.length === 0 ? (
-                            <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-30">
-                                <span className="text-7xl mb-4">🥋</span>
-                                <p className="font-bold text-lg uppercase tracking-widest">Sin cambios de faja pendientes</p>
+                            <div className="py-12 flex flex-col items-center justify-center opacity-40">
+                                <Award size={36} className="text-slate-500 mb-2" />
+                                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Sin cambios de faja pendientes</p>
                             </div>
                         ) : candidatosAFaja.slice((currentPageFaja - 1) * itemsPerPage, currentPageFaja * itemsPerPage).map(a => (
-                            <div key={a._id} className="group bg-blue-900/10 hover:bg-blue-900/20 p-5 rounded-3xl border border-blue-500/10 hover:border-blue-500/40 transition-all cursor-pointer flex items-center gap-5 shadow-lg" onClick={() => navigate(`/editar/${a._id}`)}>
-                                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-blue-900 group-hover:border-blue-500/50 relative shrink-0 transition-all shadow-xl">
-                                    {a.fotoUrl ? (
-                                        <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-xl">{a.nombre[0]}</div>
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-black text-white text-base leading-none mb-2">{a.nombre} <span className="opacity-70">{a.apellido}</span></p>
-                                    <div className="flex items-center gap-2">
-                                        <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
-                                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Elegible para Faja</span>
+                            <div 
+                                key={a._id} 
+                                onClick={() => navigate(`/editar/${a._id}`)}
+                                className="group bg-slate-950/40 hover:bg-slate-800/60 p-3.5 rounded-xl border border-slate-800/80 hover:border-blue-500/30 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-sm"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-11 h-11 rounded-xl overflow-hidden border border-slate-800 relative shrink-0 bg-slate-800 flex items-center justify-center">
+                                        {a.fotoUrl ? (
+                                            <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" alt={a.nombre} />
+                                        ) : (
+                                            <span className="font-black text-slate-500 uppercase text-sm">{a.nombre[0]}</span>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-white text-sm truncate leading-tight">{a.nombre} {a.apellido}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <BeltBadge faja={a.faja} grado={a.grado} size="xs" showLabel={false} />
+                                            <span className="text-[10px] font-black text-blue-400 uppercase tracking-wider">Elegible Cinturón</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <ChevronRight size={16} className="text-slate-500 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                             </div>
                         ))}
                     </div>
 
                     {candidatosAFaja.length > itemsPerPage && (
-                        <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-blue-500/10">
-                            <button onClick={(e) => { e.stopPropagation(); setCurrentPageFaja(p => Math.max(1, p - 1))}} disabled={currentPageFaja === 1} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">◀</button>
-                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Página {currentPageFaja} de {Math.ceil(candidatosAFaja.length / itemsPerPage)}</span>
-                            <button onClick={(e) => { e.stopPropagation(); setCurrentPageFaja(p => Math.min(Math.ceil(candidatosAFaja.length / itemsPerPage), p + 1))}} disabled={currentPageFaja === Math.ceil(candidatosAFaja.length / itemsPerPage)} className="p-2 bg-slate-900 rounded-xl border border-slate-700 text-slate-400 disabled:opacity-30 hover:bg-slate-800 transition-all shadow-lg">▶</button>
+                        <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-800/60">
+                            <button 
+                                onClick={() => setCurrentPageFaja(p => Math.max(1, p - 1))} 
+                                disabled={currentPageFaja === 1} 
+                                className="px-3 py-1.5 bg-slate-800/80 rounded-lg border border-slate-700 text-slate-300 disabled:opacity-30 hover:bg-slate-700 text-xs font-bold transition-all"
+                            >
+                                Anterior
+                            </button>
+                            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">
+                                {currentPageFaja} / {Math.ceil(candidatosAFaja.length / itemsPerPage)}
+                            </span>
+                            <button 
+                                onClick={() => setCurrentPageFaja(p => Math.min(Math.ceil(candidatosAFaja.length / itemsPerPage), p + 1))} 
+                                disabled={currentPageFaja === Math.ceil(candidatosAFaja.length / itemsPerPage)} 
+                                className="px-3 py-1.5 bg-slate-800/80 rounded-lg border border-slate-700 text-slate-300 disabled:opacity-30 hover:bg-slate-700 text-xs font-bold transition-all"
+                            >
+                                Siguiente
+                            </button>
                         </div>
                     )}
                 </div>
-
-                {/* Panel 3: Pendientes de Pago (Este puede ser un grid o full width) */}
-                {isAdminOrEncargado && (
-                    <div className="w-full bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
-                        <div className="flex items-center justify-between mb-8 pb-5 border-b border-amber-500/10">
-                            <h3 className="text-xl font-black text-white flex items-center gap-3">
-                                <span className="bg-amber-900/30 p-2.5 rounded-xl border border-amber-500/20 shadow-inner">💰</span> Cobranzas Pendientes
-                            </h3>
-                            <button onClick={() => navigate('/finanzas')} className="text-[10px] font-black text-amber-500 hover:text-amber-400 uppercase tracking-widest transition-all">Ir a Caja →</button>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {pendientesPago.length === 0 ? (
-                                <div className="col-span-full py-12 flex flex-col items-center justify-center opacity-30">
-                                    <span className="text-6xl mb-3">💎</span>
-                                    <p className="font-bold text-base uppercase tracking-widest text-center">Al día con los pagos</p>
-                                </div>
-                            ) : pendientesPago.slice((currentPageCobranzas - 1) * itemsPerPageCobranzas, currentPageCobranzas * itemsPerPageCobranzas).map(a => (
-                                <div key={a._id} className="group bg-amber-900/10 hover:bg-amber-900/20 p-5 rounded-3xl border border-amber-500/10 hover:border-amber-500/40 transition-all cursor-pointer flex items-center gap-4 shadow-lg" onClick={() => navigate('/finanzas')}>
-                                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-amber-500/30 group-hover:border-amber-500/60 relative shrink-0 transition-all">
-                                        {a.fotoUrl ? (
-                                            <img src={a.fotoUrl.startsWith('http') ? a.fotoUrl : `${UPLOAD_URL}/${a.fotoUrl}`} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-slate-800 flex items-center justify-center font-black text-slate-500 uppercase text-lg">{a.nombre[0]}</div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-black text-white text-sm truncate leading-none mb-1">{a.nombre} {a.apellido}</p>
-                                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-tighter">Pendiente Membresía</span>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-xl">💵</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {pendientesPago.length > itemsPerPageCobranzas && (
-                            <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-amber-500/10">
-                                <button onClick={(e) => { e.stopPropagation(); setCurrentPageCobranzas(p => Math.max(1, p - 1))}} disabled={currentPageCobranzas === 1} className="p-2 bg-slate-900 rounded-xl border border-amber-700/30 text-amber-500 disabled:opacity-30 hover:bg-amber-900/20 transition-all shadow-lg">◀</button>
-                                <span className="text-amber-500/50 font-bold text-[10px] tracking-widest uppercase">Página {currentPageCobranzas} de {Math.ceil(pendientesPago.length / itemsPerPageCobranzas)}</span>
-                                <button onClick={(e) => { e.stopPropagation(); setCurrentPageCobranzas(p => Math.min(Math.ceil(pendientesPago.length / itemsPerPageCobranzas), p + 1))}} disabled={currentPageCobranzas === Math.ceil(pendientesPago.length / itemsPerPageCobranzas)} className="p-2 bg-slate-900 rounded-xl border border-amber-700/30 text-amber-500 disabled:opacity-30 hover:bg-amber-900/20 transition-all shadow-lg">▶</button>
-                            </div>
-                        ) }
-                    </div>
-                )}
             </div>
 
-            {/* Fila Inferior: Actividad Reciente */}
-            {isAdminOrEncargado && (
-                <div className="w-full bg-slate-800/10 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl flex flex-col">
-                    <div className="flex items-center justify-between mb-8 pb-5 border-b border-slate-700/50">
-                        <h3 className="text-xl font-black text-white flex items-center gap-3">
-                            <span className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 shadow-inner">⚡</span> Movimientos Recientes
-                        </h3>
-                        <button onClick={() => navigate('/finanzas')} className="text-[10px] font-black text-slate-500 hover:text-red-400 uppercase tracking-widest transition-all">Ver Historial Completo →</button>
+            {/* Panel 3: Cobranzas Pendientes (TailAdmin Table Style) */}
+            {isAdminOrEncargado && pendientesPago && pendientesPago.length > 0 && (
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6 backdrop-blur-md">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                <DollarSign size={18} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-white uppercase tracking-tight">Cobranzas Pendientes</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Alumnos con cuotas o pagos a regularizar</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => navigate('/finanzas')} 
+                            className="text-xs font-black text-amber-400 hover:text-amber-300 uppercase tracking-wider transition-all"
+                        >
+                            Ir a Finanzas →
+                        </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {ultimasTransacciones.length === 0 ? (
-                            <div className="col-span-full py-16 flex flex-col items-center justify-center opacity-30">
-                                <span className="text-7xl mb-4">💳</span>
-                                <p className="font-bold text-lg uppercase tracking-widest">Sin movimientos registrados</p>
-                            </div>
-                        ) : ultimasTransacciones.map(t => (
-                            <div key={t._id} className="flex items-center gap-4 bg-slate-900/40 p-5 rounded-3xl border border-slate-800/50 shadow-lg hover:border-slate-600 transition-all">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-inner border-2 ${t.tipo === 'INGRESO' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                                    {t.tipo === 'INGRESO' ? '↑' : '↓'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-black text-white text-sm truncate mb-0.5">{t.descripcion}</p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t.categoria}</span>
-                                        <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                                        <span className="text-[9px] font-bold text-slate-600 uppercase">{format(new Date(t.fecha), "d MMM", { locale: es })}</span>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className={`font-black text-lg tracking-tight ${t.tipo === 'INGRESO' ? 'text-emerald-400' : 'text-red-400'}`}>
-                                        {t.tipo === 'INGRESO' ? '+' : '-'}${t.monto.toLocaleString()}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="overflow-x-auto no-scrollbar">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                    <th className="py-3 px-3">Alumno</th>
+                                    <th className="py-3 px-3">Concepto</th>
+                                    <th className="py-3 px-3">Monto</th>
+                                    <th className="py-3 px-3 text-right">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800/60 text-xs">
+                                {pendientesPago.slice((currentPageCobranzas - 1) * itemsPerPageCobranzas, currentPageCobranzas * itemsPerPageCobranzas).map((p, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                                        <td className="py-3 px-3 font-bold text-white whitespace-nowrap">
+                                            {p.alumnoNombre || p.alumno?.nombre || "Alumno"} {p.alumnoApellido || p.alumno?.apellido || ""}
+                                        </td>
+                                        <td className="py-3 px-3 text-slate-300 whitespace-nowrap">
+                                            {p.concepto || "Membresía"}
+                                        </td>
+                                        <td className="py-3 px-3 font-black text-amber-400 whitespace-nowrap">
+                                            ${Number(p.monto || 0).toLocaleString("es-AR")}
+                                        </td>
+                                        <td className="py-3 px-3 text-right whitespace-nowrap">
+                                            <button 
+                                                onClick={() => navigate('/finanzas')}
+                                                className="px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 font-black text-[10px] uppercase tracking-wider transition-all"
+                                            >
+                                                Cobrar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             )}
