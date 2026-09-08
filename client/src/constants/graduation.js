@@ -2,46 +2,46 @@ export const REGLAS_GRACIE_BARRA = {
     ADULTOS: {
         'Branca': {
             tramos: {
-                0: { dias: 30, clases: 8 },    // G0 -> G1 (1 mes)
-                1: { dias: 30, clases: 8 },    // G1 -> G2 (1 mes)
-                2: { dias: 60, clases: 16 },   // G2 -> G3 (2 meses)
-                3: { dias: 122, clases: 32 },  // G3 -> G4 (4 meses)
-                4: { dias: 122, clases: 32 }   // G4 -> Azul (4 meses)
+                0: { dias: 30, clases: 8, meses: 1 },    // G0 -> G1 (1 mes)
+                1: { dias: 30, clases: 8, meses: 1 },    // G1 -> G2 (1 mes)
+                2: { dias: 60, clases: 16, meses: 2 },   // G2 -> G3 (2 meses)
+                3: { dias: 122, clases: 32, meses: 4 },  // G3 -> G4 (4 meses)
+                4: { dias: 122, clases: 32, meses: 4 }   // G4 -> Azul (4 meses)
             }
         },
         'Azul': {
             tramos: {
-                0: { dias: 122, clases: 32 },  // G0 -> G1 (4 meses)
-                1: { dias: 152, clases: 40 },  // G1 -> G2 (5 meses)
-                2: { dias: 152, clases: 40 },  // G2 -> G3 (5 meses)
-                3: { dias: 152, clases: 40 },  // G3 -> G4 (5 meses)
-                4: { dias: 152, clases: 40 }   // G4 -> Morado (5 meses)
+                0: { dias: 122, clases: 32, meses: 4 },  // G0 -> G1 (4 meses)
+                1: { dias: 152, clases: 40, meses: 5 },  // G1 -> G2 (5 meses)
+                2: { dias: 152, clases: 40, meses: 5 },  // G2 -> G3 (5 meses)
+                3: { dias: 152, clases: 40, meses: 5 },  // G3 -> G4 (5 meses)
+                4: { dias: 152, clases: 40, meses: 5 }   // G4 -> Morado (5 meses)
             }
         },
         'Roxa': {
             tramos: {
-                0: { dias: 91, clases: 24 },   // G0 -> G1 (3 meses)
-                1: { dias: 91, clases: 24 },   // G1 -> G2 (3 meses)
-                2: { dias: 122, clases: 32 },  // G2 -> G3 (4 meses)
-                3: { dias: 122, clases: 32 },  // G3 -> G4 (4 meses)
-                4: { dias: 122, clases: 32 }   // G4 -> Marrón (4 meses)
+                0: { dias: 91, clases: 24, meses: 3 },   // G0 -> G1 (3 meses)
+                1: { dias: 91, clases: 24, meses: 3 },   // G1 -> G2 (3 meses)
+                2: { dias: 122, clases: 32, meses: 4 },  // G2 -> G3 (4 meses)
+                3: { dias: 122, clases: 32, meses: 4 },  // G3 -> G4 (4 meses)
+                4: { dias: 122, clases: 32, meses: 4 }   // G4 -> Marrón (4 meses)
             }
         },
         'Marrom': {
             tramos: {
-                0: { dias: 91, clases: 24 },   // G0 -> G1 (3 meses)
-                1: { dias: 91, clases: 24 },   // G1 -> G2 (3 meses)
-                2: { dias: 122, clases: 32 },  // G2 -> G3 (4 meses)
-                3: { dias: 122, clases: 32 },  // G3 -> G4 (4 meses)
-                4: { dias: 122, clases: 32 }   // G4 -> Negro (4 meses)
+                0: { dias: 91, clases: 24, meses: 3 },   // G0 -> G1 (3 meses)
+                1: { dias: 91, clases: 24, meses: 3 },   // G1 -> G2 (3 meses)
+                2: { dias: 122, clases: 32, meses: 4 },  // G2 -> G3 (4 meses)
+                3: { dias: 122, clases: 32, meses: 4 },  // G3 -> G4 (4 meses)
+                4: { dias: 122, clases: 32, meses: 4 }   // G4 -> Negro (4 meses)
             }
         },
         'Preta': {
-            defaultTramo: { dias: 1095, clases: 300 } // Preta
+            defaultTramo: { dias: 1095, clases: 300, meses: 36 } // Preta (3 años)
         }
     },
     KIDS: {
-        defaultTramo: { dias: 122, clases: 32 },
+        defaultTramo: { dias: 122, clases: 32, meses: 4 },
         cinturones: {
             'Cinza e Branca': { edadMin: 4, edadMax: 15, grupo: 'Grupo Gris (Cinza)' },
             'Cinza': { edadMin: 4, edadMax: 15, grupo: 'Grupo Gris (Cinza)' },
@@ -257,23 +257,38 @@ export const evaluarGraduacion = ({
             ? parseInt(permanencia_manual)
             : asistenciasTramo.length;
 
-    // Días transcurridos
-    const diffTime = Math.max(0, hoy.getTime() - startCompareDate.getTime());
-    const dias_transcurridos = isNaN(diffTime) ? 0 : Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
     // 3. Requisitos del tramo
     const reqs = getRequisitosAcumulados(fajaKey, grado_actual);
-    const reqDias = (dias_para_graduacion !== undefined && dias_para_graduacion !== null && dias_para_graduacion !== "" && !isNaN(dias_para_graduacion))
-        ? parseInt(dias_para_graduacion)
-        : reqs.dias;
     const reqClases = (clases_para_graduacion !== undefined && clases_para_graduacion !== null && clases_para_graduacion !== "" && !isNaN(clases_para_graduacion))
         ? parseInt(clases_para_graduacion)
         : reqs.clases;
 
-    const clases_restantes = Math.max(0, reqClases - clases_acumuladas);
-    const dias_restantes = Math.max(0, reqDias - dias_transcurridos);
+    let reqMeses = reqs.meses || 1;
+    let reqDias = reqs.dias;
 
-    const tiempoCumplido = dias_transcurridos >= reqDias;
+    if (dias_para_graduacion !== undefined && dias_para_graduacion !== null && dias_para_graduacion !== "" && !isNaN(dias_para_graduacion)) {
+        reqDias = parseInt(dias_para_graduacion);
+        reqMeses = Math.round(reqDias / 30);
+    }
+
+    // Fecha en que se cumple la permanencia mínima (meses calendario exactos desde el inicio del tramo)
+    let fechaMinPermanencia;
+    if (reqMeses >= 1) {
+        fechaMinPermanencia = addMonths(startCompareDate, reqMeses);
+    } else {
+        fechaMinPermanencia = new Date(startCompareDate.getTime() + reqDias * 24 * 60 * 60 * 1000);
+    }
+
+    const totalDiasTramo = Math.max(1, Math.round((fechaMinPermanencia.getTime() - startCompareDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+    // Días transcurridos y restantes
+    const diffTime = Math.max(0, hoy.getTime() - startCompareDate.getTime());
+    const dias_transcurridos = isNaN(diffTime) ? 0 : Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const dias_restantes = Math.max(0, Math.ceil((fechaMinPermanencia.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)));
+
+    const clases_restantes = Math.max(0, reqClases - clases_acumuladas);
+
+    const tiempoCumplido = hoy >= fechaMinPermanencia || dias_transcurridos >= totalDiasTramo;
     const clasesCumplidas = clases_acumuladas >= reqClases;
     const elegible = tiempoCumplido && clasesCumplidas;
 
@@ -295,9 +310,9 @@ export const evaluarGraduacion = ({
             porcentaje: Math.min(100, Math.round((clases_acumuladas / reqClases) * 100))
         },
         permanencia: {
-            acumuladas: dias_transcurridos,
-            requeridas: reqDias,
-            porcentaje: Math.min(100, Math.round((dias_transcurridos / reqDias) * 100))
+            acumuladas: Math.min(dias_transcurridos, totalDiasTramo),
+            requeridas: totalDiasTramo,
+            porcentaje: Math.min(100, Math.round((dias_transcurridos / totalDiasTramo) * 100))
         }
     };
 
@@ -305,12 +320,23 @@ export const evaluarGraduacion = ({
     if (elegible) {
         fecha_estimada_promocion = hoy.toISOString().split('T')[0];
     } else {
-        const freq = (frecuenciaSemanalReal && !isNaN(frecuenciaSemanalReal) && frecuenciaSemanalReal > 0) ? frecuenciaSemanalReal : 2;
-        const validClasesRest = !isNaN(clases_restantes) ? Math.max(0, clases_restantes) : 0;
-        const validDiasRest = !isNaN(dias_restantes) ? Math.max(0, dias_restantes) : 0;
-        const diasPorClases = Math.ceil((validClasesRest / freq) * 7);
-        const diasAdicionales = Math.max(validDiasRest, diasPorClases);
-        const fechaProyectada = new Date(hoy.getTime() + (diasAdicionales * 24 * 60 * 60 * 1000));
+        // 1. Fecha por permanencia de meses reglamentaria
+        const fechaPorPermanencia = new Date(fechaMinPermanencia);
+
+        // 2. Fecha proyectada para completar las clases técnicas restantes a su ritmo real
+        let fechaPorClases;
+        if (clases_restantes === 0) {
+            fechaPorClases = new Date(hoy);
+        } else {
+            const freq = (frecuenciaSemanalReal && !isNaN(frecuenciaSemanalReal) && frecuenciaSemanalReal > 0) ? frecuenciaSemanalReal : 2;
+            const validClasesRest = !isNaN(clases_restantes) ? Math.max(0, clases_restantes) : 0;
+            const diasParaClases = Math.ceil((validClasesRest / freq) * 7);
+            fechaPorClases = new Date(hoy.getTime() + (diasParaClases * 24 * 60 * 60 * 1000));
+        }
+
+        // Se requiere cumplir AMBAS condiciones: la fecha estimada es la mayor entre la de permanencia y la de clases.
+        // Si no cumple las clases a tiempo, se proyecta más adelante cuando termine de asistir.
+        const fechaProyectada = new Date(Math.max(fechaPorPermanencia.getTime(), fechaPorClases.getTime()));
         fecha_estimada_promocion = !isNaN(fechaProyectada.getTime()) 
             ? fechaProyectada.toISOString().split('T')[0] 
             : hoy.toISOString().split('T')[0];
@@ -323,7 +349,7 @@ export const evaluarGraduacion = ({
         deudaClases: 0,
         msgDeuda: "",
         dias_transcurridos,
-        dias_requeridos: reqDias,
+        dias_requeridos: totalDiasTramo,
         dias_restantes,
         clases_acumuladas,
         clases_requeridas: reqClases,
@@ -338,6 +364,17 @@ export const evaluarGraduacion = ({
         asistenciasTotalesFaja: (asistencias || []).length,
         msgAlertaDeuda: ""
     };
+};
+
+export const addMonths = (dateVal, months) => {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return new Date();
+    const day = d.getDate();
+    d.setMonth(d.getMonth() + months);
+    if (d.getDate() !== day) {
+        d.setDate(0);
+    }
+    return d;
 };
 
 export const getRequisitosAcumulados = (faja, grado) => {
@@ -356,21 +393,25 @@ export const getRequisitosAcumulados = (faja, grado) => {
     
     let clases = 32;
     let dias = 122;
+    let meses = 4;
 
     if (isKids) {
         clases = 32;
         dias = 122;
+        meses = 4;
     } else {
         const reglasAdulto = REGLAS_GRACIE_BARRA.ADULTOS[key] || REGLAS_GRACIE_BARRA.ADULTOS['Branca'];
         if (reglasAdulto.tramos && reglasAdulto.tramos[gNum] !== undefined) {
             const tr = reglasAdulto.tramos[gNum];
             clases = tr.clases;
             dias = tr.dias;
+            meses = tr.meses !== undefined ? tr.meses : Math.round(tr.dias / 30);
         } else if (reglasAdulto.defaultTramo) {
             clases = reglasAdulto.defaultTramo.clases;
             dias = reglasAdulto.defaultTramo.dias;
+            meses = reglasAdulto.defaultTramo.meses !== undefined ? reglasAdulto.defaultTramo.meses : Math.round(reglasAdulto.defaultTramo.dias / 30);
         }
     }
 
-    return { clases, dias, meses: Math.round(dias / 30) };
+    return { clases, dias, meses };
 };
