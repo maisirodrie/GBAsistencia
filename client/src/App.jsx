@@ -7,6 +7,8 @@ import AlumnoFormPage from "./pages/AlumnoFormPage";
 import DashboardPage from "./pages/DashboardPage";
 import FinanzasPage from "./pages/FinanzasPage";
 import CheckInPage from "./pages/CheckInPage";
+import AutoCheckInPage from "./pages/AutoCheckInPage";
+import QRCartelPage from "./pages/QRCartelPage";
 import PublicQRPage from "./pages/PublicQRPage";
 import LoginPage from "./pages/LoginPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
@@ -19,6 +21,8 @@ function AppContent() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     
     const isPublic = location.pathname === "/checkin" || 
+                     location.pathname === "/asistencia" ||
+                     location.pathname === "/cartel-qr" ||
                      location.pathname.startsWith("/mi-pase/") || 
                      location.pathname === "/login";
 
@@ -34,6 +38,8 @@ function AppContent() {
                         {/* Rutas Públicas */}
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/checkin" element={<CheckInPage />} />
+                        <Route path="/asistencia" element={<AutoCheckInPage />} />
+                        <Route path="/cartel-qr" element={<QRCartelPage />} />
                         <Route path="/mi-pase/:id" element={<PublicQRPage />} />
 
                         {/* Rutas Protegidas */}

@@ -108,6 +108,7 @@ export default function AlumnoFormPage() {
             setAlumnoData(data);
             setValue("nombre", data.nombre);
             setValue("apellido", data.apellido || "");
+            setValue("dni", data.dni || "");
             setValue("celular", data.celular || "");
             setValue("faja", data.faja ?? "Branca");
             setValue("grado", String(data.grado ?? 0));
@@ -169,6 +170,7 @@ export default function AlumnoFormPage() {
         setAsistencias(data.asistencias);
         if (data.faja) setValue("faja", data.faja);
         setValue("grado", String(data.grado ?? 0));
+        if (data.dni !== undefined) setValue("dni", data.dni || "");
         if (data.categoria) setCategoria(data.categoria);
         if (data.ultimaGraduacion) {
             const local = toLocal(data.ultimaGraduacion);
@@ -601,15 +603,29 @@ export default function AlumnoFormPage() {
                             </div>
                         </div>
 
-                        {/* Celular */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Celular (WhatsApp)</label>
-                            <input
-                                type="text"
-                                placeholder="Ej: +54 9 11 1234-5678"
-                                className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
-                                {...register("celular")}
-                            />
+                        {/* DNI & Celular */}
+                        <div className="grid sm:grid-cols-2 gap-5">
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">DNI (Documento)</label>
+                                    <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Para Check-in QR</span>
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: 38123456"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-semibold shadow-inner"
+                                    {...register("dni")}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Celular (WhatsApp)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: +54 9 11 1234-5678"
+                                    className="w-full bg-slate-900/60 border border-slate-700/60 rounded-2xl px-5 py-3.5 text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all font-semibold shadow-inner"
+                                    {...register("celular")}
+                                />
+                            </div>
                         </div>
 
                         {/* Fecha de Nacimiento & Frecuencia Semanal */}

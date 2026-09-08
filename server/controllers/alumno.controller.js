@@ -45,6 +45,7 @@ export const getAlumnos = async (req, res) => {
                 _id: alumno._id,
                 nombre: alumno.nombre,
                 apellido: alumno.apellido,
+                dni: alumno.dni || "",
                 faja: alumno.faja,
                 grado: alumno.grado,
                 fotoUrl: alumno.fotoUrl,
@@ -84,11 +85,21 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, apellido, celular, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, diasParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual, clasesTramoManual } = req.body;
+        const { nombre, apellido, celular, dni, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, diasParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual, clasesTramoManual } = req.body;
+
+        const dniLimpio = dni ? dni.toString().replace(/\./g, '').trim() : null;
+        if (dniLimpio) {
+            const existeDni = await Alumno.findOne({ dni: dniLimpio });
+            if (existeDni) {
+                return res.status(400).json({ message: `El DNI ${dniLimpio} ya está registrado por ${existeDni.nombre} ${existeDni.apellido}` });
+            }
+        }
+
         const newAlumno = new Alumno({
             nombre,
             apellido,
             celular,
+            dni: dniLimpio || undefined,
             categoria,
             faja,
             grado,
@@ -206,6 +217,18 @@ export const updateAlumno = async (req, res) => {
         if (req.body.nombre) alumno.nombre = req.body.nombre;
         if (req.body.apellido !== undefined) alumno.apellido = req.body.apellido;
         if (req.body.celular !== undefined) alumno.celular = req.body.celular;
+        if (req.body.dni !== undefined) {
+            const dniLimpio = req.body.dni ? req.body.dni.toString().replace(/\./g, '').trim() : null;
+            if (dniLimpio) {
+                const existeDni = await Alumno.findOne({ dni: dniLimpio, _id: { $ne: req.params.id } });
+                if (existeDni) {
+                    return res.status(400).json({ message: `El DNI ${dniLimpio} ya está registrado por ${existeDni.nombre} ${existeDni.apellido}` });
+                }
+                alumno.dni = dniLimpio;
+            } else {
+                alumno.dni = undefined;
+            }
+        }
         if (req.body.categoria) alumno.categoria = req.body.categoria;
         if (req.body.trackProgreso !== undefined) alumno.trackProgreso = req.body.trackProgreso;
         
@@ -385,6 +408,81 @@ export const subirFotoAlumno = async (req, res) => {
         await alumno.save();
 
         res.json(alumno);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const checkInByDni = async (req, res) => {
+    try {
+        const { dni } = req.body;
+        if (!dni || dni.toString().trim() === '') {
+            return res.status(400).json({ message: 'Por favor, ingresá tu número de DNI.' });
+        }
+
+        const dniLimpio = dni.toString().replace(/\./g, '').trim();
+
+        // Buscar alumno por DNI (limpio o con puntos)
+        const alumno = await Alumno.findOne({ 
+            $or: [
+                { dni: dniLimpio },
+                { dni: dni.toString().trim() }
+            ]
+        });
+
+        if (!alumno) {
+            return res.status(404).json({ 
+                message: 'No encontramos ningún alumno registrado con este DNI. Consultá con tu profesor en recepción.' 
+            });
+        }
+
+        // Obtener la fecha actual ajustando al huso horario de Argentina (UTC-3)
+        const hoyLocal = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        const yyyy = hoyLocal.getUTCFullYear();
+        const mm = String(hoyLocal.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(hoyLocal.getUTCDate()).padStart(2, '0');
+        const fechaCheckIn = new Date(`${yyyy}-${mm}-${dd}T12:00:00.000Z`);
+
+        // Evitar duplicados comparando año, mes y día en UTC
+        const yaAsistio = alumno.asistencias.some(a => {
+            const d = new Date(a);
+            return d.getUTCFullYear() === yyyy &&
+                   (d.getUTCMonth() + 1) === parseInt(mm) &&
+                   d.getUTCDate() === parseInt(dd);
+        });
+
+        if (yaAsistio) {
+            return res.json({ 
+                alreadyCheckedIn: true,
+                message: `¡Hola ${alumno.nombre}! Tu asistencia de hoy ya fue registrada previamente.`,
+                alumno: {
+                    _id: alumno._id,
+                    nombre: alumno.nombre,
+                    apellido: alumno.apellido,
+                    faja: alumno.faja,
+                    grado: alumno.grado,
+                    categoria: alumno.categoria,
+                    fotoUrl: alumno.fotoUrl
+                }
+            });
+        }
+
+        alumno.asistencias.push(fechaCheckIn);
+        await alumno.save();
+
+        return res.json({ 
+            alreadyCheckedIn: false,
+            message: `¡Presente confirmado! Bienvenido ${alumno.nombre}.`,
+            alumno: {
+                _id: alumno._id,
+                nombre: alumno.nombre,
+                apellido: alumno.apellido,
+                faja: alumno.faja,
+                grado: alumno.grado,
+                categoria: alumno.categoria,
+                fotoUrl: alumno.fotoUrl
+            }
+        });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }

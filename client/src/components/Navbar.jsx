@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, DollarSign, Package, LogOut, UserPlus, Shield, Menu, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, Users, DollarSign, Package, LogOut, UserPlus, Shield, Menu, ChevronLeft, QrCode } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar({ isCollapsed, onToggle }) {
@@ -11,6 +11,7 @@ export default function Navbar({ isCollapsed, onToggle }) {
     const navLinks = [
         { to: "/", label: "Panel", icon: <LayoutDashboard size={20} />, active: isActive("/") },
         { to: "/alumnos", label: "Alumnos", icon: <Users size={20} />, active: isActive("/alumnos") },
+        { to: "/cartel-qr", label: "Cartel QR Dojo", icon: <QrCode size={20} />, active: isActive("/cartel-qr") },
     ];
 
     const canSeeEconomy = ['Admin', 'Encargado'].includes(user?.role);

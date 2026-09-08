@@ -5,12 +5,14 @@ import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
 import { getFajaStyle, grauLabel } from "../utils/fajas";
 import BeltBadge from "../components/BeltBadge";
+import QRCartelModal from "../components/QRCartelModal";
 import { useAuth } from "../context/AuthContext";
 
 export default function AlumnosPage() {
     const { user } = useAuth();
     const [alumnos, setAlumnos] = useState([]);
     const [filtro, setFiltro] = useState("");
+    const [showQRCartel, setShowQRCartel] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => { cargar(); }, []);
@@ -91,9 +93,13 @@ export default function AlumnosPage() {
         }
     }
 
-    const lista = alumnos.filter(a =>
-        a.nombre.toLowerCase().includes(filtro.toLowerCase())
-    );
+    const lista = alumnos.filter(a => {
+        const q = filtro.toLowerCase().trim();
+        if (!q) return true;
+        return a.nombre.toLowerCase().includes(q) ||
+               (a.apellido && a.apellido.toLowerCase().includes(q)) ||
+               (a.dni && a.dni.toString().includes(q));
+    });
 
     // Fecha local de hoy p/ validar UI
     const hoyStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
@@ -107,7 +113,7 @@ export default function AlumnosPage() {
                     <span className="text-slate-400">🔍</span>
                     <input
                         type="text"
-                        placeholder="Buscar por nombre..."
+                        placeholder="Buscar por nombre, apellido o DNI..."
                         className="flex-1 bg-transparent py-4 text-lg outline-none text-white placeholder-slate-500"
                         value={filtro}
                         onChange={e => setFiltro(e.target.value)}
@@ -120,13 +126,24 @@ export default function AlumnosPage() {
                     )}
                 </div>
 
-                <button
-                    onClick={() => navigate('/nuevo')}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap uppercase tracking-wider"
-                >
-                    <span className="text-2xl leading-none">+</span>
-                    Nuevo Alumno
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setShowQRCartel(true)}
+                        className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-6 py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap uppercase tracking-wider"
+                        title="Ver e Imprimir Cartel QR para el Dojo"
+                    >
+                        <span className="text-xl">📲</span>
+                        <span>Cartel QR Dojo</span>
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/nuevo')}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap uppercase tracking-wider"
+                    >
+                        <span className="text-2xl leading-none">+</span>
+                        Nuevo Alumno
+                    </button>
+                </div>
             </div>
 
             {/* Lista */}
@@ -190,6 +207,11 @@ export default function AlumnosPage() {
                                                         Elegible
                                                     </span>
                                                 )}
+                                                {a.dni && (
+                                                    <span className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 tracking-wider">
+                                                        DNI: {a.dni}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -243,6 +265,12 @@ export default function AlumnosPage() {
                     })}
                 </div>
             )}
+
+            {/* Modal para imprimir o ver el Cartel QR del Dojo */}
+            <QRCartelModal 
+                isOpen={showQRCartel} 
+                onClose={() => setShowQRCartel(false)} 
+            />
         </div>
     );
 }

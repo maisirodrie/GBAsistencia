@@ -9,7 +9,8 @@ import {
     addAsistencia,
     removeAsistencia,
     revertPromotion,
-    checkIn
+    checkIn,
+    checkInByDni
 } from '../controllers/alumno.controller.js';
 import { generarCartaoPDF } from '../controllers/pdf.controller.js';
 import multer from 'multer';
@@ -60,6 +61,7 @@ const isEncargadoOrAdmin = hasRole(['Admin', 'Encargado']);
 
 router.get('/', getAlumnos);
 router.post('/', isGestion, createAlumno);
+router.post('/checkin-dni', checkInByDni);
 router.get('/:id', getAlumno);
 router.get('/:id/pdf', generarCartaoPDF);
 router.put('/:id', isGestion, updateAlumno);

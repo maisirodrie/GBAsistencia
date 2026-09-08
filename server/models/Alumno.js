@@ -11,6 +11,13 @@ const alumnoSchema = new mongoose.Schema({
         trim: true,
         default: ""
     },
+    dni: {
+        type: String,
+        trim: true,
+        sparse: true,
+        unique: true,
+        set: v => (v === null || v === undefined || (typeof v === 'string' && v.trim() === '')) ? undefined : v.toString().replace(/\./g, '').trim()
+    },
     celular: {
         type: String,
         trim: true,
