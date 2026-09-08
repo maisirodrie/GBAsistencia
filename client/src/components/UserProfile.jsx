@@ -25,11 +25,11 @@ export default function UserProfile() {
 
     return (
         <div className="relative" ref={dropdownRef}>
-            {/* Trigger Button: TailAdmin avatar circular + nombre + chevron */}
+            {/* Trigger Button: TailAdmin avatar circular + nombre minimalista + chevron */}
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2.5 text-slate-300 hover:text-white transition-colors focus:outline-none py-1 px-1.5 rounded-2xl hover:bg-slate-800/50"
+                className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors focus:outline-none p-1 rounded-2xl hover:bg-slate-800/50"
                 aria-expanded={isOpen}
             >
                 {/* Avatar circular estilo TailAdmin */}
@@ -37,18 +37,13 @@ export default function UserProfile() {
                     {inicial}
                 </div>
 
-                {/* Nombre y rol del usuario */}
-                <div className="hidden sm:flex flex-col text-left min-w-0">
-                    <span className="text-xs font-bold text-white tracking-tight truncate max-w-[160px] lg:max-w-[220px]">
-                        {user?.nombre} {user?.apellido}
-                    </span>
-                    <span className="text-[10px] font-medium text-slate-400 capitalize truncate">
-                        {user?.role?.toLowerCase() || "usuario"}
-                    </span>
-                </div>
+                {/* Solo primer nombre minimalista estilo TailAdmin */}
+                <span className="hidden sm:block text-xs font-semibold text-slate-200 tracking-tight">
+                    {primerNombre}
+                </span>
 
                 <ChevronDown 
-                    size={16} 
+                    size={15} 
                     className={`text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180 text-white" : ""}`} 
                 />
             </button>
