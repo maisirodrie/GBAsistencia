@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import AlumnosPage from "./pages/AlumnosPage";
 import AlumnoFormPage from "./pages/AlumnoFormPage";
@@ -18,7 +18,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 function AppContent() {
     const location = useLocation();
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     
     const isPublic = location.pathname === "/checkin" || 
                      location.pathname === "/asistencia" ||
@@ -26,35 +26,47 @@ function AppContent() {
                      location.pathname.startsWith("/mi-pase/") || 
                      location.pathname === "/login";
 
-    const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+    if (isPublic) {
+        return (
+            <div className="min-h-screen bg-[#070b14] text-white font-sans">
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/checkin" element={<CheckInPage />} />
+                    <Route path="/asistencia" element={<AutoCheckInPage />} />
+                    <Route path="/cartel-qr" element={<QRCartelPage />} />
+                    <Route path="/mi-pase/:id" element={<PublicQRPage />} />
+                </Routes>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex min-h-screen bg-slate-900 text-white flex-col lg:flex-row font-sans overflow-x-hidden">
-            {!isPublic && <Header isSidebarCollapsed={isSidebarCollapsed} />}
-            {!isPublic && <Navbar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />}
-            <main className={`flex-1 transition-all duration-300 ${!isPublic ? `pt-44 sm:pt-48 lg:pt-20 pb-28 sm:pb-32 lg:pb-0 ${isSidebarCollapsed ? "lg:pl-20" : "lg:pl-72"}` : "w-full h-screen overflow-hidden"}`}>
-                <div className={`${!isPublic ? "container mx-auto px-4 py-8" : "w-full h-full"}`}>
-                    <Routes>
-                        {/* Rutas Públicas */}
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/checkin" element={<CheckInPage />} />
-                        <Route path="/asistencia" element={<AutoCheckInPage />} />
-                        <Route path="/cartel-qr" element={<QRCartelPage />} />
-                        <Route path="/mi-pase/:id" element={<PublicQRPage />} />
+        <div className="flex h-screen overflow-hidden bg-[#070b14] text-white font-sans">
+            {/* Sidebar (TailAdmin drawer mobile / static desktop) */}
+            <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-                        {/* Rutas Protegidas */}
-                        <Route element={<ProtectedRoute />}>
-                            <Route path="/" element={<DashboardPage />} />
-                            <Route path="/alumnos" element={<AlumnosPage />} />
-                            <Route path="/nuevo" element={<AlumnoFormPage />} />
-                            <Route path="/editar/:id" element={<AlumnoFormPage />} />
-                            <Route path="/finanzas" element={<FinanzasPage />} />
-                            <Route path="/usuarios" element={<UsersPage />} />
-                            <Route path="/perfil/cambiar-password" element={<ChangePasswordPage />} />
-                        </Route>
-                    </Routes>
-                </div>
-            </main>
+            {/* Content Area */}
+            <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+                {/* Header (TailAdmin sticky top header) */}
+                <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+                {/* Main Content */}
+                <main className="flex-1">
+                    <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+                        <Routes>
+                            <Route element={<ProtectedRoute />}>
+                                <Route path="/" element={<DashboardPage />} />
+                                <Route path="/alumnos" element={<AlumnosPage />} />
+                                <Route path="/nuevo" element={<AlumnoFormPage />} />
+                                <Route path="/editar/:id" element={<AlumnoFormPage />} />
+                                <Route path="/finanzas" element={<FinanzasPage />} />
+                                <Route path="/usuarios" element={<UsersPage />} />
+                                <Route path="/perfil/cambiar-password" element={<ChangePasswordPage />} />
+                            </Route>
+                        </Routes>
+                    </div>
+                </main>
+            </div>
         </div>
     );
 }

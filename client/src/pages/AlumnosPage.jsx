@@ -107,14 +107,14 @@ export default function AlumnosPage() {
     return (
         <div className="max-w-5xl mx-auto pb-20">
 
-            {/* Header + Buscador */}
-            <div className="mb-8 flex flex-col md:flex-row gap-4 items-stretch md:items-center">
-                <div className="flex-1 flex gap-3 items-center bg-slate-800/50 overflow-hidden shadow-lg border border-slate-700/50 rounded-2xl px-4 transition-all focus-within:border-blue-500/50">
+            {/* Header + Buscador y Botones Responsivos */}
+            <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+                <div className="flex-1 flex gap-3 items-center bg-slate-800/60 overflow-hidden shadow-lg border border-slate-700/60 rounded-2xl px-4 transition-all focus-within:border-red-500/50">
                     <span className="text-slate-400">🔍</span>
                     <input
                         type="text"
                         placeholder="Buscar por nombre, apellido o DNI..."
-                        className="flex-1 bg-transparent py-4 text-lg outline-none text-white placeholder-slate-500"
+                        className="flex-1 bg-transparent py-3.5 sm:py-4 text-base sm:text-lg outline-none text-white placeholder-slate-500"
                         value={filtro}
                         onChange={e => setFiltro(e.target.value)}
                     />
@@ -126,22 +126,22 @@ export default function AlumnosPage() {
                     )}
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3">
                     <button
                         onClick={() => setShowQRCartel(true)}
-                        className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-6 py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap uppercase tracking-wider"
+                        className="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-white px-3 sm:px-5 py-3 sm:py-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 uppercase tracking-wider text-xs sm:text-sm text-center"
                         title="Ver e Imprimir Cartel QR para la Academia"
                     >
-                        <span className="text-xl">📲</span>
-                        <span>Cartel QR Academia</span>
+                        <span className="text-lg">📲</span>
+                        <span>Cartel QR</span>
                     </button>
 
                     <button
                         onClick={() => navigate('/nuevo')}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap uppercase tracking-wider"
+                        className="bg-red-600 hover:bg-red-500 text-white px-3 sm:px-6 py-3 sm:py-4 rounded-2xl font-black shadow-lg shadow-red-900/30 flex items-center justify-center gap-2 transition-all active:scale-95 uppercase tracking-wider text-xs sm:text-sm text-center"
                     >
-                        <span className="text-2xl leading-none">+</span>
-                        Nuevo Alumno
+                        <span className="text-xl leading-none">+</span>
+                        <span>Nuevo Alumno</span>
                     </button>
                 </div>
             </div>
