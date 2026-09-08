@@ -2,13 +2,14 @@ import QRCode from "react-qr-code";
 import { Printer, Copy, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { showToast } from "../utils/alerts";
+import { printCartelQR } from "../utils/printCartel";
 
 export default function QRCartelPage() {
     const navigate = useNavigate();
     const checkInUrl = `${window.location.origin}/asistencia`;
 
     const handlePrint = () => {
-        window.print();
+        printCartelQR("cartel-dojo");
     };
 
     const handleCopy = () => {

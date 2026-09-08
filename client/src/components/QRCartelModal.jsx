@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import QRCode from "react-qr-code";
 import { Printer, Copy, X, ExternalLink, QrCode } from "lucide-react";
 import { showToast } from "../utils/alerts";
+import { printCartelQR } from "../utils/printCartel";
 
 export default function QRCartelModal({ isOpen, onClose }) {
     const printRef = useRef(null);
@@ -23,7 +24,7 @@ export default function QRCartelModal({ isOpen, onClose }) {
     const checkInUrl = `${window.location.origin}/asistencia`;
 
     const handlePrint = () => {
-        window.print();
+        printCartelQR("printable-cartel");
     };
 
     const handleCopy = () => {
