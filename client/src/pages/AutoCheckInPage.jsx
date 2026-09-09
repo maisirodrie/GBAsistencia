@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { checkInByDni } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 import { getDeviceFingerprint } from "../utils/fingerprint";
@@ -20,11 +21,20 @@ function getTodayStr() {
 }
 
 export default function AutoCheckInPage() {
+    const [searchParams] = useSearchParams();
+    const qrToken = searchParams.get("token"); // Si viene escaneado de pantalla en vivo
+
     const [dni, setDni] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isFraudBlocked, setIsFraudBlocked] = useState(false);
+    const [isOutOfRange, setIsOutOfRange] = useState(false);
+    const [isQrExpired, setIsQrExpired] = useState(false);
     const [countdown, setCountdown] = useState(0);
+
+    // Geolocalización GPS (para el cartel impreso)
+    const [coords, setCoords] = useState(null);
+    const [gpsStatus, setGpsStatus] = useState("idle"); // idle, locating, success, denied
 
     // Modo Recepción / Kiosco (para tablets compartidas en recepción del Dojo)
     const [isKiosk, setIsKiosk] = useState(() => sessionStorage.getItem("gb_kiosk_mode") === "true");
@@ -32,6 +42,27 @@ export default function AutoCheckInPage() {
     const [showPinModal, setShowPinModal] = useState(false);
     const [pinInput, setPinInput] = useState("");
     const [pinError, setPinError] = useState("");
+
+    // Solicitar GPS automáticamente si no viene de pantalla en vivo y no es Kiosco
+    useEffect(() => {
+        if (!qrToken && !isKiosk && "geolocation" in navigator) {
+            setGpsStatus("locating");
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setCoords({
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    });
+                    setGpsStatus("success");
+                },
+                (err) => {
+                    console.warn("Geolocation warning:", err.message);
+                    setGpsStatus("denied");
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+        }
+    }, [qrToken, isKiosk]);
 
     // Cargar si este dispositivo ya tiene asistencia registrada para hoy
     const [result, setResult] = useState(() => {
@@ -92,6 +123,8 @@ export default function AutoCheckInPage() {
         setResult(null);
         setError(null);
         setIsFraudBlocked(false);
+        setIsOutOfRange(false);
+        setIsQrExpired(false);
         setDni("");
         setTimeout(() => inputRef.current?.focus(), 100);
     };
@@ -102,19 +135,41 @@ export default function AutoCheckInPage() {
         if (!clean) {
             setError("Por favor, ingresá tu número de DNI.");
             setIsFraudBlocked(false);
+            setIsOutOfRange(false);
+            setIsQrExpired(false);
             return;
         }
 
         setLoading(true);
         setError(null);
         setIsFraudBlocked(false);
+        setIsOutOfRange(false);
+        setIsQrExpired(false);
 
         const deviceId = getOrCreateDeviceId();
         const deviceFingerprint = await getDeviceFingerprint();
         const todayStr = getTodayStr();
 
+        // Si no tenemos coords y se necesita GPS, intentar obtener una rápida
+        let activeCoords = coords;
+        if (!activeCoords && !qrToken && !isKiosk && "geolocation" in navigator) {
+            try {
+                activeCoords = await new Promise((resolve) => {
+                    navigator.geolocation.getCurrentPosition(
+                        (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+                        () => resolve(null),
+                        { enableHighAccuracy: true, timeout: 5000 }
+                    );
+                });
+                if (activeCoords) {
+                    setCoords(activeCoords);
+                    setGpsStatus("success");
+                }
+            } catch {}
+        }
+
         try {
-            const res = await checkInByDni(clean, deviceId, deviceFingerprint, isKiosk, kioskPin);
+            const res = await checkInByDni(clean, deviceId, deviceFingerprint, isKiosk, kioskPin, activeCoords, qrToken);
             const dataWithDate = {
                 ...res.data,
                 fecha: res.data.fecha || todayStr
@@ -130,16 +185,15 @@ export default function AutoCheckInPage() {
             const data = err.response?.data;
             const msg = data?.message || "No se pudo registrar la asistencia. Reintentá.";
 
-            if (status === 403 && data?.isDeviceLocked) {
-                setIsFraudBlocked(true);
-            } else {
-                setIsFraudBlocked(false);
-            }
+            setIsFraudBlocked(Boolean(status === 403 && data?.isDeviceLocked));
+            setIsOutOfRange(Boolean(status === 403 && data?.isOutOfRange));
+            setIsQrExpired(Boolean(status === 400 && data?.isQrExpired));
             setError(msg);
         } finally {
             setLoading(false);
         }
     };
+
 
     // Activar o desactivar modo kiosco mediante PIN
     const handleVerifyPin = (e) => {
@@ -236,8 +290,27 @@ export default function AutoCheckInPage() {
                         {/* Status bar header */}
                         <div className="w-full text-center mb-6">
                             <div className="inline-flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 rounded-full px-4 py-1.5 text-xs font-bold text-slate-300 mb-3 shadow-inner">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                                Academia Activa
+                                {qrToken ? (
+                                    <>
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span>⏱️ Pantalla en Vivo (Token Activo)</span>
+                                    </>
+                                ) : gpsStatus === "success" ? (
+                                    <>
+                                        <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                        <span>📍 Ubicación Dojo Verificada</span>
+                                    </>
+                                ) : gpsStatus === "locating" ? (
+                                    <>
+                                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+                                        <span>📡 Verificando ubicación...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                                        <span>🥋 Registro Presencial</span>
+                                    </>
+                                )}
                             </div>
                             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                                 ¡Bienvenido!
@@ -259,6 +332,8 @@ export default function AutoCheckInPage() {
                                     onChange={(e) => {
                                         setError(null);
                                         setIsFraudBlocked(false);
+                                        setIsOutOfRange(false);
+                                        setIsQrExpired(false);
                                         setDni(e.target.value.replace(/\D/g, ""));
                                     }}
                                     placeholder="Ej: 38123456"
@@ -277,22 +352,32 @@ export default function AutoCheckInPage() {
                                 )}
                             </div>
 
-                            {/* Alerta de Error Común o Bloqueo por Dispositivo */}
+                            {/* Alerta de Error: Antifraude, GPS Fuera de Radio, QR Caducado o Error General */}
                             {error && (
                                 <div className={`rounded-2xl p-4 text-center text-xs font-bold flex flex-col gap-2 ${
-                                    isFraudBlocked 
+                                    isFraudBlocked || isOutOfRange || isQrExpired
                                         ? "bg-amber-500/15 border-2 border-amber-500/40 text-amber-300"
                                         : "bg-red-500/15 border border-red-500/40 text-red-400"
                                 }`}>
                                     <div className="flex items-center justify-center gap-2 text-sm font-black">
-                                        <span>{isFraudBlocked ? "🛑" : "⚠️"}</span>
-                                        <span>{isFraudBlocked ? "Dispositivo ya registrado hoy" : "Atención"}</span>
+                                        <span>
+                                            {isOutOfRange ? "📍" : isQrExpired ? "⏱️" : isFraudBlocked ? "🛑" : "⚠️"}
+                                        </span>
+                                        <span>
+                                            {isOutOfRange 
+                                                ? "Fuera del Radio de la Academia" 
+                                                : isQrExpired 
+                                                ? "Código QR Caducado" 
+                                                : isFraudBlocked 
+                                                ? "Dispositivo ya registrado hoy" 
+                                                : "Atención"}
+                                        </span>
                                     </div>
                                     <p className="leading-relaxed">{error}</p>
                                     
-                                    {isFraudBlocked && (
+                                    {(isFraudBlocked || isOutOfRange) && (
                                         <div className="mt-2 pt-2 border-t border-amber-500/20 text-[11px] text-amber-200/80 flex flex-col gap-2">
-                                            <span>¿Estás en recepción o compartís este dispositivo con un familiar?</span>
+                                            <span>¿Estás en el dojo o necesitás asistencia del profesor?</span>
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPinModal(true)}
@@ -304,6 +389,7 @@ export default function AutoCheckInPage() {
                                     )}
                                 </div>
                             )}
+
 
                             {/* Submit Button */}
                             <button

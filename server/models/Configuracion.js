@@ -21,8 +21,28 @@ const configuracionSchema = new mongoose.Schema({
     moneda: {
         type: String,
         default: '$'
+    },
+    // Geolocalización y Control de Asistencia Presencial
+    dojoLat: {
+        type: Number,
+        default: null
+    },
+    dojoLng: {
+        type: Number,
+        default: null
+    },
+    dojoRadioMetros: {
+        type: Number,
+        default: 200, // 200 metros por defecto
+        min: 20,
+        max: 5000
+    },
+    gpsObligatorio: {
+        type: Boolean,
+        default: true
     }
 }, {
+
     timestamps: true
 });
 

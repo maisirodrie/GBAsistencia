@@ -10,8 +10,12 @@ import {
     removeAsistencia,
     revertPromotion,
     checkIn,
-    checkInByDni
+    checkInByDni,
+    getQrToken,
+    getDojoLocation,
+    setDojoLocation
 } from '../controllers/alumno.controller.js';
+
 import { generarCartaoPDF } from '../controllers/pdf.controller.js';
 import multer from 'multer';
 import path from 'path';
@@ -64,6 +68,8 @@ const isEncargadoOrAdmin = hasRole(['Admin', 'Encargado']);
 // No requieren sesión de profesor / admin
 // ==========================================
 router.post('/checkin-dni', checkInByDni);
+router.get('/qr-token', getQrToken);
+router.get('/dojo-location', getDojoLocation);
 router.post('/:id/checkin', checkIn);
 router.get('/:id', getAlumno);
 
@@ -72,7 +78,9 @@ router.get('/:id', getAlumno);
 // Requieren inicio de sesión con token válido
 // ==========================================
 router.get('/', validateToken, getAlumnos);
+router.post('/dojo-location', validateToken, isGestion, setDojoLocation);
 router.post('/', validateToken, isGestion, createAlumno);
+
 router.get('/:id/pdf', validateToken, generarCartaoPDF);
 router.put('/:id', validateToken, isGestion, updateAlumno);
 router.delete('/:id', validateToken, isEncargadoOrAdmin, deleteAlumno);

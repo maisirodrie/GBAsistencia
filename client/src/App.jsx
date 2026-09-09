@@ -8,6 +8,7 @@ import FinanzasPage from "./pages/FinanzasPage";
 import CheckInPage from "./pages/CheckInPage";
 import AutoCheckInPage from "./pages/AutoCheckInPage";
 import QRCartelPage from "./pages/QRCartelPage";
+import PantallaQRPage from "./pages/PantallaQRPage";
 import PublicQRPage from "./pages/PublicQRPage";
 import LoginPage from "./pages/LoginPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
@@ -22,6 +23,7 @@ function AppContent() {
     const isPublic = location.pathname === "/checkin" || 
                      location.pathname === "/asistencia" ||
                      location.pathname === "/cartel-qr" ||
+                     location.pathname === "/pantalla-qr" ||
                      location.pathname.startsWith("/mi-pase/") || 
                      location.pathname === "/login";
 
@@ -33,11 +35,13 @@ function AppContent() {
                     <Route path="/checkin" element={<CheckInPage />} />
                     <Route path="/asistencia" element={<AutoCheckInPage />} />
                     <Route path="/cartel-qr" element={<QRCartelPage />} />
+                    <Route path="/pantalla-qr" element={<PantallaQRPage />} />
                     <Route path="/mi-pase/:id" element={<PublicQRPage />} />
                 </Routes>
             </div>
         );
     }
+
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#070b14] text-white font-sans">

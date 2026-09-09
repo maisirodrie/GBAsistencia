@@ -1,12 +1,22 @@
 import QRCode from "react-qr-code";
-import { Printer, Copy, ArrowLeft } from "lucide-react";
+import { Printer, Copy, ArrowLeft, MapPin, Tv, Loader2, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { showToast } from "../utils/alerts";
 import { printCartelQR } from "../utils/printCartel";
+import { getDojoLocation, setDojoLocation } from "../api/alumnos";
 
 export default function QRCartelPage() {
     const navigate = useNavigate();
     const checkInUrl = `${window.location.origin}/asistencia`;
+    const [dojoConfig, setDojoConfig] = useState(null);
+    const [calibrating, setCalibrating] = useState(false);
+
+    useEffect(() => {
+        getDojoLocation()
+            .then((res) => setDojoConfig(res.data))
+            .catch(() => {});
+    }, []);
 
     const handlePrint = () => {
         printCartelQR("cartel-dojo");
@@ -17,31 +27,102 @@ export default function QRCartelPage() {
         showToast("Enlace de check-in copiado al portapapeles", "success");
     };
 
+    const handleCalibrateLocation = () => {
+        if (!("geolocation" in navigator)) {
+            showToast("Tu navegador no soporta geolocalización.", "error");
+            return;
+        }
+
+        setCalibrating(true);
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const res = await setDojoLocation({
+                        lat,
+                        lng,
+                        radius: 200,
+                        gpsObligatorio: true
+                    });
+                    setDojoConfig(res.data.config);
+                    showToast("¡Ubicación del Dojo calibrada con éxito en este punto! (Radio: 200m)", "success");
+                } catch (err) {
+                    showToast(err.response?.data?.message || "No se pudo guardar la ubicación.", "error");
+                } finally {
+                    setCalibrating(false);
+                }
+            },
+            (err) => {
+                setCalibrating(false);
+                showToast(`No se pudo obtener el GPS: ${err.message}. Asegurate de activar la ubicación.`, "error");
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
+
     return (
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 sm:p-8">
             {/* Top Toolbar (Hidden on print) */}
-            <div className="w-full max-w-lg flex items-center justify-between mb-6 print:hidden">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-slate-400 hover:text-white font-bold text-xs uppercase tracking-widest bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl transition-all"
-                >
-                    <ArrowLeft size={16} />
-                    <span>Volver</span>
-                </button>
-                <div className="flex gap-2">
+            <div className="w-full max-w-lg flex flex-col gap-3 mb-6 print:hidden">
+                <div className="flex items-center justify-between">
                     <button
-                        onClick={handleCopy}
-                        className="flex items-center gap-2 text-slate-300 hover:text-white bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 text-slate-400 hover:text-white font-bold text-xs uppercase tracking-widest bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl transition-all"
                     >
-                        <Copy size={16} />
-                        <span>Copiar URL</span>
+                        <ArrowLeft size={16} />
+                        <span>Volver</span>
                     </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => navigate("/pantalla-qr")}
+                            className="flex items-center gap-2 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all"
+                            title="Abrir vista para TV o Tablet con QR rotativo"
+                        >
+                            <Tv size={16} />
+                            <span>Pantalla en Vivo</span>
+                        </button>
+                        <button
+                            onClick={handlePrint}
+                            className="flex items-center gap-2 text-white bg-red-600 hover:bg-red-500 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-red-900/30 active:scale-95"
+                        >
+                            <Printer size={16} />
+                            <span>Imprimir</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Dojo GPS Geofencing Status Bar */}
+                <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 text-slate-300">
+                        <MapPin size={16} className={dojoConfig?.dojoLat ? "text-emerald-400" : "text-amber-400"} />
+                        {dojoConfig?.dojoLat ? (
+                            <span className="text-[11px] font-bold">
+                                GPS Dojo: <span className="text-emerald-400">Activo</span> ({dojoConfig.dojoRadioMetros}m de radio)
+                            </span>
+                        ) : (
+                            <span className="text-[11px] font-bold text-amber-300">
+                                Sin calibrar (Tocá para fijar aquí)
+                            </span>
+                        )}
+                    </div>
+
                     <button
-                        onClick={handlePrint}
-                        className="flex items-center gap-2 text-white bg-red-600 hover:bg-red-500 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-red-900/30 active:scale-95"
+                        onClick={handleCalibrateLocation}
+                        disabled={calibrating}
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all"
                     >
-                        <Printer size={16} />
-                        <span>Imprimir</span>
+                        {calibrating ? (
+                            <>
+                                <Loader2 size={12} className="animate-spin text-red-500" />
+                                <span>Obteniendo GPS...</span>
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 size={12} className="text-emerald-400" />
+                                <span>Calibrar Aquí</span>
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

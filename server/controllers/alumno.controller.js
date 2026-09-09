@@ -1,6 +1,8 @@
 import Alumno from '../models/Alumno.js';
 import DeviceCheckIn from '../models/DeviceCheckIn.js';
+import Configuracion from '../models/Configuracion.js';
 import { KIOSK_PIN } from '../config.js';
+import { calculateDistanceMeters, generateQrToken, verifyQrToken } from '../utils/geoAndToken.js';
 import { getFechaInicioFaja, getFechaUltimoGrado, getRequisitosAcumulados, evaluarGraduacion } from '../constants/graduation.js';
 
 
@@ -417,7 +419,7 @@ export const subirFotoAlumno = async (req, res) => {
 
 export const checkInByDni = async (req, res) => {
     try {
-        const { dni, deviceId, deviceFingerprint, isKiosk, kioskPin } = req.body;
+        const { dni, deviceId, deviceFingerprint, isKiosk, kioskPin, coords, qrToken } = req.body;
         if (!dni || dni.toString().trim() === '') {
             return res.status(400).json({ message: 'Por favor, ingresá tu número de DNI.' });
         }
@@ -449,7 +451,47 @@ export const checkInByDni = async (req, res) => {
         // Validar si está en modo Kiosco verificado
         const isKioskMode = Boolean(isKiosk && kioskPin && kioskPin.toString().trim() === KIOSK_PIN.toString().trim());
 
-        // Control antifraude: 1 dispositivo físico por día (salvo modo Kiosco)
+        // 1. Verificación de Token QR de Pantalla (si proviene de pantalla rotativa)
+        let tokenVerified = false;
+        if (qrToken) {
+            tokenVerified = verifyQrToken(qrToken);
+            if (!tokenVerified) {
+                return res.status(400).json({
+                    isQrExpired: true,
+                    message: 'Este código QR de pantalla ha caducado o fue reenviado. Por favor, escaneá el código actualizado que se muestra en la pantalla del dojo.'
+                });
+            }
+        }
+
+        // 2. Verificación de Geolocalización GPS (para el cartel impreso en la pared)
+        // Solo se exige si no proviene de un token de pantalla en vivo verificado y no es modo kiosco
+        if (!isKioskMode && !tokenVerified) {
+            const config = await Configuracion.findOne();
+            if (config && config.gpsObligatorio && config.dojoLat && config.dojoLng) {
+                if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+                    return res.status(400).json({
+                        isLocationRequired: true,
+                        message: 'Se requiere tu ubicación GPS para verificar que estás presente en el dojo. Por favor, permití el acceso a la ubicación en tu celular.'
+                    });
+                }
+
+                const distanciaMetros = calculateDistanceMeters(coords.lat, coords.lng, config.dojoLat, config.dojoLng);
+                const radioPermitido = config.dojoRadioMetros || 200;
+
+                if (distanciaMetros > radioPermitido) {
+                    const distTexto = distanciaMetros >= 1000 
+                        ? `${(distanciaMetros / 1000).toFixed(1)} km` 
+                        : `${distanciaMetros} metros`;
+                    return res.status(403).json({
+                        isOutOfRange: true,
+                        distanciaMetros,
+                        message: `Estás fuera del radio de la academia (a ${distTexto}). Por normas de seguridad, la asistencia debe registrarse presencialmente en el dojo.`
+                    });
+                }
+            }
+        }
+
+        // 3. Control antifraude: 1 dispositivo físico por día (salvo modo Kiosco)
         // Se valida tanto por el deviceId (localStorage) como por la huella de hardware (deviceFingerprint)
         if (!isKioskMode && (deviceId || deviceFingerprint)) {
             const orConditions = [];
@@ -554,3 +596,63 @@ export const checkInByDni = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
+/* ── Generar Token para Código QR Rotativo (Pantalla en Vivo) ── */
+export const getQrToken = async (req, res) => {
+    try {
+        const token = generateQrToken(45); // 45 segundos de validez
+        res.json({ token, expiresIn: 45 });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/* ── Obtener Configuración de Ubicación del Dojo ── */
+export const getDojoLocation = async (req, res) => {
+    try {
+        let config = await Configuracion.findOne();
+        if (!config) config = await Configuracion.create({});
+        res.json({
+            dojoLat: config.dojoLat,
+            dojoLng: config.dojoLng,
+            dojoRadioMetros: config.dojoRadioMetros || 200,
+            gpsObligatorio: config.gpsObligatorio !== false
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/* ── Guardar / Calibrar Ubicación del Dojo ── */
+export const setDojoLocation = async (req, res) => {
+    try {
+        const { lat, lng, radius, gpsObligatorio } = req.body;
+        let config = await Configuracion.findOne();
+        if (!config) config = new Configuracion();
+
+        if (lat != null && lng != null) {
+            config.dojoLat = Number(lat);
+            config.dojoLng = Number(lng);
+        }
+        if (radius != null) {
+            config.dojoRadioMetros = Number(radius);
+        }
+        if (gpsObligatorio !== undefined) {
+            config.gpsObligatorio = Boolean(gpsObligatorio);
+        }
+
+        await config.save();
+        res.json({
+            message: 'Ubicación y parámetros del Dojo actualizados con éxito.',
+            config: {
+                dojoLat: config.dojoLat,
+                dojoLng: config.dojoLng,
+                dojoRadioMetros: config.dojoRadioMetros,
+                gpsObligatorio: config.gpsObligatorio
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+

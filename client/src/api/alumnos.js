@@ -9,8 +9,12 @@ export const addAsistencia   = (id, fecha)  => api.post(`/alumnos/${id}/asistenc
 export const removeAsistencia = (id, fecha) => api.delete(`/alumnos/${id}/asistencia`, { data: { fecha } });
 export const uploadFoto      = (id, formData) => api.post(`/alumnos/${id}/foto`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const checkIn         = (id)         => api.post(`/alumnos/${id}/checkin`);
-export const checkInByDni    = (dni, deviceId, deviceFingerprint, isKiosk = false, kioskPin = '') => api.post('/alumnos/checkin-dni', { dni, deviceId, deviceFingerprint, isKiosk, kioskPin });
+export const checkInByDni    = (dni, deviceId, deviceFingerprint, isKiosk = false, kioskPin = '', coords = null, qrToken = null) => 
+    api.post('/alumnos/checkin-dni', { dni, deviceId, deviceFingerprint, isKiosk, kioskPin, coords, qrToken });
 export const revertPromotion = (id)         => api.post(`/alumnos/${id}/revert-promotion`);
+export const getQrToken      = ()           => api.get('/alumnos/qr-token');
+export const getDojoLocation = ()           => api.get('/alumnos/dojo-location');
+export const setDojoLocation = (data)       => api.post('/alumnos/dojo-location', data);
 
 export const descargarPDF = async (id, nombreAlumno = 'alumno') => {
     const response = await api.get(`/alumnos/${id}/pdf`, { responseType: 'blob' });
