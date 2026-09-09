@@ -94,18 +94,18 @@ export default function QRCartelPage() {
 
                 {/* Dojo GPS Geofencing Status Bar */}
                 <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-slate-300">
-                        <MapPin size={16} className={dojoConfig?.dojoLat ? "text-emerald-400" : "text-amber-400"} />
-                        {dojoConfig?.dojoLat ? (
-                            <span className="text-[11px] font-bold">
-                                GPS Dojo: <span className="text-emerald-400">Activo</span> ({dojoConfig.dojoRadioMetros}m de radio)
+                    <div className="flex items-center gap-2.5 text-slate-300">
+                        <MapPin size={18} className="text-emerald-400 flex-shrink-0" />
+                        <div className="flex flex-col">
+                            <span className="text-[11px] font-black text-white leading-tight">
+                                Av. Tomás Guido 1745, Posadas
                             </span>
-                        ) : (
-                            <span className="text-[11px] font-bold text-amber-300">
-                                Sin calibrar (Tocá para fijar aquí)
+                            <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
+                                GPS Dojo: <span className="text-emerald-400 font-bold">Activo</span> ({dojoConfig?.dojoRadioMetros || 200}m de tolerancia)
                             </span>
-                        )}
+                        </div>
                     </div>
+
 
                     <button
                         onClick={handleCalibrateLocation}

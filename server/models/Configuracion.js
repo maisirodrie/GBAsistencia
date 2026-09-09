@@ -23,17 +23,21 @@ const configuracionSchema = new mongoose.Schema({
         default: '$'
     },
     // Geolocalización y Control de Asistencia Presencial
+    dojoDireccion: {
+        type: String,
+        default: 'Av. Tomás Guido 1745, Posadas, Misiones'
+    },
     dojoLat: {
         type: Number,
-        default: null
+        default: -27.364711 // Av. Tomás Guido 1745, Posadas
     },
     dojoLng: {
         type: Number,
-        default: null
+        default: -55.912295
     },
     dojoRadioMetros: {
         type: Number,
-        default: 200, // 200 metros por defecto
+        default: 200, // 200 metros de tolerancia
         min: 20,
         max: 5000
     },
