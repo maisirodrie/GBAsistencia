@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { checkInByDni } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
+import { getDeviceFingerprint } from "../utils/fingerprint";
 
 // Generar o recuperar ID único persistente del dispositivo
 function getOrCreateDeviceId() {
@@ -109,10 +110,11 @@ export default function AutoCheckInPage() {
         setIsFraudBlocked(false);
 
         const deviceId = getOrCreateDeviceId();
+        const deviceFingerprint = await getDeviceFingerprint();
         const todayStr = getTodayStr();
 
         try {
-            const res = await checkInByDni(clean, deviceId, isKiosk, kioskPin);
+            const res = await checkInByDni(clean, deviceId, deviceFingerprint, isKiosk, kioskPin);
             const dataWithDate = {
                 ...res.data,
                 fecha: res.data.fecha || todayStr

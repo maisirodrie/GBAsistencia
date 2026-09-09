@@ -6,6 +6,10 @@ const deviceCheckInSchema = new mongoose.Schema({
         required: true,
         index: true
     },
+    deviceFingerprint: {
+        type: String,
+        index: true
+    },
     alumnoId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Alumno',
@@ -27,6 +31,8 @@ const deviceCheckInSchema = new mongoose.Schema({
     }
 });
 
-deviceCheckInSchema.index({ deviceId: 1, fecha: 1 }, { unique: true });
+deviceCheckInSchema.index({ deviceId: 1, fecha: 1 });
+deviceCheckInSchema.index({ deviceFingerprint: 1, fecha: 1 });
 
 export default mongoose.model('DeviceCheckIn', deviceCheckInSchema);
+
