@@ -1,5 +1,5 @@
 import QRCode from "react-qr-code";
-import { Printer, Copy, ArrowLeft, MapPin, Tv, Loader2, CheckCircle2 } from "lucide-react";
+import { Printer, Copy, ArrowLeft, MapPin, Tv, Loader2, CheckCircle2, KeyRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { showToast } from "../utils/alerts";
@@ -61,6 +61,25 @@ export default function QRCartelPage() {
         );
     };
 
+    const handleChangePin = async () => {
+        const actual = dojoConfig?.kioskPin || "1234";
+        const nuevo = window.prompt("Ingresá el nuevo PIN de profesor (mínimo 4 dígitos):", actual);
+        if (nuevo === null) return;
+        const clean = nuevo.trim();
+        if (!clean || clean.length < 4) {
+            showToast("El PIN debe tener al menos 4 dígitos.", "error");
+            return;
+        }
+
+        try {
+            const res = await setDojoLocation({ kioskPin: clean });
+            setDojoConfig(res.data.config);
+            showToast(`¡PIN de profesor actualizado con éxito a: ${clean}!`, "success");
+        } catch (err) {
+            showToast(err.response?.data?.message || "No se pudo actualizar el PIN.", "error");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 sm:p-8">
             {/* Top Toolbar (Hidden on print) */}
@@ -106,7 +125,6 @@ export default function QRCartelPage() {
                         </div>
                     </div>
 
-
                     <button
                         onClick={handleCalibrateLocation}
                         disabled={calibrating}
@@ -125,7 +143,28 @@ export default function QRCartelPage() {
                         )}
                     </button>
                 </div>
+
+                {/* Professor PIN Bar */}
+                <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2.5 text-slate-300">
+                        <KeyRound size={18} className="text-yellow-400 flex-shrink-0" />
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-slate-400">PIN de Profesor:</span>
+                            <span className="font-mono font-black text-yellow-400 bg-slate-950 px-2.5 py-0.5 rounded-lg border border-slate-800 text-xs tracking-widest">
+                                {dojoConfig?.kioskPin || "1234"}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleChangePin}
+                        className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
+                    >
+                        Cambiar PIN
+                    </button>
+                </div>
             </div>
+
 
             {/* Poster for Dojo */}
             <div 

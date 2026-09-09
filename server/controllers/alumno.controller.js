@@ -448,8 +448,10 @@ export const checkInByDni = async (req, res) => {
         const fechaStr = `${yyyy}-${mm}-${dd}`;
         const fechaCheckIn = new Date(`${fechaStr}T12:00:00.000Z`);
 
-        // Validar si está en modo Kiosco verificado
-        const isKioskMode = Boolean(isKiosk && kioskPin && kioskPin.toString().trim() === KIOSK_PIN.toString().trim());
+        // Validar si está en modo Kiosco verificado con el PIN configurado en la base de datos
+        const config = await Configuracion.findOne();
+        const actualPin = (config?.kioskPin || KIOSK_PIN || '1234').toString().trim();
+        const isKioskMode = Boolean(isKiosk && kioskPin && kioskPin.toString().trim() === actualPin);
 
         // 1. Verificación de Token QR de Pantalla (si proviene de pantalla rotativa)
         let tokenVerified = false;
@@ -466,8 +468,8 @@ export const checkInByDni = async (req, res) => {
         // 2. Verificación de Geolocalización GPS (para el cartel impreso en la pared)
         // Solo se exige si no proviene de un token de pantalla en vivo verificado y no es modo kiosco
         if (!isKioskMode && !tokenVerified) {
-            const config = await Configuracion.findOne();
             if (config && config.gpsObligatorio && config.dojoLat && config.dojoLng) {
+
                 if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
                     return res.status(400).json({
                         isLocationRequired: true,
@@ -613,23 +615,26 @@ export const getDojoLocation = async (req, res) => {
         let config = await Configuracion.findOne();
         if (!config) config = await Configuracion.create({});
         res.json({
+            dojoDireccion: config.dojoDireccion || 'Av. Tomás Guido 1745, Posadas, Misiones',
             dojoLat: config.dojoLat,
             dojoLng: config.dojoLng,
             dojoRadioMetros: config.dojoRadioMetros || 200,
-            gpsObligatorio: config.gpsObligatorio !== false
+            gpsObligatorio: config.gpsObligatorio !== false,
+            kioskPin: config.kioskPin || KIOSK_PIN || '1234'
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-/* ── Guardar / Calibrar Ubicación del Dojo ── */
+/* ── Guardar / Calibrar Ubicación del Dojo y PIN ── */
 export const setDojoLocation = async (req, res) => {
     try {
-        const { lat, lng, radius, gpsObligatorio } = req.body;
+        const { lat, lng, radius, gpsObligatorio, kioskPin, direccion } = req.body;
         let config = await Configuracion.findOne();
         if (!config) config = new Configuracion();
 
+        if (direccion) config.dojoDireccion = direccion.trim();
         if (lat != null && lng != null) {
             config.dojoLat = Number(lat);
             config.dojoLng = Number(lng);
@@ -640,19 +645,41 @@ export const setDojoLocation = async (req, res) => {
         if (gpsObligatorio !== undefined) {
             config.gpsObligatorio = Boolean(gpsObligatorio);
         }
+        if (kioskPin != null && kioskPin.toString().trim() !== '') {
+            config.kioskPin = kioskPin.toString().trim();
+        }
 
         await config.save();
         res.json({
-            message: 'Ubicación y parámetros del Dojo actualizados con éxito.',
+            message: 'Configuración actualizada con éxito.',
             config: {
+                dojoDireccion: config.dojoDireccion,
                 dojoLat: config.dojoLat,
                 dojoLng: config.dojoLng,
                 dojoRadioMetros: config.dojoRadioMetros,
-                gpsObligatorio: config.gpsObligatorio
+                gpsObligatorio: config.gpsObligatorio,
+                kioskPin: config.kioskPin
             }
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
+
+/* ── Verificar PIN de Profesor (Modo Recepción) ── */
+export const verifyKioskPin = async (req, res) => {
+    try {
+        const { pin } = req.body;
+        let config = await Configuracion.findOne();
+        const validPin = (config?.kioskPin || KIOSK_PIN || '1234').toString().trim();
+
+        if (pin && pin.toString().trim() === validPin) {
+            return res.json({ valid: true, message: 'PIN verificado correctamente.' });
+        }
+        return res.status(401).json({ valid: false, message: 'PIN incorrecto. Solicitá el PIN al profesor.' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { checkInByDni } from "../api/alumnos";
+import { checkInByDni, verifyKioskPin } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 import { getDeviceFingerprint } from "../utils/fingerprint";
+
 
 // Generar o recuperar ID único persistente del dispositivo
 function getOrCreateDeviceId() {
@@ -196,7 +197,7 @@ export default function AutoCheckInPage() {
 
 
     // Activar o desactivar modo kiosco mediante PIN
-    const handleVerifyPin = (e) => {
+    const handleVerifyPin = async (e) => {
         e?.preventDefault();
         setPinError("");
         if (!pinInput.trim()) {
@@ -204,8 +205,8 @@ export default function AutoCheckInPage() {
             return;
         }
 
-        // Si el PIN es correcto (1234 por defecto o el configurado)
-        if (pinInput.trim() === "1234") {
+        try {
+            await verifyKioskPin(pinInput.trim());
             const newKioskState = !isKiosk;
             setIsKiosk(newKioskState);
             if (newKioskState) {
@@ -221,11 +222,13 @@ export default function AutoCheckInPage() {
             setPinInput("");
             // Si desbloqueamos, limpiamos bloqueos de pantalla
             setIsFraudBlocked(false);
+            setIsOutOfRange(false);
             setError(null);
-        } else {
-            setPinError("PIN incorrecto. Solicitá el PIN al profesor.");
+        } catch (err) {
+            setPinError(err.response?.data?.message || "PIN incorrecto. Solicitá el PIN al profesor.");
         }
     };
+
 
     const handleClearDeviceLock = () => {
         localStorage.removeItem("gb_checkin_today");

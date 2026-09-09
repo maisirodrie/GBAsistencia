@@ -13,8 +13,10 @@ import {
     checkInByDni,
     getQrToken,
     getDojoLocation,
-    setDojoLocation
+    setDojoLocation,
+    verifyKioskPin
 } from '../controllers/alumno.controller.js';
+
 
 import { generarCartaoPDF } from '../controllers/pdf.controller.js';
 import multer from 'multer';
@@ -70,8 +72,10 @@ const isEncargadoOrAdmin = hasRole(['Admin', 'Encargado']);
 router.post('/checkin-dni', checkInByDni);
 router.get('/qr-token', getQrToken);
 router.get('/dojo-location', getDojoLocation);
+router.post('/verify-pin', verifyKioskPin);
 router.post('/:id/checkin', checkIn);
 router.get('/:id', getAlumno);
+
 
 // ==========================================
 // RUTAS PRIVADAS (Gestión del Dojo)

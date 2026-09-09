@@ -15,6 +15,7 @@ export const revertPromotion = (id)         => api.post(`/alumnos/${id}/revert-p
 export const getQrToken      = ()           => api.get('/alumnos/qr-token');
 export const getDojoLocation = ()           => api.get('/alumnos/dojo-location');
 export const setDojoLocation = (data)       => api.post('/alumnos/dojo-location', data);
+export const verifyKioskPin  = (pin)        => api.post('/alumnos/verify-pin', { pin });
 
 export const descargarPDF = async (id, nombreAlumno = 'alumno') => {
     const response = await api.get(`/alumnos/${id}/pdf`, { responseType: 'blob' });

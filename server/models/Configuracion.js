@@ -44,6 +44,11 @@ const configuracionSchema = new mongoose.Schema({
     gpsObligatorio: {
         type: Boolean,
         default: true
+    },
+    // PIN de administración para Modo Recepción / Kiosco
+    kioskPin: {
+        type: String,
+        default: '1234'
     }
 }, {
 
