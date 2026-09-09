@@ -2,30 +2,82 @@ import { useState, useEffect, useRef } from "react";
 import { checkInByDni } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 
+// Generar o recuperar ID único persistente del dispositivo
+function getOrCreateDeviceId() {
+    let id = localStorage.getItem("gb_device_id");
+    if (!id) {
+        id = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 10);
+        localStorage.setItem("gb_device_id", id);
+    }
+    return id;
+}
+
+// Fecha actual en huso horario de Argentina (UTC-3) formato YYYY-MM-DD
+function getTodayStr() {
+    const d = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
 export default function AutoCheckInPage() {
     const [dni, setDni] = useState("");
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
+    const [isFraudBlocked, setIsFraudBlocked] = useState(false);
     const [countdown, setCountdown] = useState(0);
-    const inputRef = useRef(null);
 
-    // Auto-focus en el campo DNI al cargar o al resetear
+    // Modo Recepción / Kiosco (para tablets compartidas en recepción del Dojo)
+    const [isKiosk, setIsKiosk] = useState(() => sessionStorage.getItem("gb_kiosk_mode") === "true");
+    const [kioskPin, setKioskPin] = useState(() => sessionStorage.getItem("gb_kiosk_pin") || "");
+    const [showPinModal, setShowPinModal] = useState(false);
+    const [pinInput, setPinInput] = useState("");
+    const [pinError, setPinError] = useState("");
+
+    // Cargar si este dispositivo ya tiene asistencia registrada para hoy
+    const [result, setResult] = useState(() => {
+        const today = getTodayStr();
+        const stored = localStorage.getItem("gb_checkin_today");
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (parsed.fecha === today && parsed.alumno) {
+                    return parsed;
+                } else {
+                    localStorage.removeItem("gb_checkin_today");
+                }
+            } catch {
+                localStorage.removeItem("gb_checkin_today");
+            }
+        }
+        return null;
+    });
+
+    const inputRef = useRef(null);
+    const pinInputRef = useRef(null);
+
+    // Auto-focus en el campo DNI al estar listo
     useEffect(() => {
-        if (!result) {
+        if (!result && !showPinModal) {
             inputRef.current?.focus();
         }
-    }, [result]);
+    }, [result, showPinModal]);
 
-    // Cuenta regresiva para volver a dejar la pantalla lista para el siguiente alumno
+    // Focus en PIN modal
     useEffect(() => {
-        if (!result) return;
+        if (showPinModal) {
+            setTimeout(() => pinInputRef.current?.focus(), 100);
+        }
+    }, [showPinModal]);
+
+    // Cuenta regresiva SOLO si está en MODO KIOSCO (en celular personal el pase queda fijo)
+    useEffect(() => {
+        if (!result || !isKiosk) return;
+
         setCountdown(6);
         const interval = setInterval(() => {
-            setCountdown(prev => {
+            setCountdown((prev) => {
                 if (prev <= 1) {
                     clearInterval(interval);
-                    handleReset();
+                    handleKioskReset();
                     return 0;
                 }
                 return prev - 1;
@@ -33,11 +85,12 @@ export default function AutoCheckInPage() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [result]);
+    }, [result, isKiosk]);
 
-    const handleReset = () => {
+    const handleKioskReset = () => {
         setResult(null);
         setError(null);
+        setIsFraudBlocked(false);
         setDni("");
         setTimeout(() => inputRef.current?.focus(), 100);
     };
@@ -47,22 +100,83 @@ export default function AutoCheckInPage() {
         const clean = dni.replace(/\D/g, "");
         if (!clean) {
             setError("Por favor, ingresá tu número de DNI.");
+            setIsFraudBlocked(false);
             return;
         }
 
         setLoading(true);
         setError(null);
-        setResult(null);
+        setIsFraudBlocked(false);
+
+        const deviceId = getOrCreateDeviceId();
+        const todayStr = getTodayStr();
 
         try {
-            const res = await checkInByDni(clean);
-            setResult(res.data);
+            const res = await checkInByDni(clean, deviceId, isKiosk, kioskPin);
+            const dataWithDate = {
+                ...res.data,
+                fecha: res.data.fecha || todayStr
+            };
+            setResult(dataWithDate);
+
+            // Si es dispositivo personal, guardar para mostrar su pase durante todo el día
+            if (!isKiosk) {
+                localStorage.setItem("gb_checkin_today", JSON.stringify(dataWithDate));
+            }
         } catch (err) {
-            const msg = err.response?.data?.message || "No se pudo registrar la asistencia. Reintentá.";
+            const status = err.response?.status;
+            const data = err.response?.data;
+            const msg = data?.message || "No se pudo registrar la asistencia. Reintentá.";
+
+            if (status === 403 && data?.isDeviceLocked) {
+                setIsFraudBlocked(true);
+            } else {
+                setIsFraudBlocked(false);
+            }
             setError(msg);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Activar o desactivar modo kiosco mediante PIN
+    const handleVerifyPin = (e) => {
+        e?.preventDefault();
+        setPinError("");
+        if (!pinInput.trim()) {
+            setPinError("Ingresá el PIN de profesor.");
+            return;
+        }
+
+        // Si el PIN es correcto (1234 por defecto o el configurado)
+        if (pinInput.trim() === "1234") {
+            const newKioskState = !isKiosk;
+            setIsKiosk(newKioskState);
+            if (newKioskState) {
+                setKioskPin(pinInput.trim());
+                sessionStorage.setItem("gb_kiosk_mode", "true");
+                sessionStorage.setItem("gb_kiosk_pin", pinInput.trim());
+            } else {
+                setKioskPin("");
+                sessionStorage.removeItem("gb_kiosk_mode");
+                sessionStorage.removeItem("gb_kiosk_pin");
+            }
+            setShowPinModal(false);
+            setPinInput("");
+            // Si desbloqueamos, limpiamos bloqueos de pantalla
+            setIsFraudBlocked(false);
+            setError(null);
+        } else {
+            setPinError("PIN incorrecto. Solicitá el PIN al profesor.");
+        }
+    };
+
+    const handleClearDeviceLock = () => {
+        localStorage.removeItem("gb_checkin_today");
+        setResult(null);
+        setError(null);
+        setIsFraudBlocked(false);
+        setDni("");
     };
 
     return (
@@ -73,8 +187,30 @@ export default function AutoCheckInPage() {
                 <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600 rounded-full blur-[140px]"></div>
             </div>
 
-            {/* Top Bar / Brand */}
+            {/* Top Bar / Header */}
             <header className="w-full max-w-md flex flex-col items-center justify-center pt-2 sm:pt-4 relative z-10">
+                {/* Banner de Modo Recepción si está activo */}
+                {isKiosk && (
+                    <div className="w-full mb-3 bg-amber-500/15 border border-amber-500/40 text-amber-300 rounded-2xl px-4 py-2 flex items-center justify-between text-xs font-bold shadow-lg animate-pulse">
+                        <div className="flex items-center gap-2">
+                            <span>🏢</span>
+                            <span>Modo Recepción Activo (Múltiples Alumnos)</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsKiosk(false);
+                                setKioskPin("");
+                                sessionStorage.removeItem("gb_kiosk_mode");
+                                sessionStorage.removeItem("gb_kiosk_pin");
+                            }}
+                            className="bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 px-2.5 py-1 rounded-lg text-[10px] uppercase font-black tracking-wider transition-all"
+                        >
+                            Salir
+                        </button>
+                    </div>
+                )}
+
                 <img 
                     src="/gbnorte_v4.png" 
                     alt="Gracie Barra Logo" 
@@ -120,6 +256,7 @@ export default function AutoCheckInPage() {
                                     value={dni}
                                     onChange={(e) => {
                                         setError(null);
+                                        setIsFraudBlocked(false);
                                         setDni(e.target.value.replace(/\D/g, ""));
                                     }}
                                     placeholder="Ej: 38123456"
@@ -138,10 +275,31 @@ export default function AutoCheckInPage() {
                                 )}
                             </div>
 
-                            {/* Error Message */}
+                            {/* Alerta de Error Común o Bloqueo por Dispositivo */}
                             {error && (
-                                <div className="bg-red-500/15 border border-red-500/40 rounded-2xl p-4 text-center text-red-400 text-xs font-bold animate-shake">
-                                    ⚠️ {error}
+                                <div className={`rounded-2xl p-4 text-center text-xs font-bold flex flex-col gap-2 ${
+                                    isFraudBlocked 
+                                        ? "bg-amber-500/15 border-2 border-amber-500/40 text-amber-300"
+                                        : "bg-red-500/15 border border-red-500/40 text-red-400"
+                                }`}>
+                                    <div className="flex items-center justify-center gap-2 text-sm font-black">
+                                        <span>{isFraudBlocked ? "🛑" : "⚠️"}</span>
+                                        <span>{isFraudBlocked ? "Dispositivo ya registrado hoy" : "Atención"}</span>
+                                    </div>
+                                    <p className="leading-relaxed">{error}</p>
+                                    
+                                    {isFraudBlocked && (
+                                        <div className="mt-2 pt-2 border-t border-amber-500/20 text-[11px] text-amber-200/80 flex flex-col gap-2">
+                                            <span>¿Estás en recepción o compartís este dispositivo con un familiar?</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPinModal(true)}
+                                                className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 py-2 px-3 rounded-xl font-black uppercase tracking-wider text-[10px] transition-all"
+                                            >
+                                                Desbloquear con PIN de Profesor
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -158,7 +316,7 @@ export default function AutoCheckInPage() {
                                 {loading ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                        <span>Buscando...</span>
+                                        <span>Verificando...</span>
                                     </>
                                 ) : (
                                     <>
@@ -169,12 +327,20 @@ export default function AutoCheckInPage() {
                             </button>
                         </form>
 
-                        <div className="mt-6 text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                            ¿Primera vez o no figura tu DNI? Avisale al profesor en recepción.
+                        <div className="mt-6 text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                            <span>Dispositivo Único por Alumno</span>
+                            <span>•</span>
+                            <button 
+                                type="button"
+                                onClick={() => setShowPinModal(true)}
+                                className="text-slate-500 hover:text-slate-300 underline underline-offset-2 transition-colors"
+                            >
+                                {isKiosk ? "Desactivar Kiosco" : "Modo Recepción"}
+                            </button>
                         </div>
                     </div>
                 ) : (
-                    /* Check-in Success / Already Checked Card */
+                    /* Check-in Success Card */
                     <div className="bg-slate-900/90 backdrop-blur-2xl border border-slate-800 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center relative overflow-hidden animate-in zoom-in-95 duration-300">
                         {/* Top banner */}
                         <div className={`w-full py-2.5 px-4 rounded-2xl mb-6 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest ${
@@ -182,7 +348,7 @@ export default function AutoCheckInPage() {
                                 ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" 
                                 : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                         }`}>
-                            <span>{result.alreadyCheckedIn ? "⚠️" : "✅"}</span>
+                            <span>{result.alreadyCheckedIn ? "📋" : "✅"}</span>
                             <span>{result.alreadyCheckedIn ? "Asistencia ya tomada hoy" : "¡Asistencia Confirmada!"}</span>
                         </div>
 
@@ -218,25 +384,126 @@ export default function AutoCheckInPage() {
                             {result.message}
                         </p>
 
+                        {/* Bottom Actions based on Kiosk Mode vs Personal Phone */}
                         <div className="w-full border-t border-slate-800/80 mt-6 pt-5 flex flex-col items-center gap-3">
-                            <button
-                                onClick={handleReset}
-                                className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95"
-                            >
-                                Listo / Siguiente Alumno ({countdown}s)
-                            </button>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                                Esta pantalla se reiniciará automáticamente
-                            </span>
+                            {isKiosk ? (
+                                <>
+                                    <button
+                                        onClick={handleKioskReset}
+                                        className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95"
+                                    >
+                                        Listo / Siguiente Alumno ({countdown}s)
+                                    </button>
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                        Modo Kiosco • Reinicio automático
+                                    </span>
+                                </>
+                            ) : (
+                                <div className="w-full flex flex-col items-center gap-2">
+                                    <div className="w-full py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-bold flex items-center justify-center gap-2">
+                                        <span>🔒</span>
+                                        <span>Pase del día activo en este dispositivo</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                        Tu presente ya está computado. ¡Excelente entrenamiento! Oss.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={handleClearDeviceLock}
+                                        className="mt-3 text-[11px] text-slate-500 hover:text-slate-300 underline underline-offset-4 transition-colors"
+                                    >
+                                        ¿No sos vos o querés cambiar de DNI?
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
             </main>
 
+            {/* Modal PIN Modo Recepción */}
+            {showPinModal && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-black text-white flex items-center gap-2">
+                                <span>🔐</span>
+                                <span>Modo Recepción</span>
+                            </h3>
+                            <button 
+                                onClick={() => {
+                                    setShowPinModal(false);
+                                    setPinInput("");
+                                    setPinError("");
+                                }}
+                                className="text-slate-400 hover:text-white text-sm font-bold w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                            {isKiosk 
+                                ? "Ingresá el PIN de profesor para desactivar el modo recepción y volver al modo de dispositivo único por alumno."
+                                : "Habilitá este dispositivo para permitir que varios alumnos registren su presente de forma continua (ej. tablet de recepción)."
+                            }
+                        </p>
+
+                        <form onSubmit={handleVerifyPin} className="flex flex-col gap-3">
+                            <input
+                                ref={pinInputRef}
+                                type="password"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={6}
+                                value={pinInput}
+                                onChange={(e) => {
+                                    setPinError("");
+                                    setPinInput(e.target.value);
+                                }}
+                                placeholder="PIN de Profesor"
+                                className="w-full bg-slate-950 border-2 border-slate-700 focus:border-red-500 rounded-2xl py-3 px-4 text-center text-2xl font-black tracking-widest text-white outline-none"
+                            />
+
+                            {pinError && (
+                                <div className="text-red-400 text-xs font-bold text-center">
+                                    ⚠️ {pinError}
+                                </div>
+                            )}
+
+                            <div className="flex gap-2 mt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowPinModal(false);
+                                        setPinInput("");
+                                        setPinError("");
+                                    }}
+                                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-red-900/30"
+                                >
+                                    {isKiosk ? "Desactivar" : "Activar"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Footer */}
-            <footer className="w-full text-center py-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest relative z-10">
-                Gracie Barra Norte • Estructura Digital
+            <footer className="w-full flex items-center justify-between max-w-md py-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest relative z-10">
+                <span>Gracie Barra Norte</span>
+                <div className="flex items-center gap-1.5 text-slate-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>1 Dispositivo por Alumno</span>
+                </div>
             </footer>
         </div>
     );
 }
+

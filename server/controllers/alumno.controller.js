@@ -1,4 +1,6 @@
 import Alumno from '../models/Alumno.js';
+import DeviceCheckIn from '../models/DeviceCheckIn.js';
+import { KIOSK_PIN } from '../config.js';
 import { getFechaInicioFaja, getFechaUltimoGrado, getRequisitosAcumulados, evaluarGraduacion } from '../constants/graduation.js';
 
 
@@ -415,7 +417,7 @@ export const subirFotoAlumno = async (req, res) => {
 
 export const checkInByDni = async (req, res) => {
     try {
-        const { dni } = req.body;
+        const { dni, deviceId, isKiosk, kioskPin } = req.body;
         if (!dni || dni.toString().trim() === '') {
             return res.status(400).json({ message: 'Por favor, ingresá tu número de DNI.' });
         }
@@ -441,7 +443,23 @@ export const checkInByDni = async (req, res) => {
         const yyyy = hoyLocal.getUTCFullYear();
         const mm = String(hoyLocal.getUTCMonth() + 1).padStart(2, '0');
         const dd = String(hoyLocal.getUTCDate()).padStart(2, '0');
-        const fechaCheckIn = new Date(`${yyyy}-${mm}-${dd}T12:00:00.000Z`);
+        const fechaStr = `${yyyy}-${mm}-${dd}`;
+        const fechaCheckIn = new Date(`${fechaStr}T12:00:00.000Z`);
+
+        // Validar si está en modo Kiosco verificado
+        const isKioskMode = Boolean(isKiosk && kioskPin && kioskPin.toString().trim() === KIOSK_PIN.toString().trim());
+
+        // Control antifraude: 1 dispositivo por día (salvo modo Kiosco)
+        if (!isKioskMode && deviceId) {
+            const checkInExistente = await DeviceCheckIn.findOne({ deviceId, fecha: fechaStr });
+            if (checkInExistente && checkInExistente.alumnoId.toString() !== alumno._id.toString()) {
+                return res.status(403).json({
+                    isDeviceLocked: true,
+                    registradoPara: checkInExistente.alumnoNombre,
+                    message: `Este dispositivo ya registró la asistencia de hoy para ${checkInExistente.alumnoNombre}. Por normas de la academia, cada alumno debe registrar su presente desde su propio celular.`
+                });
+            }
+        }
 
         // Evitar duplicados comparando año, mes y día en UTC
         const yaAsistio = alumno.asistencias.some(a => {
@@ -452,8 +470,23 @@ export const checkInByDni = async (req, res) => {
         });
 
         if (yaAsistio) {
+            // Asegurar que quede registrado el dispositivo para este alumno en el día
+            if (deviceId && !isKioskMode) {
+                await DeviceCheckIn.findOneAndUpdate(
+                    { deviceId, fecha: fechaStr },
+                    { 
+                        deviceId, 
+                        alumnoId: alumno._id, 
+                        alumnoNombre: `${alumno.nombre} ${alumno.apellido}`.trim(), 
+                        fecha: fechaStr 
+                    },
+                    { upsert: true, new: true }
+                ).catch(() => {});
+            }
+
             return res.json({ 
                 alreadyCheckedIn: true,
+                fecha: fechaStr,
                 message: `¡Hola ${alumno.nombre}! Tu asistencia de hoy ya fue registrada previamente.`,
                 alumno: {
                     _id: alumno._id,
@@ -470,8 +503,23 @@ export const checkInByDni = async (req, res) => {
         alumno.asistencias.push(fechaCheckIn);
         await alumno.save();
 
+        // Registrar uso de este dispositivo para este alumno hoy
+        if (deviceId && !isKioskMode) {
+            await DeviceCheckIn.findOneAndUpdate(
+                { deviceId, fecha: fechaStr },
+                { 
+                    deviceId, 
+                    alumnoId: alumno._id, 
+                    alumnoNombre: `${alumno.nombre} ${alumno.apellido}`.trim(), 
+                    fecha: fechaStr 
+                },
+                { upsert: true, new: true }
+            ).catch(err => console.warn('DeviceCheckIn error:', err.message));
+        }
+
         return res.json({ 
             alreadyCheckedIn: false,
+            fecha: fechaStr,
             message: `¡Presente confirmado! Bienvenido ${alumno.nombre}.`,
             alumno: {
                 _id: alumno._id,
