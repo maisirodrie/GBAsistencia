@@ -53,5 +53,6 @@ export const generarPDFCartao = async (elemento, nombreAlumno = "alumno") => {
   });
 
   pdf.addImage(imgData, "PNG", 0, 0, pxW, pxH);
-  pdf.save(`Carton_${nombreAlumno.replace(/\s+/g, "_")}.pdf`);
+  const cleanName = (nombreAlumno || "alumno").trim().replace(/[/\\?%*:|"<>]/g, "");
+  pdf.save(`${cleanName}.pdf`);
 };

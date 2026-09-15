@@ -24,7 +24,8 @@ export const descargarPDF = async (id, nombreAlumno = 'alumno') => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Carton_${nombreAlumno.replace(/\s+/g, '_')}.pdf`;
+        const cleanName = (nombreAlumno || 'alumno').trim().replace(/[/\\?%*:|"<>]/g, '');
+        a.download = `${cleanName}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

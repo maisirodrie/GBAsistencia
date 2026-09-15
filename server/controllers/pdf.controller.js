@@ -74,8 +74,10 @@ export const generarCartaoPDF = async (req, res) => {
 
         await browser.close();
 
-        // Enviar PDF como descarga
-        const filename = `Carton_${(alumno.nombre || 'alumno').replace(/\s+/g, '_')}.pdf`;
+        // Enviar PDF como descarga con el nombre completo del alumno
+        const nombreCompleto = `${alumno.nombre || ''} ${alumno.apellido || ''}`.trim() || 'alumno';
+        const cleanFilename = nombreCompleto.replace(/[/\\?%*:|"<>]/g, '').replace(/\s+/g, '_');
+        const filename = `${cleanFilename}.pdf`;
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename="${filename}"`,

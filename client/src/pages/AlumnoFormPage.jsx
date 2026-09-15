@@ -57,7 +57,7 @@ export default function AlumnoFormPage() {
     const cameraInputRef = useRef(null);
 
     const handleImprimirCarton = async () => {
-        const nombreCompleto = `${watch("nombre") || ""} ${watch("apellido") || ""}`.trim();
+        const nombreCompleto = `${watch("nombre") || ""} ${watch("apellido") || ""}`.trim() || "Alumno";
         setImprimiendoCarton(true);
         try {
             await descargarPDF(id, nombreCompleto);
@@ -67,8 +67,20 @@ export default function AlumnoFormPage() {
             const cartaoElem = document.getElementById("cartao-print");
             if (cartaoElem) {
                 showToast("Abriendo visor de impresión...", "info");
+                const originalTitle = document.title;
+                document.title = nombreCompleto;
+                window.addEventListener(
+                    "afterprint",
+                    () => {
+                        document.title = originalTitle;
+                    },
+                    { once: true }
+                );
                 setTimeout(() => {
                     window.print();
+                    setTimeout(() => {
+                        document.title = originalTitle;
+                    }, 2500);
                 }, 200);
             } else {
                 showAlert({
