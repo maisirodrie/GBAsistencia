@@ -769,12 +769,12 @@ export default function FinanzasPage() {
 
                     {/* Dashboard de Ventas Visual */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-md shadow-sm">
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-md shadow-sm min-w-0">
                             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-blue-500"></span> Tendencia de Ventas (Anual)
                             </h4>
-                            <div className="h-[280px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
+                            <div className="h-[280px] w-full min-w-0">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                     <BarChart data={dataMensual}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                         <XAxis dataKey="mes" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} />
@@ -790,12 +790,12 @@ export default function FinanzasPage() {
                             </div>
                         </div>
 
-                        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-md shadow-sm">
+                        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-md shadow-sm min-w-0">
                             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-purple-500"></span> Distribución por Categoría
                             </h4>
-                            <div className="h-[280px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
+                            <div className="h-[280px] w-full min-w-0">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                     <PieChart>
                                         <Pie data={dataCategorias} cx="50%" cy="50%" innerRadius={55} outerRadius={75} paddingAngle={4} dataKey="monto">
                                             {dataCategorias.map((entry, index) => (

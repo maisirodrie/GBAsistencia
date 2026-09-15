@@ -52,8 +52,35 @@ export default function AlumnoFormPage() {
     const [imageToCrop, setImageToCrop] = useState(null);
     const [categoria, setCategoria] = useState('Adulto');
     const [alumnoData, setAlumnoData] = useState(null);
+    const [imprimiendoCarton, setImprimiendoCarton] = useState(false);
     const fileInputRef = useRef(null);
     const cameraInputRef = useRef(null);
+
+    const handleImprimirCarton = async () => {
+        const nombreCompleto = `${watch("nombre") || ""} ${watch("apellido") || ""}`.trim();
+        setImprimiendoCarton(true);
+        try {
+            await descargarPDF(id, nombreCompleto);
+            showToast("Cartón descargado con éxito", "success");
+        } catch (serverErr) {
+            console.warn("Fallo al descargar PDF del servidor, utilizando visor de impresión directo:", serverErr);
+            const cartaoElem = document.getElementById("cartao-print");
+            if (cartaoElem) {
+                showToast("Abriendo visor de impresión...", "info");
+                setTimeout(() => {
+                    window.print();
+                }, 200);
+            } else {
+                showAlert({
+                    title: "Error al generar cartón",
+                    text: serverErr.message || "No se pudo generar el archivo del cartón.",
+                    icon: "error"
+                });
+            }
+        } finally {
+            setImprimiendoCarton(false);
+        }
+    };
 
 
     const handlePhotoClick = async () => {
@@ -479,11 +506,24 @@ export default function AlumnoFormPage() {
                 <div className="flex gap-2.5 w-full sm:w-auto">
                     {id && (
                         <button
-                            onClick={() => descargarPDF(id, `${watch("nombre") || ""} ${watch("apellido") || ""}`.trim())}
-                            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-700 shadow-sm"
+                            type="button"
+                            disabled={imprimiendoCarton}
+                            onClick={handleImprimirCarton}
+                            className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-700 shadow-sm ${
+                                imprimiendoCarton ? "opacity-70 cursor-wait" : ""
+                            }`}
                         >
-                            <Printer size={15} />
-                            <span className="hidden sm:inline">Imprimir Cartón</span>
+                            {imprimiendoCarton ? (
+                                <>
+                                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <span>Generando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Printer size={15} />
+                                    <span className="hidden sm:inline">Imprimir Cartón</span>
+                                </>
+                            )}
                         </button>
                     )}
                     {id && ['Admin', 'Encargado'].includes(user?.role) && (

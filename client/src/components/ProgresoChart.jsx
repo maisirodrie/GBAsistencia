@@ -76,8 +76,8 @@ export default function ProgresoChart({ asistencias = [], anio, clasesObjetivo =
             </div>
 
             {/* Gráfico */}
-            <div style={{ height: 280 }}>
-                <ResponsiveContainer width="100%" height="100%">
+            <div style={{ height: 280, minWidth: 0 }} className="w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <BarChart data={data} margin={{ top: 20, right: 10, left: -15, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                         <XAxis

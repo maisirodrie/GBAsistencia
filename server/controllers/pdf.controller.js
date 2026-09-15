@@ -16,10 +16,19 @@ export const generarCartaoPDF = async (req, res) => {
             asistencias: alumno.asistencias || [],
         });
 
-        // Lanzar Puppeteer y generar PDF
+        // Lanzar Puppeteer con flags óptimos para servidores Linux (Render / Docker)
         const browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process'
+            ],
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
         });
 
         const page = await browser.newPage();

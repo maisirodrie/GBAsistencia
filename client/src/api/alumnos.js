@@ -18,14 +18,35 @@ export const setDojoLocation = (data)       => api.post('/alumnos/dojo-location'
 export const verifyKioskPin  = (pin)        => api.post('/alumnos/verify-pin', { pin });
 
 export const descargarPDF = async (id, nombreAlumno = 'alumno') => {
-    const response = await api.get(`/alumnos/${id}/pdf`, { responseType: 'blob' });
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Carton_${nombreAlumno.replace(/\s+/g, '_')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    try {
+        const response = await api.get(`/alumnos/${id}/pdf`, { responseType: 'blob' });
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Carton_${nombreAlumno.replace(/\s+/g, '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        return true;
+    } catch (err) {
+        let errorMsg = 'No se pudo generar el PDF del cartón.';
+        if (err.response?.data instanceof Blob) {
+            try {
+                const text = await err.response.data.text();
+                const json = JSON.parse(text);
+                if (json.message) errorMsg = json.message;
+            } catch {
+                // Not JSON text
+            }
+        } else if (err.response?.data?.message) {
+            errorMsg = err.response.data.message;
+        } else if (err.message) {
+            errorMsg = err.message;
+        }
+        const error = new Error(errorMsg);
+        error.original = err;
+        throw error;
+    }
 };
