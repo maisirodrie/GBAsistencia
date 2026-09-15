@@ -1180,6 +1180,7 @@ export default function AlumnoFormPage() {
                                     faja={watch("faja")}
                                     grado={watch("grado")}
                                     ultimaGraduacion={watch("ultimaGraduacion")}
+                                    historicoGraduaciones={alumnoData?.historicoGraduaciones || []}
                                 />
                             </div>
                         </div>

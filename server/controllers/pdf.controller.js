@@ -13,6 +13,7 @@ export const generarCartaoPDF = async (req, res) => {
             faja: alumno.faja || 'Blanca',
             grado: alumno.grado || 0,
             ultimaGraduacion: alumno.ultimaGraduacion,
+            historicoGraduaciones: alumno.historicoGraduaciones || [],
             asistencias: alumno.asistencias || [],
         });
 

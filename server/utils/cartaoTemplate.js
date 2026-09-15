@@ -35,10 +35,101 @@ function asistioEnDia(asistencias, mesIdx, dia) {
     });
 }
 
+function formatFechaGrad(d) {
+    if (!d) return '';
+    try {
+        if (typeof d === 'string' && d.includes('-')) {
+            const parts = d.split('T')[0].split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}`;
+            }
+        }
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return '';
+        const local = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+        const dia = String(local.getDate()).padStart(2, '0');
+        const mes = String(local.getMonth() + 1).padStart(2, '0');
+        return `${dia}/${mes}`;
+    } catch {
+        return '';
+    }
+}
+
+export function getFechasGraduacion({
+    faja = 'Blanca',
+    grado = 0,
+    ultimaGraduacion = '',
+    historicoGraduaciones = []
+}) {
+    const norm = (f) => (f || '').trim().toLowerCase().replace('branca', 'blanca');
+    const currentFaja = norm(faja);
+    const currentGrado = parseInt(grado, 10) || 0;
+
+    const fechas = ['', '', '', '', '']; // Exactamente 5 barras para las fechas
+
+    if (Array.isArray(historicoGraduaciones) && historicoGraduaciones.length > 0) {
+        const histOrdenado = [...historicoGraduaciones].sort((a, b) => {
+            const dateA = new Date(a.fechaClasePromocion || a.ultimaGraduacion || 0);
+            const dateB = new Date(b.fechaClasePromocion || b.ultimaGraduacion || 0);
+            return dateA - dateB;
+        });
+
+        const histFaja = histOrdenado.filter(h => norm(h.faja) === currentFaja);
+
+        for (const h of histFaja) {
+            const g = parseInt(h.grado, 10);
+            const promoDate = h.fechaClasePromocion || h.ultimaGraduacion;
+            if (promoDate) {
+                const formatted = formatFechaGrad(promoDate);
+                if (g >= 1 && g <= 4) {
+                    fechas[g - 1] = formatted;
+                }
+                if (g > 1 && !fechas[g - 2] && h.ultimaGraduacion) {
+                    fechas[g - 2] = formatFechaGrad(h.ultimaGraduacion);
+                }
+            }
+        }
+
+        let nextSlot = 0;
+        for (const h of histFaja) {
+            const promoDate = h.fechaClasePromocion || h.ultimaGraduacion;
+            const formatted = formatFechaGrad(promoDate);
+            if (formatted && !fechas.includes(formatted)) {
+                while (nextSlot < 5 && fechas[nextSlot] !== '') {
+                    nextSlot++;
+                }
+                if (nextSlot < 5) {
+                    fechas[nextSlot] = formatted;
+                }
+            }
+        }
+    }
+
+    if (ultimaGraduacion) {
+        const formattedUltima = formatFechaGrad(ultimaGraduacion);
+        if (formattedUltima && !fechas.includes(formattedUltima)) {
+            if (currentGrado >= 1 && currentGrado <= 4 && fechas[currentGrado - 1] === '') {
+                fechas[currentGrado - 1] = formattedUltima;
+            } else {
+                const emptyIdx = fechas.findIndex(f => f === '');
+                if (emptyIdx !== -1) {
+                    fechas[emptyIdx] = formattedUltima;
+                }
+            }
+        }
+    }
+
+    if (currentGrado === 1 && !fechas[0] && ultimaGraduacion) {
+        fechas[0] = formatFechaGrad(ultimaGraduacion);
+    }
+
+    return fechas;
+}
+
 /**
  * Genera el HTML completo de la ficha con fuentes embebidas.
  */
-export function generarCartaoHTML({ nombre, faja, grado, ultimaGraduacion, asistencias }) {
+export function generarCartaoHTML({ nombre, faja, grado, ultimaGraduacion, historicoGraduaciones = [], asistencias }) {
     // Convertir fonts a base64
     const font643 = fontToBase64('643-font.otf');
     const fontStereo = fontToBase64('StereoGothic-850.ttf');
@@ -49,15 +140,8 @@ export function generarCartaoHTML({ nombre, faja, grado, ultimaGraduacion, asist
     const fondovectorB64 = imageToBase64('fondovector.png');
     const logoB64 = imageToBase64('logo-gb.png');
 
-    // Fecha de graduación
-    let fechaGrad = '';
-    if (ultimaGraduacion) {
-        try {
-            const d = new Date(ultimaGraduacion);
-            const local = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
-            fechaGrad = `${String(local.getDate()).padStart(2, '0')}/${String(local.getMonth() + 1).padStart(2, '0')}`;
-        } catch { /* */ }
-    }
+    // Fechas de graduación para las 4 casillas
+    const fechasGraduacion = getFechasGraduacion({ faja, grado, ultimaGraduacion, historicoGraduaciones });
 
     // FAIXA data
     const faixas = [
@@ -99,9 +183,9 @@ export function generarCartaoHTML({ nombre, faja, grado, ultimaGraduacion, asist
         return rowHTML;
     }).join('\n');
 
-    // Generar cajas de graduación
-    const gradBoxes = [0, 1, 2, 3, 4].map(i =>
-        `<div style="width:2.5cm;height:0.5cm;background:white;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.35cm;color:#000;font-family:'643',sans-serif;box-sizing:border-box">${i === 0 ? fechaGrad : ''}</div>`
+    // Generar exactamente 4 cajas de graduación para los 4 grados
+    const gradBoxes = fechasGraduacion.map(fecha =>
+        `<div style="width:2.5cm;height:0.5cm;background:white;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.35cm;color:#000;font-family:'643',sans-serif;box-sizing:border-box">${fecha || ''}</div>`
     ).join('\n');
 
     return `<!DOCTYPE html>

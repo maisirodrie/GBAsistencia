@@ -18,6 +18,102 @@ function asistioEnDia(asistencias, mesIdx, dia) {
     });
 }
 
+function formatFechaGrad(d) {
+    if (!d) return "";
+    try {
+        if (typeof d === "string" && d.includes("-")) {
+            const parts = d.split("T")[0].split("-");
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}`;
+            }
+        }
+        const date = new Date(d);
+        if (isNaN(date.getTime())) return "";
+        const local = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+        const dia = String(local.getDate()).padStart(2, "0");
+        const mes = String(local.getMonth() + 1).padStart(2, "0");
+        return `${dia}/${mes}`;
+    } catch {
+        return "";
+    }
+}
+
+export function getFechasGraduacion({
+    faja = "Blanca",
+    grado = 0,
+    ultimaGraduacion = "",
+    historicoGraduaciones = []
+}) {
+    const norm = (f) => (f || "").trim().toLowerCase().replace("branca", "blanca");
+    const currentFaja = norm(faja);
+    const currentGrado = parseInt(grado, 10) || 0;
+
+    const fechas = ["", "", "", "", ""]; // Exactamente 5 barras para las fechas
+
+    // 1. Recorrer el historial cronológico de promociones de la faja actual
+    if (Array.isArray(historicoGraduaciones) && historicoGraduaciones.length > 0) {
+        const histOrdenado = [...historicoGraduaciones].sort((a, b) => {
+            const dateA = new Date(a.fechaClasePromocion || a.ultimaGraduacion || 0);
+            const dateB = new Date(b.fechaClasePromocion || b.ultimaGraduacion || 0);
+            return dateA - dateB;
+        });
+
+        const histFaja = histOrdenado.filter(h => norm(h.faja) === currentFaja);
+
+        for (const h of histFaja) {
+            const g = parseInt(h.grado, 10);
+            const promoDate = h.fechaClasePromocion || h.ultimaGraduacion;
+            if (promoDate) {
+                const formatted = formatFechaGrad(promoDate);
+                if (g >= 1 && g <= 4) {
+                    fechas[g - 1] = formatted;
+                }
+                // Si este grado N trae la fecha del grado N-1
+                if (g > 1 && !fechas[g - 2] && h.ultimaGraduacion) {
+                    fechas[g - 2] = formatFechaGrad(h.ultimaGraduacion);
+                }
+            }
+        }
+
+        // Completar cronológicamente si hay fechas adicionales o faja inicial
+        let nextSlot = 0;
+        for (const h of histFaja) {
+            const promoDate = h.fechaClasePromocion || h.ultimaGraduacion;
+            const formatted = formatFechaGrad(promoDate);
+            if (formatted && !fechas.includes(formatted)) {
+                while (nextSlot < 5 && fechas[nextSlot] !== "") {
+                    nextSlot++;
+                }
+                if (nextSlot < 5) {
+                    fechas[nextSlot] = formatted;
+                }
+            }
+        }
+    }
+
+    // 2. Si el grado actual del alumno tiene fecha y aún no está asignada en su casilla
+    if (ultimaGraduacion) {
+        const formattedUltima = formatFechaGrad(ultimaGraduacion);
+        if (formattedUltima && !fechas.includes(formattedUltima)) {
+            if (currentGrado >= 1 && currentGrado <= 4 && fechas[currentGrado - 1] === "") {
+                fechas[currentGrado - 1] = formattedUltima;
+            } else {
+                const emptyIdx = fechas.findIndex(f => f === "");
+                if (emptyIdx !== -1) {
+                    fechas[emptyIdx] = formattedUltima;
+                }
+            }
+        }
+    }
+
+    // 3. Fallback: Si el alumno está en grado 1 y solo hay ultimaGraduacion sin historial
+    if (currentGrado === 1 && !fechas[0] && ultimaGraduacion) {
+        fechas[0] = formatFechaGrad(ultimaGraduacion);
+    }
+
+    return fechas;
+}
+
 export default function CartaoFrequencia({
     id = "cartao-print",
     asistencias = [],
@@ -25,14 +121,14 @@ export default function CartaoFrequencia({
     faja = "Blanca",
     grado = 0,
     ultimaGraduacion = "",
+    historicoGraduaciones = [],
 }) {
-    let fechaGrad = "";
-    if (ultimaGraduacion) {
-        try {
-            const [, m, d] = ultimaGraduacion.split("-");
-            fechaGrad = `${d}/${m}`;
-        } catch { /**/ }
-    }
+    const fechasGraduacion = getFechasGraduacion({
+        faja,
+        grado,
+        ultimaGraduacion,
+        historicoGraduaciones,
+    });
 
     return (
         <div
@@ -331,7 +427,7 @@ export default function CartaoFrequencia({
                             textAlign: "left",
                         }}>Data da Última<br />Graduação:</p>
 
-                        {[0, 1, 2, 3, 4].map(i => (
+                        {fechasGraduacion.map((fecha, i) => (
                             <div key={i} style={{
                                 width: "2.5cm",
                                 height: "0.5cm",
@@ -346,7 +442,7 @@ export default function CartaoFrequencia({
                                 fontFamily: "'643', sans-serif",
                                 boxSizing: "border-box",
                             }}>
-                                {i === 0 ? fechaGrad : ""}
+                                {fecha}
                             </div>
                         ))}
 
