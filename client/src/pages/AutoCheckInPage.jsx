@@ -501,9 +501,10 @@ export default function AutoCheckInPage() {
                                     <button
                                         type="button"
                                         onClick={handleClearDeviceLock}
-                                        className="mt-3 text-[11px] text-slate-500 hover:text-slate-300 underline underline-offset-4 transition-colors"
+                                        className="mt-3 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 px-4 py-2 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-1.5"
                                     >
-                                        ¿No sos vos o querés cambiar de DNI?
+                                        <span>🔄</span>
+                                        <span>¿Registrar a otro alumno o cambiar DNI?</span>
                                     </button>
                                 </div>
                             )}

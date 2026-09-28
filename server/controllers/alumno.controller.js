@@ -494,15 +494,14 @@ export const checkInByDni = async (req, res) => {
         }
 
         // 3. Control antifraude: 1 dispositivo físico por día (salvo modo Kiosco)
-        // Se valida tanto por el deviceId (localStorage) como por la huella de hardware (deviceFingerprint)
-        if (!isKioskMode && (deviceId || deviceFingerprint)) {
-            const orConditions = [];
-            if (deviceId) orConditions.push({ deviceId });
-            if (deviceFingerprint) orConditions.push({ deviceFingerprint });
-
+        // Se valida por el deviceId único almacenado en el navegador del teléfono.
+        // IMPORTANTE: NO validar por deviceFingerprint (huella de hardware) porque si dos alumnos
+        // tienen el mismo modelo de celular (ej: Samsung A14, Moto G, etc.), sus huellas son 100% idénticas
+        // y provocaría falsos positivos bloqueando al segundo alumno en su propio celular.
+        if (!isKioskMode && deviceId && deviceId !== 'unknown') {
             const checkInExistente = await DeviceCheckIn.findOne({ 
                 fecha: fechaStr,
-                $or: orConditions
+                deviceId
             });
 
             if (checkInExistente && checkInExistente.alumnoId.toString() !== alumno._id.toString()) {
@@ -524,15 +523,11 @@ export const checkInByDni = async (req, res) => {
 
         if (yaAsistio) {
             // Asegurar que quede registrado el dispositivo para este alumno en el día
-            if (!isKioskMode && (deviceId || deviceFingerprint)) {
-                const orConditions = [];
-                if (deviceId) orConditions.push({ deviceId });
-                if (deviceFingerprint) orConditions.push({ deviceFingerprint });
-
+            if (!isKioskMode && deviceId && deviceId !== 'unknown') {
                 await DeviceCheckIn.findOneAndUpdate(
-                    { fecha: fechaStr, $or: orConditions },
+                    { fecha: fechaStr, deviceId },
                     { 
-                        deviceId: deviceId || 'unknown', 
+                        deviceId, 
                         deviceFingerprint: deviceFingerprint || 'unknown',
                         alumnoId: alumno._id, 
                         alumnoNombre: `${alumno.nombre} ${alumno.apellido}`.trim(), 
@@ -562,15 +557,11 @@ export const checkInByDni = async (req, res) => {
         await alumno.save();
 
         // Registrar uso de este dispositivo para este alumno hoy
-        if (!isKioskMode && (deviceId || deviceFingerprint)) {
-            const orConditions = [];
-            if (deviceId) orConditions.push({ deviceId });
-            if (deviceFingerprint) orConditions.push({ deviceFingerprint });
-
+        if (!isKioskMode && deviceId && deviceId !== 'unknown') {
             await DeviceCheckIn.findOneAndUpdate(
-                { fecha: fechaStr, $or: orConditions },
+                { fecha: fechaStr, deviceId },
                 { 
-                    deviceId: deviceId || 'unknown', 
+                    deviceId, 
                     deviceFingerprint: deviceFingerprint || 'unknown',
                     alumnoId: alumno._id, 
                     alumnoNombre: `${alumno.nombre} ${alumno.apellido}`.trim(), 
