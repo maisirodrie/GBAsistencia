@@ -31,7 +31,7 @@ const deviceCheckInSchema = new mongoose.Schema({
     }
 });
 
-deviceCheckInSchema.index({ deviceId: 1, fecha: 1 });
+deviceCheckInSchema.index({ deviceId: 1, fecha: 1, alumnoId: 1 });
 deviceCheckInSchema.index({ deviceFingerprint: 1, fecha: 1 });
 
 export default mongoose.model('DeviceCheckIn', deviceCheckInSchema);

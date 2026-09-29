@@ -10,7 +10,7 @@ import { getFechaInicioFaja, getFechaUltimoGrado, getRequisitosAcumulados, evalu
 
 export const getAlumnos = async (req, res) => {
     try {
-        const alumnosData = await Alumno.find({});
+        const alumnosData = await Alumno.find({}).populate('tutorId', 'nombre apellido dni celular');
         const hoy = new Date();
         const hoyInicio = new Date(hoy.setHours(0, 0, 0, 0));
         const hoyFin = new Date(hoy.setHours(23, 59, 59, 999));
@@ -50,6 +50,13 @@ export const getAlumnos = async (req, res) => {
                 nombre: alumno.nombre,
                 apellido: alumno.apellido,
                 dni: alumno.dni || "",
+                celular: alumno.celular || "",
+                categoria: alumno.categoria || "Adulto",
+                tutorId: alumno.tutorId,
+                tutorNombre: alumno.tutorNombre || (alumno.tutorId ? `${alumno.tutorId.nombre} ${alumno.tutorId.apellido || ''}`.trim() : ''),
+                tutorDni: alumno.tutorDni || (alumno.tutorId ? alumno.tutorId.dni : ''),
+                tutorTelefono: alumno.tutorTelefono || (alumno.tutorId ? alumno.tutorId.celular : ''),
+                tutorRelacion: alumno.tutorRelacion || 'Padre',
                 faja: alumno.faja,
                 grado: alumno.grado,
                 fotoUrl: alumno.fotoUrl,
@@ -89,7 +96,12 @@ export const getAlumnos = async (req, res) => {
 
 export const createAlumno = async (req, res) => {
     try {
-        const { nombre, apellido, celular, dni, categoria, faja, grado, ultimaGraduacion, clasesParaGraduacion, diasParaGraduacion, trackProgreso, fechaNacimiento, frecuenciaSemanal, permanenciaManual, clasesTramoManual } = req.body;
+        const { 
+            nombre, apellido, celular, dni, categoria, faja, grado, ultimaGraduacion, 
+            clasesParaGraduacion, diasParaGraduacion, trackProgreso, fechaNacimiento, 
+            frecuenciaSemanal, permanenciaManual, clasesTramoManual,
+            tutorId, tutorNombre, tutorDni, tutorTelefono, tutorRelacion 
+        } = req.body;
 
         const dniLimpio = dni ? dni.toString().replace(/\./g, '').trim() : null;
         if (dniLimpio) {
@@ -99,12 +111,29 @@ export const createAlumno = async (req, res) => {
             }
         }
 
+        let finalTutorNombre = tutorNombre || '';
+        let finalTutorDni = tutorDni ? tutorDni.toString().replace(/\./g, '').trim() : '';
+        let finalTutorTelefono = tutorTelefono || '';
+        if (tutorId) {
+            const tutorAlumno = await Alumno.findById(tutorId);
+            if (tutorAlumno) {
+                if (!finalTutorNombre) finalTutorNombre = `${tutorAlumno.nombre} ${tutorAlumno.apellido || ''}`.trim();
+                if (!finalTutorDni && tutorAlumno.dni) finalTutorDni = tutorAlumno.dni;
+                if (!finalTutorTelefono && tutorAlumno.celular) finalTutorTelefono = tutorAlumno.celular;
+            }
+        }
+
         const newAlumno = new Alumno({
             nombre,
             apellido,
             celular,
             dni: dniLimpio || undefined,
             categoria,
+            tutorId: tutorId || null,
+            tutorNombre: finalTutorNombre,
+            tutorDni: finalTutorDni,
+            tutorTelefono: finalTutorTelefono,
+            tutorRelacion: tutorRelacion || 'Padre',
             faja,
             grado,
             clasesParaGraduacion: (clasesParaGraduacion === undefined || clasesParaGraduacion === null || clasesParaGraduacion === "" || isNaN(clasesParaGraduacion)) ? 30 : parseInt(clasesParaGraduacion),
@@ -126,7 +155,7 @@ export const createAlumno = async (req, res) => {
 
 export const getAlumno = async (req, res) => {
     try {
-        const alumno = await Alumno.findById(req.params.id);
+        const alumno = await Alumno.findById(req.params.id).populate('tutorId', 'nombre apellido dni celular');
         if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado' });
         
         const fechaInicioFaja = getFechaInicioFaja(alumno);
@@ -234,6 +263,23 @@ export const updateAlumno = async (req, res) => {
             }
         }
         if (req.body.categoria) alumno.categoria = req.body.categoria;
+        if (req.body.tutorId !== undefined) {
+            alumno.tutorId = req.body.tutorId || null;
+            if (alumno.tutorId) {
+                const tutorAlumno = await Alumno.findById(alumno.tutorId);
+                if (tutorAlumno) {
+                    if (!req.body.tutorNombre) alumno.tutorNombre = `${tutorAlumno.nombre} ${tutorAlumno.apellido || ''}`.trim();
+                    if (!req.body.tutorDni && tutorAlumno.dni) alumno.tutorDni = tutorAlumno.dni;
+                    if (!req.body.tutorTelefono && tutorAlumno.celular) alumno.tutorTelefono = tutorAlumno.celular;
+                }
+            }
+        }
+        if (req.body.tutorNombre !== undefined) alumno.tutorNombre = req.body.tutorNombre || '';
+        if (req.body.tutorDni !== undefined) {
+            alumno.tutorDni = req.body.tutorDni ? req.body.tutorDni.toString().replace(/\./g, '').trim() : '';
+        }
+        if (req.body.tutorTelefono !== undefined) alumno.tutorTelefono = req.body.tutorTelefono || '';
+        if (req.body.tutorRelacion !== undefined) alumno.tutorRelacion = req.body.tutorRelacion || 'Padre';
         if (req.body.trackProgreso !== undefined) alumno.trackProgreso = req.body.trackProgreso;
         
         if (req.body.clasesParaGraduacion !== undefined) {
@@ -436,7 +482,7 @@ export const checkInByDni = async (req, res) => {
 
         if (!alumno) {
             return res.status(404).json({ 
-                message: 'No encontramos ningún alumno registrado con este DNI. Consultá con tu profesor en recepción.' 
+                message: 'No encontramos ningún alumno registrado con este DNI. Si es un alumno de Kids, consultá con tu profesor para registrar su DNI.' 
             });
         }
 
@@ -493,23 +539,91 @@ export const checkInByDni = async (req, res) => {
             }
         }
 
-        // 3. Control antifraude: 1 dispositivo físico por día (salvo modo Kiosco)
+        // 3. Control antifraude: Sistema de Cuentas Parentales y 1 Dispositivo Físico por Alumno
         // Se valida por el deviceId único almacenado en el navegador del teléfono.
-        // IMPORTANTE: NO validar por deviceFingerprint (huella de hardware) porque si dos alumnos
-        // tienen el mismo modelo de celular (ej: Samsung A14, Moto G, etc.), sus huellas son 100% idénticas
-        // y provocaría falsos positivos bloqueando al segundo alumno en su propio celular.
+        // REGLAS:
+        // A) Si el alumno a registrar es 'Infantil' (Kids):
+        //    - Un padre/madre puede marcar la asistencia de sus propios hijos vinculados desde su celular.
+        //    - Si el celular ya registró a otro alumno hoy:
+        //      * Caso 1 (Es el padre/tutor): El alumno previo registrado en este celular es el tutor del niño (por tutorId o tutorDni). -> PERMITIDO.
+        //      * Caso 2 (Son hermanos): El alumno previo registrado en este celular es otro Kid y comparten el mismo padre/tutor (mismo tutorId o tutorDni). -> PERMITIDO.
+        //      * Caso 3 (Transición/Sin tutor cargado aún): Si ni el niño ni los registros previos tienen tutor asignado, se permite durante la carga de datos.
+        //      * Bloqueo: Si el celular fue registrado por un adulto ajeno que NO es su padre/tutor, o por un niño de otra familia (con distinto tutor). -> BLOQUEADO.
+        // B) Si el alumno a registrar es 'Adulto':
+        //    - Si el dispositivo solo registró previamente a sus propios hijos vinculados (donde él es el tutor), se autoriza su presente.
+        //    - Si el dispositivo registró a otro alumno adulto o a un niño ajeno, se bloquea por antifraude.
         if (!isKioskMode && deviceId && deviceId !== 'unknown') {
-            const checkInExistente = await DeviceCheckIn.findOne({ 
+            const checkInsDispositivo = await DeviceCheckIn.find({ 
                 fecha: fechaStr,
                 deviceId
-            });
+            }).populate('alumnoId');
 
-            if (checkInExistente && checkInExistente.alumnoId.toString() !== alumno._id.toString()) {
-                return res.status(403).json({
-                    isDeviceLocked: true,
-                    registradoPara: checkInExistente.alumnoNombre,
-                    message: `Este dispositivo ya registró la asistencia de hoy para ${checkInExistente.alumnoNombre}. Por normas de la academia, cada alumno debe registrar su presente desde su propio celular.`
-                });
+            const otrosCheckIns = checkInsDispositivo.filter(
+                c => c.alumnoId && c.alumnoId._id.toString() !== alumno._id.toString()
+            );
+
+            if (otrosCheckIns.length > 0) {
+                const esAlumnoKid = alumno.categoria === 'Infantil';
+
+                for (const otro of otrosCheckIns) {
+                    const prevAlumno = otro.alumnoId;
+                    const prevEsKid = prevAlumno.categoria === 'Infantil';
+
+                    if (esAlumnoKid) {
+                        // El alumno actual es KID
+                        if (!prevEsKid) {
+                            // El alumno previo en este celular es un ADULTO
+                            const esMiTutor = (alumno.tutorId && alumno.tutorId.toString() === prevAlumno._id.toString()) ||
+                                              (alumno.tutorDni && prevAlumno.dni && alumno.tutorDni === prevAlumno.dni);
+                            
+                            if (!esMiTutor) {
+                                return res.status(403).json({
+                                    isDeviceLocked: true,
+                                    registradoPara: otro.alumnoNombre,
+                                    message: `Este dispositivo ya registró la asistencia de ${otro.alumnoNombre}. Por seguridad de los menores, la asistencia de Kids debe ser confirmada desde el celular de su propio padre o tutor registrado.`
+                                });
+                            }
+                        } else {
+                            // El alumno previo en este celular también es un KID (¿Hermanos?)
+                            const mismoTutorId = alumno.tutorId && prevAlumno.tutorId && alumno.tutorId.toString() === prevAlumno.tutorId.toString();
+                            const mismoTutorDni = alumno.tutorDni && prevAlumno.tutorDni && alumno.tutorDni === prevAlumno.tutorDni;
+                            const ambosSinTutor = !alumno.tutorId && !alumno.tutorDni && !prevAlumno.tutorId && !prevAlumno.tutorDni;
+
+                            const sonHermanos = mismoTutorId || mismoTutorDni || ambosSinTutor;
+
+                            if (!sonHermanos) {
+                                return res.status(403).json({
+                                    isDeviceLocked: true,
+                                    registradoPara: otro.alumnoNombre,
+                                    message: `Este dispositivo ya registró la asistencia de ${otro.alumnoNombre}. Esta cuenta parental solo puede confirmar la asistencia de sus propios hijos a cargo.`
+                                });
+                            }
+                        }
+                    } else {
+                        // El alumno actual es ADULTO
+                        if (!prevEsKid) {
+                            // Dos adultos distintos compartiendo celular
+                            return res.status(403).json({
+                                isDeviceLocked: true,
+                                registradoPara: otro.alumnoNombre,
+                                message: `Este dispositivo ya registró la asistencia de hoy para ${otro.alumnoNombre}. Por normas de la academia, cada alumno adulto debe registrar su presente desde su propio celular.`
+                            });
+                        } else {
+                            // El alumno previo en el celular es un KID. ¿Es hijo de este adulto?
+                            const soySuTutor = (prevAlumno.tutorId && prevAlumno.tutorId.toString() === alumno._id.toString()) ||
+                                               (prevAlumno.tutorDni && alumno.dni && prevAlumno.tutorDni === alumno.dni) ||
+                                               (!prevAlumno.tutorId && !prevAlumno.tutorDni);
+
+                            if (!soySuTutor) {
+                                return res.status(403).json({
+                                    isDeviceLocked: true,
+                                    registradoPara: otro.alumnoNombre,
+                                    message: `Este dispositivo ya registró la asistencia de ${otro.alumnoNombre}. Solo el padre o tutor registrado puede utilizar este dispositivo.`
+                                });
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -525,7 +639,7 @@ export const checkInByDni = async (req, res) => {
             // Asegurar que quede registrado el dispositivo para este alumno en el día
             if (!isKioskMode && deviceId && deviceId !== 'unknown') {
                 await DeviceCheckIn.findOneAndUpdate(
-                    { fecha: fechaStr, deviceId },
+                    { fecha: fechaStr, deviceId, alumnoId: alumno._id },
                     { 
                         deviceId, 
                         deviceFingerprint: deviceFingerprint || 'unknown',
@@ -548,7 +662,9 @@ export const checkInByDni = async (req, res) => {
                     faja: alumno.faja,
                     grado: alumno.grado,
                     categoria: alumno.categoria,
-                    fotoUrl: alumno.fotoUrl
+                    fotoUrl: alumno.fotoUrl,
+                    tutorNombre: alumno.tutorNombre,
+                    tutorDni: alumno.tutorDni
                 }
             });
         }
@@ -559,7 +675,7 @@ export const checkInByDni = async (req, res) => {
         // Registrar uso de este dispositivo para este alumno hoy
         if (!isKioskMode && deviceId && deviceId !== 'unknown') {
             await DeviceCheckIn.findOneAndUpdate(
-                { fecha: fechaStr, deviceId },
+                { fecha: fechaStr, deviceId, alumnoId: alumno._id },
                 { 
                     deviceId, 
                     deviceFingerprint: deviceFingerprint || 'unknown',
@@ -582,7 +698,9 @@ export const checkInByDni = async (req, res) => {
                 faja: alumno.faja,
                 grado: alumno.grado,
                 categoria: alumno.categoria,
-                fotoUrl: alumno.fotoUrl
+                fotoUrl: alumno.fotoUrl,
+                tutorNombre: alumno.tutorNombre,
+                tutorDni: alumno.tutorDni
             }
         });
     } catch (error) {

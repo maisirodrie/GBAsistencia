@@ -177,8 +177,9 @@ export default function AutoCheckInPage() {
             };
             setResult(dataWithDate);
 
-            // Si es dispositivo personal, guardar para mostrar su pase durante todo el día
-            if (!isKiosk) {
+            // Si es dispositivo personal de un adulto, guardar para mostrar su pase durante todo el día.
+            // Para Kids (Infantil), no bloqueamos localStorage para que los padres puedan registrar a sus otros hijos fácilmente.
+            if (!isKiosk && res.data.alumno?.categoria !== 'Infantil') {
                 localStorage.setItem("gb_checkin_today", JSON.stringify(dataWithDate));
             }
         } catch (err) {
@@ -319,7 +320,7 @@ export default function AutoCheckInPage() {
                                 ¡Bienvenido!
                             </h2>
                             <p className="text-xs text-slate-400 font-semibold mt-1">
-                                Ingresá tu número de DNI para confirmar tu presente
+                                Ingresá tu número de DNI para confirmar el presente (Alumnos o Padres)
                             </p>
                         </div>
 
@@ -471,6 +472,22 @@ export default function AutoCheckInPage() {
                             </span>
                         </div>
 
+                        {/* Badge de Categoría Infantil / Kids */}
+                        {result.alumno?.categoria === 'Infantil' && (
+                            <div className="mt-2 flex flex-col items-center gap-1">
+                                <span className="text-[10px] font-black px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
+                                    <span>👦</span>
+                                    <span>Alumno Kids (Infantil)</span>
+                                </span>
+                                {result.alumno?.tutorNombre && (
+                                    <span className="text-[11px] font-semibold text-amber-300/90 flex items-center gap-1">
+                                        <span>👨‍👧</span>
+                                        <span>Tutor a cargo: {result.alumno.tutorNombre}</span>
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
                         <p className="text-sm font-bold text-slate-300 mt-5 leading-relaxed">
                             {result.message}
                         </p>
@@ -489,6 +506,21 @@ export default function AutoCheckInPage() {
                                         Modo Kiosco • Reinicio automático
                                     </span>
                                 </>
+                            ) : result.alumno?.categoria === 'Infantil' ? (
+                                <div className="w-full flex flex-col items-center gap-2.5">
+                                    <div className="w-full py-2 px-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-bold flex items-center justify-center gap-2">
+                                        <span>👦</span>
+                                        <span>Presente de Kids registrado con éxito</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleClearDeviceLock}
+                                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-blue-900/30 active:scale-95 flex items-center justify-center gap-2 border-b-2 border-blue-900"
+                                    >
+                                        <span>➕</span>
+                                        <span>Registrar a otro hijo o alumno</span>
+                                    </button>
+                                </div>
                             ) : (
                                 <div className="w-full flex flex-col items-center gap-2">
                                     <div className="w-full py-2.5 px-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs font-bold flex items-center justify-center gap-2">
@@ -504,7 +536,7 @@ export default function AutoCheckInPage() {
                                         className="mt-3 text-xs text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 px-4 py-2 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-1.5"
                                     >
                                         <span>🔄</span>
-                                        <span>¿Registrar a otro alumno o cambiar DNI?</span>
+                                        <span>¿Registrar a otro alumno / hijo o cambiar DNI?</span>
                                     </button>
                                 </div>
                             )}

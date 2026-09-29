@@ -15,6 +15,7 @@ export default function AlumnosPage() {
     const { user } = useAuth();
     const [alumnos, setAlumnos] = useState([]);
     const [filtro, setFiltro] = useState("");
+    const [categoriaFiltro, setCategoriaFiltro] = useState("todos"); // 'todos', 'sin_dni', 'kids', 'adultos', 'presentes'
     const [showQRCartel, setShowQRCartel] = useState(false);
     const [viewMode, setViewMode] = useState(() => localStorage.getItem("alumnos_view_mode") || "grid");
     const navigate = useNavigate();
@@ -97,12 +98,32 @@ export default function AlumnosPage() {
         }
     }
 
+    const totalCount = alumnos.length;
+    const sinDniCount = alumnos.filter(a => !a.dni || !a.dni.toString().trim()).length;
+    const kidsCount = alumnos.filter(a => a.categoria === 'Infantil').length;
+    const adultosCount = alumnos.filter(a => a.categoria !== 'Infantil').length;
+    const presentesCount = alumnos.filter(a => a.yaAsistioHoy).length;
+
     const lista = alumnos.filter(a => {
+        // Filtro por píldoras / chips rápidos
+        if (categoriaFiltro === "sin_dni" && a.dni && a.dni.toString().trim() !== "") return false;
+        if (categoriaFiltro === "kids" && a.categoria !== "Infantil") return false;
+        if (categoriaFiltro === "adultos" && a.categoria === "Infantil") return false;
+        if (categoriaFiltro === "presentes" && !a.yaAsistioHoy) return false;
+
         const q = filtro.toLowerCase().trim();
         if (!q) return true;
+
+        // Búsqueda inteligente por texto para "sin dni" / "falta dni"
+        if (q === "sin dni" || q === "falta dni" || q === "sin doc" || q === "sin documento") {
+            return !a.dni || !a.dni.toString().trim();
+        }
+
         return a.nombre?.toLowerCase().includes(q) ||
                (a.apellido && a.apellido.toLowerCase().includes(q)) ||
-               (a.dni && a.dni.toString().includes(q));
+               (a.dni && a.dni.toString().includes(q)) ||
+               (a.tutorNombre && a.tutorNombre.toLowerCase().includes(q)) ||
+               (a.tutorDni && a.tutorDni.toString().includes(q));
     });
 
     return (
@@ -116,7 +137,14 @@ export default function AlumnosPage() {
                             <span>🥋</span> Alumnos y Asistencia
                         </h1>
                         <p className="text-xs sm:text-sm font-medium text-slate-400 mt-0.5">
-                            Padrón general, control de asistencia diaria y seguimiento técnico
+                            {totalCount} Alumnos • {kidsCount} Kids •{" "}
+                            <button
+                                onClick={() => setCategoriaFiltro(categoriaFiltro === "sin_dni" ? "todos" : "sin_dni")}
+                                className="text-amber-400 font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                                title="Filtrar alumnos a los que les falta DNI"
+                            >
+                                <span>⚠️ {sinDniCount} sin DNI</span>
+                            </button>
                         </p>
                     </div>
 
@@ -163,7 +191,7 @@ export default function AlumnosPage() {
                     <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, apellido o DNI..."
+                        placeholder="Buscar por nombre, apellido, DNI o escribí 'sin dni'..."
                         className="w-full bg-slate-950/60 border border-slate-700/80 rounded-xl pl-10 pr-10 py-2.5 sm:py-3 text-white text-sm outline-none focus:border-red-500 transition-all font-medium placeholder:text-slate-500"
                         value={filtro}
                         onChange={e => setFiltro(e.target.value)}
@@ -177,19 +205,102 @@ export default function AlumnosPage() {
                         </button>
                     )}
                 </div>
+
+                {/* Filtros Rápidos (Chips / Pills) */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-bold no-scrollbar">
+                    <button
+                        onClick={() => setCategoriaFiltro("todos")}
+                        className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                            categoriaFiltro === "todos"
+                                ? "bg-slate-100 text-slate-900 border-white shadow-sm font-black"
+                                : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700"
+                        }`}
+                    >
+                        <span>Todos</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${categoriaFiltro === "todos" ? "bg-slate-300 text-slate-900 font-black" : "bg-slate-800 text-slate-400"}`}>
+                            {totalCount}
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={() => setCategoriaFiltro("sin_dni")}
+                        className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                            categoriaFiltro === "sin_dni"
+                                ? "bg-amber-500 text-black border-amber-400 shadow-sm font-black"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20"
+                        }`}
+                        title="Ver alumnos a los que les falta cargar el DNI"
+                    >
+                        <span>⚠️ Sin DNI</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-black ${categoriaFiltro === "sin_dni" ? "bg-black text-amber-400" : "bg-amber-500/25 text-amber-200"}`}>
+                            {sinDniCount}
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={() => setCategoriaFiltro("kids")}
+                        className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                            categoriaFiltro === "kids"
+                                ? "bg-blue-600 text-white border-blue-500 shadow-sm font-black"
+                                : "bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20"
+                        }`}
+                    >
+                        <span>👦 Kids</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${categoriaFiltro === "kids" ? "bg-blue-800 text-white font-black" : "bg-blue-500/20 text-blue-300"}`}>
+                            {kidsCount}
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={() => setCategoriaFiltro("adultos")}
+                        className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                            categoriaFiltro === "adultos"
+                                ? "bg-red-600 text-white border-red-500 shadow-sm font-black"
+                                : "bg-slate-950/60 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700"
+                        }`}
+                    >
+                        <span>🥋 Adultos</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${categoriaFiltro === "adultos" ? "bg-red-800 text-white font-black" : "bg-slate-800 text-slate-400"}`}>
+                            {adultosCount}
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={() => setCategoriaFiltro("presentes")}
+                        className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                            categoriaFiltro === "presentes"
+                                ? "bg-emerald-600 text-white border-emerald-500 shadow-sm font-black"
+                                : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+                        }`}
+                    >
+                        <span>✅ Presentes Hoy</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${categoriaFiltro === "presentes" ? "bg-emerald-800 text-white font-black" : "bg-emerald-500/20 text-emerald-300"}`}>
+                            {presentesCount}
+                        </span>
+                    </button>
+                </div>
             </div>
 
             {/* Listado */}
             {lista.length === 0 ? (
                 <div className="text-center py-20 text-slate-500 border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
                     <UserIcon size={48} className="mx-auto mb-3 opacity-30 text-slate-400" />
-                    <p className="font-bold text-sm">{filtro ? "No se encontraron alumnos con ese criterio." : "No hay alumnos en el sistema."}</p>
-                    {filtro && (
+                    <p className="font-bold text-sm">
+                        {categoriaFiltro === "sin_dni" 
+                            ? "¡Excelente! No hay alumnos pendientes de DNI." 
+                            : filtro 
+                            ? "No se encontraron alumnos con ese criterio." 
+                            : "No hay alumnos en esta sección."}
+                    </p>
+                    {(filtro || categoriaFiltro !== "todos") && (
                         <button 
-                            className="mt-3 text-xs font-bold text-red-400 hover:text-red-300 uppercase tracking-wider"
-                            onClick={() => setFiltro("")}
+                            className="mt-3 text-xs font-bold text-red-400 hover:text-red-300 uppercase tracking-wider underline cursor-pointer"
+                            onClick={() => {
+                                setFiltro("");
+                                setCategoriaFiltro("todos");
+                            }}
                         >
-                            Limpiar búsqueda
+                            Ver todos los alumnos
                         </button>
                     )}
                 </div>
@@ -235,9 +346,33 @@ export default function AlumnosPage() {
                                                         <div className="font-bold text-white leading-tight">
                                                             {a.nombre} {a.apellido || ""}
                                                         </div>
-                                                        <div className="text-xs text-slate-500 font-mono mt-0.5">
-                                                            {a.dni ? `DNI: ${a.dni}` : "Sin DNI"}
+                                                        <div className="mt-0.5">
+                                                            {a.dni ? (
+                                                                <span className="text-xs text-slate-500 font-mono">DNI: {a.dni}</span>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        navigate(`/editar/${a._id}`);
+                                                                    }}
+                                                                    className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25 transition-all shadow-sm"
+                                                                    title="Hacé clic para cargar el DNI"
+                                                                >
+                                                                    <span>⚠️ Falta DNI</span>
+                                                                    <span className="underline ml-1">+ Cargar</span>
+                                                                </button>
+                                                            )}
                                                         </div>
+                                                        {a.categoria === 'Infantil' && (
+                                                            <div className="mt-1 text-[11px] text-amber-400/90 font-medium flex items-center gap-1">
+                                                                <span>👨‍👧</span>
+                                                                {a.tutorNombre ? (
+                                                                    <span>Tutor: {a.tutorNombre}</span>
+                                                                ) : (
+                                                                    <span className="text-amber-500/70 italic text-[10px]">Sin tutor asignado</span>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
@@ -372,12 +507,33 @@ export default function AlumnosPage() {
                                                             <Award size={10} /> Elegible
                                                         </span>
                                                     )}
-                                                    {a.dni && (
+                                                    {a.dni ? (
                                                         <span className="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-slate-950/60 text-slate-400 border border-slate-800 font-mono">
                                                             DNI: {a.dni}
                                                         </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/editar/${a._id}`);
+                                                            }}
+                                                            className="text-[9px] font-black px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all flex items-center gap-1 shadow-sm"
+                                                            title="Hacé clic para cargar el DNI"
+                                                        >
+                                                            <span>⚠️ Falta DNI</span>
+                                                        </button>
                                                     )}
                                                 </div>
+                                                {a.categoria === 'Infantil' && (
+                                                    <div className="mt-1 text-[11px] text-amber-400/90 font-medium flex items-center gap-1">
+                                                        <span>👨‍👧</span>
+                                                        {a.tutorNombre ? (
+                                                            <span className="truncate">Tutor: {a.tutorNombre}</span>
+                                                        ) : (
+                                                            <span className="text-amber-500/70 italic text-[10px]">Sin tutor asignado</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

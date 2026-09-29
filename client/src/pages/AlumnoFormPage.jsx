@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { getFechaInicioFaja, getFechaUltimoGrado, evaluarGraduacion } from "../constants/graduation";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAlumno, createAlumno, updateAlumno, deleteAlumno, addAsistencia, removeAsistencia, descargarPDF, uploadFoto, revertPromotion } from "../api/alumnos";
+import { getAlumnos, getAlumno, createAlumno, updateAlumno, deleteAlumno, addAsistencia, removeAsistencia, descargarPDF, uploadFoto, revertPromotion } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
 import CartaoFrequencia from "../components/CartaoFrequencia";
@@ -51,6 +51,7 @@ export default function AlumnoFormPage() {
     const [showQR, setShowQR] = useState(false);
     const [imageToCrop, setImageToCrop] = useState(null);
     const [categoria, setCategoria] = useState('Adulto');
+    const [adultosDisponibles, setAdultosDisponibles] = useState([]);
     const [alumnoData, setAlumnoData] = useState(null);
     const [imprimiendoCarton, setImprimiendoCarton] = useState(false);
     const fileInputRef = useRef(null);
@@ -140,6 +141,19 @@ export default function AlumnoFormPage() {
         }
     };
 
+    /* Cargar padrón de adultos disponibles para selección de tutor en Kids */
+    useEffect(() => {
+        (async () => {
+            try {
+                const { data } = await getAlumnos();
+                const adultos = data.filter(a => a.categoria !== 'Infantil' && (!id || a._id !== id));
+                setAdultosDisponibles(adultos);
+            } catch (err) {
+                console.warn("No se pudieron cargar alumnos adultos para tutores:", err);
+            }
+        })();
+    }, [id]);
+
     /* Cargar alumno */
     useEffect(() => {
         if (!id) { setCargando(false); return; }
@@ -164,6 +178,15 @@ export default function AlumnoFormPage() {
             setValue("clasesParaGraduacion", data.clasesParaGraduacion ?? 30);
             setValue("diasParaGraduacion", data.diasParaGraduacion ?? "");
             setCategoria(data.categoria || 'Adulto');
+            if (data.tutorId) {
+                setValue("tutorId", typeof data.tutorId === 'object' ? data.tutorId._id : data.tutorId);
+            } else {
+                setValue("tutorId", "");
+            }
+            setValue("tutorNombre", data.tutorNombre || "");
+            setValue("tutorDni", data.tutorDni || "");
+            setValue("tutorTelefono", data.tutorTelefono || "");
+            setValue("tutorRelacion", data.tutorRelacion || "Padre");
             if (data.ultimaGraduacion) {
                 const local = toLocal(data.ultimaGraduacion);
                 setValue("ultimaGraduacion", format(local, "yyyy-MM-dd"));
@@ -173,6 +196,19 @@ export default function AlumnoFormPage() {
         })();
     }, [id, setValue]);
 
+    /* Manejador de selección rápida de tutor adulto del dojo */
+    const handleSelectTutorAdulto = (e) => {
+        const selectedId = e.target.value;
+        setValue("tutorId", selectedId);
+        if (selectedId) {
+            const tutor = adultosDisponibles.find(a => a._id === selectedId);
+            if (tutor) {
+                setValue("tutorNombre", `${tutor.nombre} ${tutor.apellido || ''}`.trim());
+                if (tutor.dni) setValue("tutorDni", tutor.dni);
+                if (tutor.celular) setValue("tutorTelefono", tutor.celular);
+            }
+        }
+    };
 
     /* Guardar */
     const onSubmit = handleSubmit(async (data) => {
@@ -212,6 +248,13 @@ export default function AlumnoFormPage() {
         setValue("grado", String(data.grado ?? 0));
         if (data.dni !== undefined) setValue("dni", data.dni || "");
         if (data.categoria) setCategoria(data.categoria);
+        if (data.tutorId !== undefined) {
+            setValue("tutorId", typeof data.tutorId === 'object' ? data.tutorId?._id : (data.tutorId || ""));
+        }
+        if (data.tutorNombre !== undefined) setValue("tutorNombre", data.tutorNombre || "");
+        if (data.tutorDni !== undefined) setValue("tutorDni", data.tutorDni || "");
+        if (data.tutorTelefono !== undefined) setValue("tutorTelefono", data.tutorTelefono || "");
+        if (data.tutorRelacion !== undefined) setValue("tutorRelacion", data.tutorRelacion || "Padre");
         if (data.ultimaGraduacion) {
             const local = toLocal(data.ultimaGraduacion);
             setValue("ultimaGraduacion", format(local, "yyyy-MM-dd"));
@@ -684,6 +727,117 @@ export default function AlumnoFormPage() {
                                 />
                             </div>
                         </div>
+
+                        {/* CUENTA PARENTAL (Solo si la categoría es Infantil / Kids) */}
+                        {categoria === 'Infantil' && (
+                            <div className="bg-amber-500/5 border border-amber-500/25 rounded-2xl p-5 space-y-4 shadow-sm animate-in fade-in duration-300">
+                                <div className="flex items-center justify-between pb-3 border-b border-amber-500/20">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="text-2xl">👨‍👧</span>
+                                        <div>
+                                            <h3 className="text-sm font-black text-amber-300 uppercase tracking-wider">
+                                                Cuenta Parental (Padre / Madre / Tutor)
+                                            </h3>
+                                            <p className="text-[11px] text-slate-400 font-medium">
+                                                Vínculo familiar para habilitar la toma de asistencia desde el celular del tutor
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                        Kids
+                                    </span>
+                                </div>
+
+                                {/* Vincular con alumno adulto existente del dojo */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                        <span>¿El padre o madre entrena en la academia?</span>
+                                        <span className="text-[10px] text-amber-400 font-bold lowercase">(opcional)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all font-medium appearance-none"
+                                            {...register("tutorId")}
+                                            onChange={handleSelectTutorAdulto}
+                                        >
+                                            <option value="">-- No es alumno / Cargar datos manualmente abajo --</option>
+                                            {adultosDisponibles.map(a => (
+                                                <option key={a._id} value={a._id}>
+                                                    🥋 {a.nombre} {a.apellido || ''} {a.dni ? `(DNI: ${a.dni})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 text-xs">▼</div>
+                                    </div>
+                                </div>
+
+                                {/* Datos del Tutor */}
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">
+                                            Nombre del Padre / Tutor
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Ej: Marcelo Brajkovic"
+                                            className="w-full bg-slate-950/70 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all font-medium"
+                                            {...register("tutorNombre")}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">
+                                            Relación / Parentesco
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                className="w-full bg-slate-950/70 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all font-medium appearance-none"
+                                                {...register("tutorRelacion")}
+                                            >
+                                                <option value="Padre">Padre</option>
+                                                <option value="Madre">Madre</option>
+                                                <option value="Tutor Legal">Tutor Legal</option>
+                                                <option value="Familiar">Familiar / Acompañante</option>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400 text-xs">▼</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">
+                                                DNI del Padre / Tutor
+                                            </label>
+                                            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                                                Clave Check-in QR
+                                            </span>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Ej: 30123456"
+                                            className="w-full bg-slate-950/70 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all font-medium"
+                                            {...register("tutorDni")}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider pl-1">
+                                            Celular / WhatsApp Tutor
+                                        </label>
+                                        <input
+                                            type="text"
+                                            placeholder="Ej: +54 9 11 9876-5432"
+                                            className="w-full bg-slate-950/70 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-white text-sm outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all font-medium"
+                                            {...register("tutorTelefono")}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-1 text-[11px] text-slate-400 leading-relaxed bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+                                    💡 <strong className="text-slate-300">Asistencia Parental:</strong> El padre o tutor podrá confirmar el presente de sus hijos desde su propio celular colocando el DNI del niño en el cartel QR del dojo. Si tiene varios hijos vinculados, podrá marcarlos sucesivamente.
+                                </div>
+                            </div>
+                        )}
 
                         {/* Fecha de Nacimiento & Frecuencia Semanal */}
                         <div className="grid sm:grid-cols-2 gap-5">
