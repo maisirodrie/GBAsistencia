@@ -5,14 +5,22 @@ import { UPLOAD_URL } from "../api/axios";
 import { getDeviceFingerprint } from "../utils/fingerprint";
 
 
+let memoryDeviceId = null;
 // Generar o recuperar ID único persistente del dispositivo
 function getOrCreateDeviceId() {
-    let id = localStorage.getItem("gb_device_id");
-    if (!id) {
-        id = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 10);
-        localStorage.setItem("gb_device_id", id);
+    try {
+        let id = localStorage.getItem("gb_device_id");
+        if (!id) {
+            id = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 10);
+            localStorage.setItem("gb_device_id", id);
+        }
+        return id;
+    } catch {
+        if (!memoryDeviceId) {
+            memoryDeviceId = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).substring(2, 10);
+        }
+        return memoryDeviceId;
     }
-    return id;
 }
 
 // Fecha actual en huso horario de Argentina (UTC-3) formato YYYY-MM-DD
