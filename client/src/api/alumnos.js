@@ -16,6 +16,9 @@ export const getQrToken      = ()           => api.get('/alumnos/qr-token');
 export const getDojoLocation = ()           => api.get('/alumnos/dojo-location');
 export const setDojoLocation = (data)       => api.post('/alumnos/dojo-location', data);
 export const verifyKioskPin  = (pin)        => api.post('/alumnos/verify-pin', { pin });
+export const getCheckInsHoy  = ()           => api.get('/alumnos/checkins/hoy');
+export const destrabarDeviceCheckIn = (data) => api.post('/alumnos/checkins/destrabar', data);
+export const destrabarAlumno = (id, resetAsistencia = false) => api.post(`/alumnos/${id}/destrabar`, { resetAsistencia });
 
 export const descargarPDF = async (id, nombreAlumno = 'alumno') => {
     try {

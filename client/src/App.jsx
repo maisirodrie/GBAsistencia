@@ -13,6 +13,7 @@ import PublicQRPage from "./pages/PublicQRPage";
 import LoginPage from "./pages/LoginPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import UsersPage from "./pages/UsersPage";
+import DesbloqueosPage from "./pages/DesbloqueosPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { SidebarProvider } from "./context/SidebarContext";
@@ -64,6 +65,7 @@ function AppContent() {
                                 <Route path="/editar/:id" element={<AlumnoFormPage />} />
                                 <Route path="/finanzas" element={<FinanzasPage />} />
                                 <Route path="/usuarios" element={<UsersPage />} />
+                                <Route path="/desbloqueos" element={<DesbloqueosPage />} />
                                 <Route path="/perfil/cambiar-password" element={<ChangePasswordPage />} />
                             </Route>
                         </Routes>

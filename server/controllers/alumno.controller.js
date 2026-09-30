@@ -791,4 +791,119 @@ export const verifyKioskPin = async (req, res) => {
     }
 };
 
+/* ── Obtener Check-ins y Dispositivos de Hoy (Panel Administrador) ── */
+export const getCheckInsHoy = async (req, res) => {
+    try {
+        const hoyLocal = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        const yyyy = hoyLocal.getUTCFullYear();
+        const mm = String(hoyLocal.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(hoyLocal.getUTCDate()).padStart(2, '0');
+        const fechaStr = `${yyyy}-${mm}-${dd}`;
+
+        const checkIns = await DeviceCheckIn.find({ fecha: fechaStr })
+            .populate('alumnoId', 'nombre apellido dni faja grado categoria fotoUrl tutorNombre tutorDni')
+            .sort({ createdAt: -1 });
+
+        // Contar dispositivos únicos
+        const uniqueDevices = new Set(checkIns.map(c => c.deviceId)).size;
+
+        res.json({
+            fecha: fechaStr,
+            total: checkIns.length,
+            uniqueDevices,
+            checkIns
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/* ── Destrabar Check-in o Dispositivo específico ── */
+export const destrabarDeviceCheckIn = async (req, res) => {
+    try {
+        const { checkInId, deviceId, alumnoId, all } = req.body;
+        const hoyLocal = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        const yyyy = hoyLocal.getUTCFullYear();
+        const mm = String(hoyLocal.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(hoyLocal.getUTCDate()).padStart(2, '0');
+        const fechaStr = `${yyyy}-${mm}-${dd}`;
+
+        if (all) {
+            const delResult = await DeviceCheckIn.deleteMany({ fecha: fechaStr });
+            return res.json({ 
+                success: true, 
+                message: `Se liberaron todos los dispositivos (${delResult.deletedCount} registros eliminados).` 
+            });
+        }
+
+        if (checkInId) {
+            await DeviceCheckIn.findByIdAndDelete(checkInId);
+            return res.json({ success: true, message: 'Registro de dispositivo liberado con éxito.' });
+        }
+
+        if (deviceId) {
+            await DeviceCheckIn.deleteMany({ fecha: fechaStr, deviceId });
+            return res.json({ success: true, message: 'Dispositivo liberado con éxito.' });
+        }
+
+        if (alumnoId) {
+            await DeviceCheckIn.deleteMany({ fecha: fechaStr, alumnoId });
+            return res.json({ success: true, message: 'Registros del alumno liberados con éxito.' });
+        }
+
+        return res.status(400).json({ message: 'Debe especificar qué registro o dispositivo destrabar.' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/* ── Destrabar a un Alumno específico por su ID ── */
+export const destrabarAlumno = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { resetAsistencia } = req.body;
+
+        const hoyLocal = new Date(Date.now() - 3 * 60 * 60 * 1000);
+        const yyyy = hoyLocal.getUTCFullYear();
+        const mm = String(hoyLocal.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(hoyLocal.getUTCDate()).padStart(2, '0');
+        const fechaStr = `${yyyy}-${mm}-${dd}`;
+
+        const alumno = await Alumno.findById(id);
+        if (!alumno) return res.status(404).json({ message: 'Alumno no encontrado.' });
+
+        // Buscar si este alumno tenía algún registro de dispositivo hoy para obtener su deviceId
+        const checkIns = await DeviceCheckIn.find({ fecha: fechaStr, alumnoId: id });
+        const deviceIds = checkIns.map(c => c.deviceId).filter(Boolean);
+
+        // Eliminar los check-ins de este alumno para hoy
+        await DeviceCheckIn.deleteMany({ fecha: fechaStr, alumnoId: id });
+
+        // Si se encontraron deviceIds asociados, liberarlos también para que el celular quede libre
+        if (deviceIds.length > 0) {
+            await DeviceCheckIn.deleteMany({ fecha: fechaStr, deviceId: { $in: deviceIds } });
+        }
+
+        // Si el profesor pidió también reiniciar la asistencia de hoy
+        if (resetAsistencia) {
+            alumno.asistencias = alumno.asistencias.filter(a => {
+                const d = new Date(a);
+                return !(d.getUTCFullYear() === yyyy &&
+                         (d.getUTCMonth() + 1) === parseInt(mm) &&
+                         d.getUTCDate() === parseInt(dd));
+            });
+            alumno.markModified('asistencias');
+            await alumno.save();
+        }
+
+        res.json({
+            success: true,
+            message: `Dispositivo y check-in destrabados para ${alumno.nombre} ${alumno.apellido || ''}. Ya puede volver a registrarse desde su celular.`,
+            alumno
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 

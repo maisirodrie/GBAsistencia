@@ -5,6 +5,7 @@ import {
     DollarSign, 
     Shield, 
     QrCode, 
+    Unlock,
     UserPlus, 
     LogOut, 
     X,
@@ -30,6 +31,7 @@ export default function Sidebar() {
     const navLinks = [
         { to: "/", label: "Panel", icon: <LayoutDashboard size={20} />, active: isActive("/") },
         { to: "/alumnos", label: "Alumnos", icon: <Users size={20} />, active: isActive("/alumnos") },
+        { to: "/desbloqueos", label: "Desbloquear Check-in", icon: <Unlock size={20} />, active: isActive("/desbloqueos") },
         { to: "/cartel-qr", label: "Cartel QR Academia", icon: <QrCode size={20} />, active: isActive("/cartel-qr") },
     ];
 

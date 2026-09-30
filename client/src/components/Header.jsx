@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Menu, Bell, QrCode } from "lucide-react";
+import { Menu, Bell, QrCode, Unlock } from "lucide-react";
 import UserProfile from "./UserProfile";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -14,6 +14,7 @@ export default function Header() {
         if (location.pathname.startsWith("/editar/")) return "Editar Alumno";
         if (location.pathname === "/finanzas") return "Gestión Económica";
         if (location.pathname === "/usuarios") return "Control de Usuarios";
+        if (location.pathname === "/desbloqueos") return "Desbloqueo de Asistencias";
         if (location.pathname === "/perfil/cambiar-password") return "Mi Perfil";
         return "GB Asistente";
     };
@@ -54,6 +55,14 @@ export default function Header() {
 
                 {/* Right: Botones de acción circulares + Dropdown de Usuario estilo TailAdmin */}
                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <Link
+                        to="/desbloqueos"
+                        className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-700/80 bg-slate-800/60 text-amber-400 hover:text-white hover:border-amber-500/50 hover:bg-amber-500/20 transition-all shadow-sm"
+                        title="Desbloquear Check-in / Celulares"
+                    >
+                        <Unlock size={17} />
+                    </Link>
+
                     <Link
                         to="/cartel-qr"
                         className="hidden sm:flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-slate-700/80 bg-slate-800/60 text-slate-300 hover:text-white hover:border-slate-600 hover:bg-slate-800 transition-all shadow-sm"

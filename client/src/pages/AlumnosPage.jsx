@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAlumnos, addAsistencia, removeAsistencia, deleteAlumno } from "../api/alumnos";
+import { getAlumnos, addAsistencia, removeAsistencia, deleteAlumno, destrabarAlumno } from "../api/alumnos";
 import { UPLOAD_URL } from "../api/axios";
 import { showAlert, showToast } from "../utils/alerts";
 import BeltBadge from "../components/BeltBadge";
@@ -8,7 +8,7 @@ import QRCartelModal from "../components/QRCartelModal";
 import { useAuth } from "../context/AuthContext";
 import { 
     Search, QrCode, UserPlus, LayoutGrid, Table as TableIcon, 
-    Check, Plus, Pencil, Trash2, X, User as UserIcon, Award
+    Check, Plus, Pencil, Trash2, X, User as UserIcon, Award, Unlock
 } from "lucide-react";
 
 export default function AlumnosPage() {
@@ -98,6 +98,30 @@ export default function AlumnosPage() {
         }
     }
 
+    async function handleDestrabar(alumno) {
+        const confirm = await showAlert({
+            title: `¿Destrabar a ${alumno.nombre}?`,
+            text: `Se liberará el registro y bloqueo de celular de hoy para que ${alumno.nombre} pueda volver a escanear el QR desde su teléfono.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, destrabar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (confirm.isConfirmed) {
+            try {
+                const res = await destrabarAlumno(alumno._id);
+                showToast(res.data?.message || `¡Alumno ${alumno.nombre} destrabado con éxito!`, 'success');
+            } catch (err) {
+                showAlert({
+                    title: 'Error',
+                    text: err.response?.data?.message || 'No se pudo destrabar al alumno.',
+                    icon: 'error'
+                });
+            }
+        }
+    }
+
     const totalCount = alumnos.length;
     const sinDniCount = alumnos.filter(a => !a.dni || !a.dni.toString().trim()).length;
     const kidsCount = alumnos.filter(a => a.categoria === 'Infantil').length;
@@ -166,6 +190,15 @@ export default function AlumnosPage() {
                                 <TableIcon size={16} />
                             </button>
                         </div>
+
+                        <button
+                            onClick={() => navigate('/desbloqueos')}
+                            className="inline-flex items-center justify-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 px-3.5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-95"
+                            title="Desbloquear Check-in o Celulares de Alumnos"
+                        >
+                            <Unlock size={15} />
+                            <span className="hidden sm:inline">Desbloqueos</span>
+                        </button>
 
                         <button
                             onClick={() => setShowQRCartel(true)}
@@ -433,6 +466,13 @@ export default function AlumnosPage() {
                                             <td className="py-4 px-6 text-right">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <button 
+                                                        onClick={() => handleDestrabar(a)}
+                                                        className="p-2 text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all"
+                                                        title="Destrabar check-in / celular de hoy"
+                                                    >
+                                                        <Unlock size={15} />
+                                                    </button>
+                                                    <button 
                                                         onClick={() => navigate(`/editar/${a._id}`)}
                                                         className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
                                                         title="Editar Perfil"
@@ -563,6 +603,14 @@ export default function AlumnosPage() {
                                     </button>
 
                                     <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleDestrabar(a)}
+                                            className="py-2 px-3 bg-slate-800/70 hover:bg-amber-500/20 text-slate-300 hover:text-amber-400 font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/60 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                                            title="Destrabar check-in / celular de hoy"
+                                        >
+                                            <Unlock size={13} />
+                                            <span>Destrabar</span>
+                                        </button>
                                         <button 
                                             onClick={() => navigate(`/editar/${a._id}`)}
                                             className="flex-1 py-2 px-3 bg-slate-800/70 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl border border-slate-700/60 flex items-center justify-center gap-1.5 transition-all active:scale-95"

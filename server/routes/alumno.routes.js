@@ -14,7 +14,10 @@ import {
     getQrToken,
     getDojoLocation,
     setDojoLocation,
-    verifyKioskPin
+    verifyKioskPin,
+    getCheckInsHoy,
+    destrabarDeviceCheckIn,
+    destrabarAlumno
 } from '../controllers/alumno.controller.js';
 
 
@@ -73,8 +76,20 @@ router.post('/checkin-dni', checkInByDni);
 router.get('/qr-token', getQrToken);
 router.get('/dojo-location', getDojoLocation);
 router.post('/verify-pin', verifyKioskPin);
+// ==========================================
+// CONTROL DE CHECK-IN Y DESTRABAR DISPOSITIVOS
+// Requieren inicio de sesión con token de gestión
+// (Deben ir ANTES de las rutas con :id)
+// ==========================================
+router.get('/checkins/hoy', validateToken, isGestion, getCheckInsHoy);
+router.post('/checkins/destrabar', validateToken, isGestion, destrabarDeviceCheckIn);
+
+// ==========================================
+// RUTAS POR ID Y GESTIÓN GENERAL
+// ==========================================
 router.post('/:id/checkin', checkIn);
 router.get('/:id', getAlumno);
+router.post('/:id/destrabar', validateToken, isGestion, destrabarAlumno);
 
 
 // ==========================================
